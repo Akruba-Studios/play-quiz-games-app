@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.akrubastudios.playquizgames.ui.screens.game.GameScreen
 import com.akrubastudios.playquizgames.ui.screens.result.ResultScreen
+import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
@@ -21,8 +22,14 @@ fun NavGraph() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = Routes.GAME_SCREEN // Todavía empezamos en el juego
+        startDestination = Routes.MENU_SCREEN // <-- CAMBIO 1: Empezamos en el menú
     ) {
+        composable(Routes.MENU_SCREEN) {
+            MenuScreen(
+                onPlayClick = { navController.navigate(Routes.GAME_SCREEN) }
+            )
+        }
+
         composable(Routes.GAME_SCREEN) {
             // Le pasamos el navController a la GameScreen
             GameScreen(navController = navController)
@@ -50,11 +57,15 @@ fun NavGraph() {
                 onPlayAgain = {
                     // Navega al juego y limpia la pila para que no se pueda volver al resultado anterior
                     navController.navigate(Routes.GAME_SCREEN) {
-                        popUpTo(Routes.RESULT_SCREEN) { inclusive = true }
+                        popUpTo(Routes.MENU_SCREEN) // <-- CAMBIO 2: Limpia hasta el menú
                     }
                 },
                 onBackToMenu = {
-                    // Lógica para volver al menú principal (la implementaremos después)
+                    // --- AÑADE ESTA LÓGICA ---
+                    navController.navigate(Routes.MENU_SCREEN) {
+                        popUpTo(Routes.MENU_SCREEN) { inclusive = true }
+                    }
+                    // -------------------------
                 }
             )
         }
