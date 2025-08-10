@@ -1,0 +1,30 @@
+{
+  "levelId": "logos_level_1",
+  "levelName": {
+    "en": "Logos - Level 1",
+    "es": "Logos - Nivel 1"
+  },
+  "questions": [
+    {
+      "id": "logo_001",
+      "imageUrl": "https://raw.githubusercontent.com/Akruba-Studios/play-quiz-games-assets/main/logos/logo_nike.png",
+      "correctAnswer": "nike",
+      "validAnswers": ["nike"],
+      "hintLetters": "KNEILOCAB"
+    },
+    {
+      "id": "logo_002",
+      "imageUrl": "https://raw.githubusercontent.com/Akruba-Studios/play-quiz-games-assets/main/logos/logo_apple.png",
+      "correctAnswer": "apple",
+      "validAnswers": ["apple"],
+      "hintLetters": "PALEPNMOS"
+    },
+    {
+      "id": "logo_003",
+      "imageUrl": "https://raw.githubusercontent.com/Akruba-Studios/play-quiz-games-assets/main/logos/logo_mcdonalds.png",
+      "correctAnswer": "mcdonalds",
+      "validAnswers": ["mcdonalds", "mcdonald's"],
+      "hintLetters": "MCDONALS"
+    }
+  ]
+}

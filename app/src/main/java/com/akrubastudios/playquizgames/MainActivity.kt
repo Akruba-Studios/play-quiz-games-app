@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.akrubastudios.playquizgames.ui.screens.game.GameScreen
 import com.akrubastudios.playquizgames.ui.theme.PlayQuizGamesTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,12 +20,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PlayQuizGamesTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                // Aquí llamamos a nuestra pantalla
+                GameScreen()
             }
         }
     }
