@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
+import com.akrubastudios.playquizgames.domain.GameResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,9 @@ class GameViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
+
+    private val _gameResult = MutableStateFlow<GameResult?>(null)
+    val gameResult: StateFlow<GameResult?> = _gameResult.asStateFlow()
 
     // --- CORRECCIÓN: DECLARAMOS LAS VARIABLES AQUÍ ---
     private var levelPackage: QuizLevelPackage? = null
@@ -91,6 +95,11 @@ class GameViewModel @Inject constructor(
             }
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
+            _gameResult.value = GameResult(
+                score = uiState.value.score,
+                correctAnswers = uiState.value.score / 1000, // Lógica simple por ahora
+                totalQuestions = uiState.value.totalQuestions
+            )
         }
     }
 }

@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PlayQuizGamesTheme {
                 // Aquí llamamos a nuestra pantalla
-                GameScreen()
+                NavGraph()
             }
         }
     }

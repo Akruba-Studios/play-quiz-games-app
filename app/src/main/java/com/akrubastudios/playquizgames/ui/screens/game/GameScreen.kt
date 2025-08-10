@@ -18,6 +18,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,13 +30,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.akrubastudios.playquizgames.Routes
 
 @Composable
 fun GameScreen(
-    viewModel: GameViewModel = hiltViewModel()
+    viewModel: GameViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val gameResult by viewModel.gameResult.collectAsState()
+
+    // LaunchedEffect se ejecuta cuando 'gameResult' cambia, pero no en la composición inicial.
+    // Es la forma correcta de llamar a la navegación desde un Composable.
+    LaunchedEffect(gameResult) {
+        gameResult?.let { result ->
+            val route = Routes.RESULT_SCREEN
+                .replace("{score}", result.score.toString())
+                .replace("{totalQuestions}", result.totalQuestions.toString())
+                .replace("{correctAnswers}", result.correctAnswers.toString())
+
+            navController.navigate(route) {
+                popUpTo(Routes.GAME_SCREEN) { inclusive = true }
+            }
+        }
+    }
 
     // Column apila los elementos verticalmente.
     // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
