@@ -3,18 +3,19 @@ package com.akrubastudios.playquizgames.ui.screens.game
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel // Importante añadir esta línea
 
-// Esta es la función principal que dibujará nuestra pantalla.
-// La anotación @Composable le dice a Kotlin que esta función describe una pieza de UI.
 @Composable
-fun GameScreen() {
-    // Por ahora, solo mostraremos un texto simple para verificar que funciona.
-    Text(text = "¡Pantalla de Juego!")
+fun GameScreen(
+    viewModel: GameViewModel = hiltViewModel() // Hilt provee el ViewModel aquí
+) {
+    // Mantenemos el texto simple por ahora.
+    Text(text = "¡Pantalla de Juego Conectada!")
 }
 
-// Esta función nos permite previsualizar nuestro diseño directamente en Android Studio.
 @Preview(showBackground = true)
 @Composable
 fun GameScreenPreview() {
+    // La previsualización no necesita el ViewModel por ahora
     GameScreen()
 }
