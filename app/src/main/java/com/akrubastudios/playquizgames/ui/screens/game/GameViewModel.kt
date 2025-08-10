@@ -41,4 +41,16 @@ class GameViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = false) } // Dejamos de cargar
         }
     }
+
+    fun onLetterClick(letter: Char) {
+        // Solo añadimos la letra si la respuesta del usuario aún no es tan larga como la correcta
+        if (uiState.value.userAnswer.length < (uiState.value.currentQuestion?.correctAnswer?.length
+                ?: 0)
+        ) {
+            _uiState.update { currentState ->
+                currentState.copy(userAnswer = currentState.userAnswer + letter)
+            }
+        }
+    }
+
 }
