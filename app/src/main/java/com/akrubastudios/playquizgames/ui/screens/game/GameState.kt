@@ -1,0 +1,12 @@
+package com.akrubastudios.playquizgames.ui.screens.game
+
+import com.akrubastudios.playquizgames.domain.Question
+
+data class GameState(
+    val isLoading: Boolean = true,
+    val currentQuestion: Question? = null,
+    val score: Int = 0,
+    val questionNumber: Int = 1,
+    val totalQuestions: Int = 0,
+    val userAnswer: String = ""
+)
