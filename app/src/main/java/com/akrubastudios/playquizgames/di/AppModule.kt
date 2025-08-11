@@ -52,7 +52,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideGameDataRepository(db: FirebaseFirestore): GameDataRepository {
-        return GameDataRepository(db)
+    fun provideGameDataRepository(
+        db: FirebaseFirestore,
+        functions: FirebaseFunctions // <-- AÑADE ESTA LÍNEA
+    ): GameDataRepository {
+        return GameDataRepository(db, functions)
     }
 }

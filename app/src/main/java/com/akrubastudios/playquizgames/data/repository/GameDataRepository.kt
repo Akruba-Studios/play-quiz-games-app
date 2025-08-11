@@ -1,16 +1,19 @@
 package com.akrubastudios.playquizgames.data.repository
 
 import com.akrubastudios.playquizgames.domain.Country
+import com.akrubastudios.playquizgames.domain.RankedUser
 import com.akrubastudios.playquizgames.domain.User
 import com.akrubastudios.playquizgames.domain.UserCountryProgress
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class GameDataRepository @Inject constructor(
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    private val functions: FirebaseFunctions
 ) {
     // Esta función obtiene TODOS los documentos de la colección 'countries'
     suspend fun getCountryList(): List<Country> {
@@ -56,6 +59,25 @@ class GameDataRepository @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+    @Suppress("UNCHECKED_CAST")
+    suspend fun getRanking(): List<RankedUser> {
+        return try {
+            val result = functions.getHttpsCallable("getGlobalRanking").call().await()
+            // El resultado es un HashMap, necesitamos convertirlo
+            val rankedList = (result.data as List<HashMap<String, Any>>).map { userMap ->
+                RankedUser(
+                    rank = (userMap["rank"] as Long).toInt(),
+                    displayName = userMap["displayName"] as String,
+                    totalXp = userMap["totalXp"] as Long,
+                    photoUrl = userMap["photoUrl"] as String?
+                )
+            }
+            rankedList
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
     }
 }

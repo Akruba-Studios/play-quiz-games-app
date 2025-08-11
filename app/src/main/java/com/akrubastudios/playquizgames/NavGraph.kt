@@ -12,16 +12,17 @@ import com.akrubastudios.playquizgames.ui.screens.result.ResultScreen
 import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
 import com.akrubastudios.playquizgames.ui.screens.login.LoginScreen
 import com.akrubastudios.playquizgames.ui.screens.map.MapScreen
+import com.akrubastudios.playquizgames.ui.screens.ranking.RankingScreen
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}"
     const val GAME_SCREEN = "game"
-
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
-
     const val COUNTRY_SCREEN = "country/{countryId}"
+
+    const val RANKING_SCREEN = "ranking"
 }
 
 @Composable
@@ -31,6 +32,10 @@ fun NavGraph() {
         navController = navController,
         startDestination = Routes.LOGIN_SCREEN
     ) {
+
+        composable(Routes.RANKING_SCREEN) {
+            RankingScreen()
+        }
 
         composable(
             route = Routes.COUNTRY_SCREEN,
