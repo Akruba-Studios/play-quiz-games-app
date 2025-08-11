@@ -9,12 +9,15 @@ import androidx.navigation.navArgument
 import com.akrubastudios.playquizgames.ui.screens.game.GameScreen
 import com.akrubastudios.playquizgames.ui.screens.result.ResultScreen
 import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
+import com.akrubastudios.playquizgames.ui.screens.login.LoginScreen
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}"
     const val GAME_SCREEN = "game"
     const val MENU_SCREEN = "menu" // Añadimos la ruta del menú para el futuro
+
+    const val LOGIN_SCREEN = "login"
 }
 
 @Composable
@@ -22,8 +25,22 @@ fun NavGraph() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = Routes.MENU_SCREEN // <-- CAMBIO 1: Empezamos en el menú
+        startDestination = Routes.LOGIN_SCREEN
     ) {
+
+        composable(Routes.LOGIN_SCREEN) {
+            LoginScreen(
+                isLoading = false, // Por ahora, nunca está cargando
+                onSignInClick = {
+                    // La lógica de inicio de sesión irá aquí
+                    // Por ahora, solo navegamos al menú para probar
+                    navController.navigate(Routes.MENU_SCREEN) {
+                        popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Routes.MENU_SCREEN) {
             MenuScreen(
                 onPlayClick = { navController.navigate(Routes.GAME_SCREEN) }
