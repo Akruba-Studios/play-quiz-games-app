@@ -2,6 +2,7 @@ package com.akrubastudios.playquizgames.di
 
 import android.content.Context
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
+import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,4 +20,9 @@ object AppModule {
         return QuizRepository(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
+    }
 }

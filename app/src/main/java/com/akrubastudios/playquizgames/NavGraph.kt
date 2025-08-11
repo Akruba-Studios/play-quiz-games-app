@@ -30,10 +30,7 @@ fun NavGraph() {
 
         composable(Routes.LOGIN_SCREEN) {
             LoginScreen(
-                isLoading = false, // Por ahora, nunca está cargando
-                onSignInClick = {
-                    // La lógica de inicio de sesión irá aquí
-                    // Por ahora, solo navegamos al menú para probar
+                onSignInSuccess = {
                     navController.navigate(Routes.MENU_SCREEN) {
                         popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                     }
