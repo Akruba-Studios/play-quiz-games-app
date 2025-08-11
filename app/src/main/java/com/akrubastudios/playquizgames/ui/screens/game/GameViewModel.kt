@@ -44,12 +44,16 @@ class GameViewModel @Inject constructor(
         levelPackage = repository.getLevel("logos_level_1")
 
         if (levelPackage != null) {
+            val firstQuestion = levelPackage!!.questions[currentQuestionIndex]
+            val hints = generateHintLetters(firstQuestion.correctAnswer) // <-- Genera las pistas
+
             _uiState.update { currentState ->
                 currentState.copy(
                     isLoading = false,
-                    currentQuestion = levelPackage!!.questions[currentQuestionIndex],
+                    currentQuestion = firstQuestion,
                     totalQuestions = levelPackage!!.questions.size,
-                    questionNumber = currentQuestionIndex + 1
+                    questionNumber = currentQuestionIndex + 1,
+                    generatedHintLetters = hints
                 )
             }
             startTimer() // Inicia el temporizador para la nueva pregunta
@@ -57,6 +61,27 @@ class GameViewModel @Inject constructor(
             Log.d("GameViewModel", "Error al cargar el nivel.")
             _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    private fun generateHintLetters(correctAnswer: String): String {
+        // 1. Define el alfabeto para las letras aleatorias.
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+        // 2. Decide cuántas letras señuelo añadir (ej. entre 6 y 8).
+        val totalLettersInBank = 12
+        val decoyLettersCount = totalLettersInBank - correctAnswer.length
+
+        // 3. Coge las letras de la respuesta correcta.
+        val answerLetters = correctAnswer.uppercase().toList()
+
+        // 4. Coge letras aleatorias del alfabeto que NO estén en la respuesta.
+        val randomLetters = alphabet.toList()
+            .filter { !answerLetters.contains(it) } // Filtra las que ya están
+            .shuffled() // Baraja el resto del alfabeto
+            .take(decoyLettersCount) // Coge el número de señuelos que necesitamos
+
+        // 5. Junta las letras de la respuesta y las aleatorias, y barájalas.
+        return (answerLetters + randomLetters).shuffled().joinToString("")
     }
 
     fun onLetterClick(letter: Char) {
@@ -104,11 +129,15 @@ class GameViewModel @Inject constructor(
     private fun moveToNextQuestion() {
         currentQuestionIndex++
         if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
+            val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
+            val hints = generateHintLetters(nextQuestion.correctAnswer) // <-- Genera las pistas
+
             _uiState.update {
                 it.copy(
-                    currentQuestion = levelPackage!!.questions[currentQuestionIndex],
+                    currentQuestion = nextQuestion,
                     questionNumber = currentQuestionIndex + 1,
-                    userAnswer = ""
+                    userAnswer = "",
+                    generatedHintLetters = hints
                 )
             }
             startTimer() // Inicia el temporizador para la nueva pregunta

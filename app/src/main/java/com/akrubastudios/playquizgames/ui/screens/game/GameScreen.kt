@@ -87,7 +87,7 @@ fun GameScreen(
                 userAnswer = uiState.userAnswer
             )
             LetterBank(
-                hintLetters = uiState.currentQuestion!!.hintLetters,
+                hintLetters = uiState.generatedHintLetters,
                 onLetterClick = { letter -> viewModel.onLetterClick(letter) }
             )
         }
