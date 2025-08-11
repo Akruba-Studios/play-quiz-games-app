@@ -3,6 +3,7 @@ package com.akrubastudios.playquizgames.ui.screens.game
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
 import com.akrubastudios.playquizgames.domain.GameResult
@@ -20,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val repository: QuizRepository,
-    private val functions: FirebaseFunctions
+    private val functions: FirebaseFunctions,
 ) : ViewModel() {
 
     companion object {

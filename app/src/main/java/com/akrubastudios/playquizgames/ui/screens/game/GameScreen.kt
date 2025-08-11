@@ -33,6 +33,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.akrubastudios.playquizgames.Routes
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import com.akrubastudios.playquizgames.core.AdManager
 
 @Composable
 fun GameScreen(
@@ -41,6 +44,11 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        AdManager.loadInterstitialAd(context)
+    }
 
     // LaunchedEffect se ejecuta cuando 'gameResult' cambia, pero no en la composición inicial.
     // Es la forma correcta de llamar a la navegación desde un Composable.

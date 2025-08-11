@@ -13,6 +13,12 @@ import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
 import com.akrubastudios.playquizgames.ui.screens.login.LoginScreen
 import com.akrubastudios.playquizgames.ui.screens.map.MapScreen
 import com.akrubastudios.playquizgames.ui.screens.ranking.RankingScreen
+import androidx.compose.ui.platform.LocalContext
+import com.akrubastudios.playquizgames.core.AdManager
+import android.app.Activity
+import androidx.compose.ui.platform.LocalView
+import androidx.lifecycle.findViewTreeViewModelStoreOwner
+
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
@@ -82,6 +88,8 @@ fun NavGraph() {
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
+            val view = LocalView.current
+            val activity = view.context as Activity
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val correctAnswers = backStackEntry.arguments?.getInt("correctAnswers") ?: 0
@@ -99,6 +107,8 @@ fun NavGraph() {
                 },
                 onBackToMenu = {
                     // --- AÑADE ESTA LÓGICA ---
+                    AdManager.showInterstitialAd(activity)
+
                     navController.navigate(Routes.MAP_SCREEN) {
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }

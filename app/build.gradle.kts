@@ -74,4 +74,6 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.functions)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.play.services.ads)
+    implementation(platform(libs.firebase.bom))
 }
