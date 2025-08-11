@@ -41,25 +41,29 @@ class GameViewModel @Inject constructor(
     }
 
     private fun loadLevel() {
-        levelPackage = repository.getLevel("logos_level_1")
+        // Lanzamos una coroutine para llamar a nuestra función suspendida
+        viewModelScope.launch {
+            val loadedLevel = repository.getLevel("Jdneptg2H9iyLervZ6LG") // Llama a la nueva función suspend
 
-        if (levelPackage != null) {
-            val firstQuestion = levelPackage!!.questions[currentQuestionIndex]
-            val hints = generateHintLetters(firstQuestion.correctAnswer) // <-- Genera las pistas
+            if (loadedLevel != null) {
+                levelPackage = loadedLevel // Guardamos el nivel cargado
+                val firstQuestion = loadedLevel.questions[currentQuestionIndex]
+                val hints = generateHintLetters(firstQuestion.correctAnswer)
 
-            _uiState.update { currentState ->
-                currentState.copy(
-                    isLoading = false,
-                    currentQuestion = firstQuestion,
-                    totalQuestions = levelPackage!!.questions.size,
-                    questionNumber = currentQuestionIndex + 1,
-                    generatedHintLetters = hints
-                )
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        isLoading = false,
+                        currentQuestion = firstQuestion,
+                        totalQuestions = loadedLevel.questions.size,
+                        questionNumber = currentQuestionIndex + 1,
+                        generatedHintLetters = hints
+                    )
+                }
+                startTimer()
+            } else {
+                Log.d("GameViewModel", "Error al cargar el nivel desde Firestore.")
+                _uiState.update { it.copy(isLoading = false) }
             }
-            startTimer() // Inicia el temporizador para la nueva pregunta
-        } else {
-            Log.d("GameViewModel", "Error al cargar el nivel.")
-            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

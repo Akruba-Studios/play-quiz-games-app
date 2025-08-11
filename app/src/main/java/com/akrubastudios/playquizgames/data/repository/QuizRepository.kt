@@ -1,38 +1,39 @@
 package com.akrubastudios.playquizgames.data.repository
+
 import android.content.Context
-import com.akrubastudios.playquizgames.R // Para acceder a los recursos
+import android.util.Log
+import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import javax.inject.Inject
 
-class QuizRepository(private val context: Context) {
+// NOTA: AHORA DEPENDE DE FIRESTORE Y CONTEXT
+class QuizRepository @Inject constructor(
+    private val db: FirebaseFirestore,
+    private val context: Context
+) {
 
-    // Preparamos el decodificador de JSON.
-    // Lo configuramos para que ignore claves desconocidas en el JSON, lo cual es más seguro.
     private val json = Json { ignoreUnknownKeys = true }
 
-    // Esta es la función principal que nuestra app llamará para obtener un nivel.
-    fun getLevel(levelId: String): QuizLevelPackage? { // Devolvemos un tipo nullable (?) por si hay errores
-        try {
-            // Buscamos el ID del recurso en la carpeta 'raw'.
-            // Por ahora, ignoramos el 'levelId' y siempre cargamos el mismo archivo de prueba.
-            val resourceId = R.raw.logos_level_1
+    // La función sigue siendo suspend, pero aún usa el archivo local.
+    // Esto es para la transición. En el siguiente paso la cambiaremos.
+    suspend fun getLevel(levelId: String): QuizLevelPackage? {
+        return try {
+            // Apuntamos a la colección 'quizzes' y al documento específico
+            val document = db.collection("quizzes").document(levelId).get().await()
 
-            // Abrimos un flujo de lectura para el archivo de recursos.
-            val inputStream = context.resources.openRawResource(resourceId)
-
-            // Leemos todo el contenido del archivo como una única cadena de texto.
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
-
-            // Usamos la librería de serialización para convertir el texto JSON
-            // en nuestro objeto de Kotlin 'QuizLevelPackage'.
-            return json.decodeFromString<QuizLevelPackage>(jsonString)
-
+            // Usamos la utilidad de Firebase KTX para convertir el documento
+            // directamente en nuestro objeto QuizLevelPackage.
+            // Ahora que las data classes tienen valores por defecto, esto debería funcionar.
+            document.toObject(QuizLevelPackage::class.java)
         } catch (e: Exception) {
-            // Si algo sale mal (ej. el archivo no existe o el JSON está mal formado),
-            // imprimimos el error y devolvemos null para indicar que la carga falló.
+            Log.e("QuizRepository", "Error al convertir el documento de Firestore.", e)
             e.printStackTrace()
-            return null
+            null
         }
     }
 }
