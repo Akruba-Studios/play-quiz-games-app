@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.akrubastudios.playquizgames.ui.screens.country.CountryScreen
 import com.akrubastudios.playquizgames.ui.screens.game.GameScreen
 import com.akrubastudios.playquizgames.ui.screens.result.ResultScreen
 import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
@@ -19,6 +20,8 @@ object Routes {
 
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
+
+    const val COUNTRY_SCREEN = "country/{countryId}"
 }
 
 @Composable
@@ -28,6 +31,29 @@ fun NavGraph() {
         navController = navController,
         startDestination = Routes.LOGIN_SCREEN
     ) {
+
+        composable(
+            route = Routes.COUNTRY_SCREEN,
+            arguments = listOf(navArgument("countryId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            // Extraemos el ID del país de la ruta
+            val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+
+            // Lógica simple para obtener el nombre (mejorará con el ViewModel)
+            val countryName = if (countryId == "br") "Brasil" else "Desconocido"
+
+            CountryScreen(
+                countryName = countryName,
+                onPlayClick = {
+                    // Al tocar jugar, vamos a la pantalla de juego
+                    navController.navigate(Routes.GAME_SCREEN)
+                },
+                onBackClick = {
+                    // Volvemos a la pantalla anterior (el mapa)
+                    navController.popBackStack()
+                }
+            )
+        }
 
         composable(Routes.LOGIN_SCREEN) {
             LoginScreen(
@@ -40,7 +66,7 @@ fun NavGraph() {
         }
 
         composable(Routes.MAP_SCREEN) {
-            MapScreen() // Por ahora no hace nada más
+            MapScreen(navController = navController) // Por ahora no hace nada más
         }
 
         composable(Routes.GAME_SCREEN) {
