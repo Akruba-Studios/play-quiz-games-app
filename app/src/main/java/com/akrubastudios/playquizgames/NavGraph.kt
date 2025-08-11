@@ -35,21 +35,14 @@ fun NavGraph() {
         composable(
             route = Routes.COUNTRY_SCREEN,
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            // Extraemos el ID del país de la ruta
-            val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
-
-            // Lógica simple para obtener el nombre (mejorará con el ViewModel)
-            val countryName = if (countryId == "br") "Brasil" else "Desconocido"
-
+        ) {
+            // La CountryScreen ahora obtiene sus propios datos a través de su ViewModel.
+            // Solo necesitamos pasarle las acciones de navegación.
             CountryScreen(
-                countryName = countryName,
                 onPlayClick = {
-                    // Al tocar jugar, vamos a la pantalla de juego
                     navController.navigate(Routes.GAME_SCREEN)
                 },
                 onBackClick = {
-                    // Volvemos a la pantalla anterior (el mapa)
                     navController.popBackStack()
                 }
             )

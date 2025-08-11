@@ -2,35 +2,54 @@ package com.akrubastudios.playquizgames.ui.screens.country
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun CountryScreen(
-    countryName: String, // Recibirá el nombre del país para mostrarlo
+    viewModel: CountryViewModel = hiltViewModel(),
     onPlayClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = countryName, style = MaterialTheme.typography.displayMedium)
-        Spacer(modifier = Modifier.height(32.dp))
-        // Aquí iría la barra de progreso de conquista
-        Text(text = "Progreso de Conquista: 0 / 50000 PC")
-        Spacer(modifier = Modifier.height(64.dp))
-        Button(onClick = onPlayClick, modifier = Modifier.fillMaxWidth()) {
-            Text("Jugar Nivel de Logos") // Por ahora, un solo nivel
+    val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onBackClick, modifier = Modifier.fillMaxWidth()) {
-            Text("Volver al Mapa")
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = uiState.countryName, style = MaterialTheme.typography.displayMedium)
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Barra de progreso real
+            Text(text = "Progreso de Conquista: ${uiState.currentPc} / ${uiState.pcRequired} PC")
+            LinearProgressIndicator(
+                progress = { (uiState.currentPc.toFloat() / uiState.pcRequired.toFloat()) },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(64.dp))
+            Button(onClick = onPlayClick, modifier = Modifier.fillMaxWidth()) {
+                Text("Jugar Nivel de Logos")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onBackClick, modifier = Modifier.fillMaxWidth()) {
+                Text("Volver al Mapa")
+            }
         }
     }
 }
