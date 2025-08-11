@@ -72,4 +72,5 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.google.auth.service)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.functions)
 }

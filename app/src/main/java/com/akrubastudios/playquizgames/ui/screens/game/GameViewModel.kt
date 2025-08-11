@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
 import com.akrubastudios.playquizgames.domain.GameResult
+import com.google.firebase.functions.FirebaseFunctions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
-    private val repository: QuizRepository
+    private val repository: QuizRepository,
+    private val functions: FirebaseFunctions
 ) : ViewModel() {
 
     companion object {
@@ -147,6 +149,14 @@ class GameViewModel @Inject constructor(
             startTimer() // Inicia el temporizador para la nueva pregunta
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
+
+            val data = hashMapOf(
+                "score" to uiState.value.score,
+                "countryId" to "br" // Por ahora, hardcodeado a Brasil
+            )
+
+            functions.getHttpsCallable("submitScore").call(data)
+
             _gameResult.value = GameResult(
                 score = uiState.value.score,
                 correctAnswers = uiState.value.correctAnswersCount,
