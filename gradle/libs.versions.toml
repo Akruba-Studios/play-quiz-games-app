@@ -21,6 +21,7 @@ firebaseAuth = "23.0.0"
 googleAuthService = "21.2.0"
 firebaseFirestore = "25.0.0"
 firebaseFunctions = "21.0.0"
+materialIconsExtended = "1.6.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,7 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version
 google-auth-service = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "googleAuthService" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions", version.ref = "firebaseFunctions" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

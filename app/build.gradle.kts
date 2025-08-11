@@ -73,4 +73,5 @@ dependencies {
     implementation(libs.google.auth.service)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.functions)
+    implementation(libs.androidx.material.icons.extended)
 }

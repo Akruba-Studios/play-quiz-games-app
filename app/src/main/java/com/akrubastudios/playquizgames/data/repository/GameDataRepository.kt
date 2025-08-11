@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.data.repository
 
+import android.util.Log
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.RankedUser
 import com.akrubastudios.playquizgames.domain.User
@@ -63,21 +64,36 @@ class GameDataRepository @Inject constructor(
     }
     @Suppress("UNCHECKED_CAST")
     suspend fun getRanking(): List<RankedUser> {
-        return try {
+        try {
             val result = functions.getHttpsCallable("getGlobalRanking").call().await()
-            // El resultado es un HashMap, necesitamos convertirlo
-            val rankedList = (result.data as List<HashMap<String, Any>>).map { userMap ->
-                RankedUser(
-                    rank = (userMap["rank"] as Long).toInt(),
-                    displayName = userMap["displayName"] as String,
-                    totalXp = userMap["totalXp"] as Long,
-                    photoUrl = userMap["photoUrl"] as String?
-                )
+            val data = result.data as? List<Map<String, Any>> // Usa un cast seguro
+
+            // Si data es null o no es una lista, devuelve una lista vacía
+            if (data == null) {
+                Log.e("GameDataRepository", "Los datos del ranking son nulos o no son una lista.")
+                return emptyList()
             }
-            rankedList
+
+            // Mapea los datos de forma segura
+            val rankedList = data.mapNotNull { userMap ->
+                try {
+                    RankedUser(
+                        // Convierte cualquier tipo de número a Long y luego a Int
+                        rank = (userMap["rank"] as? Number)?.toInt() ?: 0,
+                        displayName = userMap["displayName"] as? String ?: "Error de Nombre",
+                        totalXp = (userMap["totalXp"] as? Number)?.toLong() ?: 0L,
+                        photoUrl = userMap["photoUrl"] as? String
+                    )
+                } catch (e: Exception) {
+                    Log.e("GameDataRepository", "Error al parsear un usuario del ranking: $userMap", e)
+                    null // Si un usuario falla, lo saltamos en lugar de romper toda la lista
+                }
+            }
+            return rankedList
         } catch (e: Exception) {
+            Log.e("GameDataRepository", "Error al llamar a la función getGlobalRanking.", e)
             e.printStackTrace()
-            emptyList()
+            return emptyList()
         }
     }
 }

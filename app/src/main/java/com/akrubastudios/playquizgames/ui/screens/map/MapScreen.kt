@@ -1,28 +1,20 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
-import android.R.attr.enabled
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
@@ -32,68 +24,87 @@ import com.akrubastudios.playquizgames.domain.Country
 @Composable
 fun MapScreen(
     navController: NavController,
-    // 1. Recibimos el ViewModel que Hilt nos proveerá
     viewModel: MapViewModel = hiltViewModel()
 ) {
-    // 2. Nos suscribimos al estado de la UI del ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
+    // Scaffold nos da la estructura de la pantalla principal
+    Scaffold(
+        bottomBar = {
+            BottomAppBar {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { navController.navigate(Routes.RANKING_SCREEN) },
+                    icon = { Icon(Icons.Filled.Leaderboard, contentDescription = "Ranking") },
+                    label = { Text("Ranking") }
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { /* Navegar a Perfil en el futuro */ },
+                    icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Perfil") },
+                    label = { Text("Perfil") }
+                )
+            }
+        }
+    ) { innerPadding -> // El contenido principal debe usar este padding
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), // Usa el padding proporcionado por el Scaffold
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Mapa del Conocimiento",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            if (uiState.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                MapContent(
+                    uiState = uiState,
+                    onCountryClick = { countryId ->
+                        navController.navigate(
+                            Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MapContent(
+    uiState: MapState,
+    onCountryClick: (String) -> Unit
+) {
     val context = LocalContext.current
     val imageLoader = ImageLoader.Builder(context)
-        .components {
-            add(SvgDecoder.Factory())
-        }
+        .components { add(SvgDecoder.Factory()) }
         .build()
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Mapa del Conocimiento")
-
-        // 3. Mostramos un texto de prueba que depende del estado
-        if (uiState.isLoading) {
-            Text(text = "Cargando países...")
-        } else {
-            Text(text = "Países cargados: ${uiState.countries.size}")
-        }
-
-        // El Box y la Imagen del mapa se quedan igual por ahora
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = rememberAsyncImagePainter(model = "file:///android_asset/world_globe.svg", imageLoader = imageLoader),
+            contentDescription = "Mapa del Mundo",
             modifier = Modifier.fillMaxSize()
-            .clickable(enabled = !uiState.isLoading) {
-            // Navega a la pantalla de Brasil al tocar el mapa.
-            // Lógica simple por ahora.
-            val brazilId = "br"
-            navController.navigate(
-                Routes.COUNTRY_SCREEN.replace("{countryId}", brazilId)
-            )
-        }
-        ) {
-            val imagePath = "file:///android_asset/world_globe.svg"
-            Image(
-                painter = rememberAsyncImagePainter(model = imagePath, imageLoader = imageLoader),
-                contentDescription = "Mapa del Mundo",
-                modifier = Modifier.fillMaxSize()
-            )
+        )
 
-            // Iteramos sobre la lista de países que cargó el ViewModel
-            uiState.countries.forEach { country ->
-                // Lógica simple para posicionar el botón de Brasil (mejorará en el futuro)
-                if (country.countryId == "br") {
-                    CountryButton(
-                        country = country,
-                        isConquered = uiState.conqueredCountryIds.contains(country.countryId),
-                        onClick = {
-                            navController.navigate(
-                                Routes.COUNTRY_SCREEN.replace("{countryId}", country.countryId)
-                            )
-                        },
-                        modifier = Modifier
-                            .align(Alignment.Center) // Centramos en el mapa
-                            .offset(x = (-50).dp, y = 100.dp) // Ajustamos la posición para Sudamérica
-                    )
-                }
+        uiState.countries.forEach { country ->
+            if (country.countryId == "br") {
+                CountryButton(
+                    country = country,
+                    isConquered = uiState.conqueredCountryIds.contains(country.countryId),
+                    onClick = { onCountryClick(country.countryId) },
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = (-50).dp, y = 100.dp)
+                )
             }
         }
     }
