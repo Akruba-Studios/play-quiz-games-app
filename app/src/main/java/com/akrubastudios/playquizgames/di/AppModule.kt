@@ -2,6 +2,7 @@ package com.akrubastudios.playquizgames.di
 
 import android.content.Context
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
+import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,5 +41,11 @@ object AppModule {
         db: FirebaseFirestore
     ): AuthRepository {
         return AuthRepository(auth, db)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameDataRepository(db: FirebaseFirestore): GameDataRepository {
+        return GameDataRepository(db)
     }
 }
