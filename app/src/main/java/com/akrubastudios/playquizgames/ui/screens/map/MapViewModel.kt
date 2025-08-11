@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class MapState(
     val countries: List<Country> = emptyList(),
+    val conqueredCountryIds: List<String> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -35,7 +36,12 @@ class MapViewModel @Inject constructor(
     private fun loadCountries() {
         viewModelScope.launch {
             val countryList = gameDataRepository.getCountryList()
-            _uiState.value = MapState(countries = countryList, isLoading = false)
+            val userData = gameDataRepository.getUserData()
+            _uiState.value = MapState(
+                countries = countryList,
+                conqueredCountryIds = userData?.conqueredCountries ?: emptyList(), // <-- AÑADE ESTA LÍNEA
+                isLoading = false
+            )
         }
     }
 }

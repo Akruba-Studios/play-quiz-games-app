@@ -16,12 +16,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
 import com.akrubastudios.playquizgames.Routes
+import com.akrubastudios.playquizgames.domain.Country
 
 @Composable
 fun MapScreen(
@@ -70,6 +76,43 @@ fun MapScreen(
                 contentDescription = "Mapa del Mundo",
                 modifier = Modifier.fillMaxSize()
             )
+
+            // Iteramos sobre la lista de países que cargó el ViewModel
+            uiState.countries.forEach { country ->
+                // Lógica simple para posicionar el botón de Brasil (mejorará en el futuro)
+                if (country.countryId == "br") {
+                    CountryButton(
+                        country = country,
+                        isConquered = uiState.conqueredCountryIds.contains(country.countryId),
+                        onClick = {
+                            navController.navigate(
+                                Routes.COUNTRY_SCREEN.replace("{countryId}", country.countryId)
+                            )
+                        },
+                        modifier = Modifier
+                            .align(Alignment.Center) // Centramos en el mapa
+                            .offset(x = (-50).dp, y = 100.dp) // Ajustamos la posición para Sudamérica
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun CountryButton(
+    country: Country,
+    isConquered: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isConquered) Color(0xFFD4AF37) else MaterialTheme.colorScheme.primary // Dorado si está conquistado
+        )
+    ) {
+        Text(text = country.name["es"] ?: "")
     }
 }

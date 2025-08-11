@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.data.repository
 
 import com.akrubastudios.playquizgames.domain.Country
+import com.akrubastudios.playquizgames.domain.User
 import com.akrubastudios.playquizgames.domain.UserCountryProgress
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,6 +41,18 @@ class GameDataRepository @Inject constructor(
         return try {
             db.collection("user_country_progress").document(progressDocId).get().await()
                 .toObject(UserCountryProgress::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    // Obtiene el documento del usuario actual desde la colección 'users'
+    suspend fun getUserData(): User? {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
+        return try {
+            db.collection("users").document(uid).get().await()
+                .toObject(User::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
             null
