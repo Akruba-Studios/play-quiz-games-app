@@ -8,5 +8,7 @@ data class GameState(
     val score: Int = 0,
     val questionNumber: Int = 1,
     val totalQuestions: Int = 0,
-    val userAnswer: String = ""
+    val correctAnswersCount: Int = 0,
+    val userAnswer: String = "",
+    val remainingTime: Long = 15L // <-- Tiempo 15 segundos por respuesta
 )

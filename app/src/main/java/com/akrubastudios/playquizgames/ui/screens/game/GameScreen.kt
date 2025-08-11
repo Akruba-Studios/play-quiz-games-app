@@ -76,7 +76,8 @@ fun GameScreen(
             TopBar(
                 questionNumber = uiState.questionNumber,
                 totalQuestions = uiState.totalQuestions,
-                score = uiState.score
+                score = uiState.score,
+                remainingTime = uiState.remainingTime
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -98,6 +99,7 @@ fun TopBar(
     questionNumber: Int,
     totalQuestions: Int,
     score: Int,
+    remainingTime: Long,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
@@ -109,6 +111,11 @@ fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = "Pregunta: $questionNumber / $totalQuestions")
+        Text(
+            text = remainingTime.toString(),
+            style = MaterialTheme.typography.headlineMedium,
+            color = if (remainingTime <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+        )
         Text(text = "Puntaje: $score")
     }
 }
