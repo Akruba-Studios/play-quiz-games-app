@@ -10,13 +10,14 @@ import com.akrubastudios.playquizgames.ui.screens.game.GameScreen
 import com.akrubastudios.playquizgames.ui.screens.result.ResultScreen
 import com.akrubastudios.playquizgames.ui.screens.menu.MenuScreen
 import com.akrubastudios.playquizgames.ui.screens.login.LoginScreen
+import com.akrubastudios.playquizgames.ui.screens.map.MapScreen
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}"
     const val GAME_SCREEN = "game"
-    const val MENU_SCREEN = "menu" // Añadimos la ruta del menú para el futuro
 
+    const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
 }
 
@@ -31,17 +32,15 @@ fun NavGraph() {
         composable(Routes.LOGIN_SCREEN) {
             LoginScreen(
                 onSignInSuccess = {
-                    navController.navigate(Routes.MENU_SCREEN) {
+                    navController.navigate(Routes.MAP_SCREEN) {
                         popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Routes.MENU_SCREEN) {
-            MenuScreen(
-                onPlayClick = { navController.navigate(Routes.GAME_SCREEN) }
-            )
+        composable(Routes.MAP_SCREEN) {
+            MapScreen() // Por ahora no hace nada más
         }
 
         composable(Routes.GAME_SCREEN) {
@@ -71,13 +70,13 @@ fun NavGraph() {
                 onPlayAgain = {
                     // Navega al juego y limpia la pila para que no se pueda volver al resultado anterior
                     navController.navigate(Routes.GAME_SCREEN) {
-                        popUpTo(Routes.MENU_SCREEN) // <-- CAMBIO 2: Limpia hasta el menú
+                        popUpTo(Routes.MAP_SCREEN) // <-- CAMBIO 2: Limpia hasta el menú
                     }
                 },
                 onBackToMenu = {
                     // --- AÑADE ESTA LÓGICA ---
-                    navController.navigate(Routes.MENU_SCREEN) {
-                        popUpTo(Routes.MENU_SCREEN) { inclusive = true }
+                    navController.navigate(Routes.MAP_SCREEN) {
+                        popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }
                     // -------------------------
                 }
