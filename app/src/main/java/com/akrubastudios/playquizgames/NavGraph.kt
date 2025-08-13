@@ -16,6 +16,7 @@ import com.akrubastudios.playquizgames.ui.screens.ranking.RankingScreen
 import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
+import android.util.Log
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
@@ -47,22 +48,25 @@ fun NavGraph() {
             route = Routes.COUNTRY_SCREEN,
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })
         ) {
-            // La CountryScreen ahora obtiene sus propios datos a través de su ViewModel.
-            // Solo necesitamos pasarle las acciones de navegación.
+            // Aquí no necesitamos el backStackEntry porque el ViewModel lo maneja
+
             CountryScreen(
-                onPlayClick = {
-                    // --- AÑADE LA LÓGICA AQUÍ ---
-                    val levelToPlay = "logos_1" // Hardcodeado por ahora
-                    navController.navigate(
-                        Routes.GAME_SCREEN.replace("{levelId}", levelToPlay)
-                    )
-                    // --------------------------
+                onPlayClick = { selectedCategoryId ->
+                    Log.d("NavGraph", "Categoría seleccionada: $selectedCategoryId")
+
+                    // Lógica de prueba: no importa qué categoría se elija,
+                    // siempre jugamos el mismo nivel por ahora.
+                    val levelToPlay = "logos_1"
+
+                    val gameRoute = Routes.GAME_SCREEN.replace("{levelId}", levelToPlay)
+                    navController.navigate(gameRoute)
                 },
                 onBackClick = {
                     navController.popBackStack()
                 }
             )
         }
+
 
         composable(Routes.LOGIN_SCREEN) {
             LoginScreen(

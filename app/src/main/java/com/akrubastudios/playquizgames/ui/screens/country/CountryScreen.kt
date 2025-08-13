@@ -17,7 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun CountryScreen(
     viewModel: CountryViewModel = hiltViewModel(),
-    onPlayClick: () -> Unit,
+    onPlayClick: (categoryId: String) -> Unit,
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,9 +43,17 @@ fun CountryScreen(
             )
 
             Spacer(modifier = Modifier.height(64.dp))
-            Button(onClick = onPlayClick, modifier = Modifier.fillMaxWidth()) {
-                Text("Jugar Nivel de Logos")
+            uiState.availableCategories.forEach { category ->
+                Button(
+                    onClick = { onPlayClick(category.categoryId) }, // Pasa el ID de la categoría
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Muestra el nombre de la categoría en español
+                    Text(category.name["es"] ?: "Categoría")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
+
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onBackClick, modifier = Modifier.fillMaxWidth()) {
                 Text("Volver al Mapa")

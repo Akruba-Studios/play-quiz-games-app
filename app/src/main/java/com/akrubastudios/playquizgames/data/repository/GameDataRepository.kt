@@ -6,6 +6,7 @@ import com.akrubastudios.playquizgames.domain.RankedUser
 import com.akrubastudios.playquizgames.domain.User
 import com.akrubastudios.playquizgames.domain.UserCountryProgress
 import com.akrubastudios.playquizgames.domain.UserLevelCompletion
+import com.akrubastudios.playquizgames.domain.Category
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
@@ -95,6 +96,16 @@ class GameDataRepository @Inject constructor(
             Log.e("GameDataRepository", "Error al llamar a la función getGlobalRanking.", e)
             e.printStackTrace()
             return emptyList()
+        }
+    }
+
+    suspend fun getCategoryList(): List<Category> {
+        return try {
+            val snapshot = db.collection("categories").get().await()
+            snapshot.toObjects(Category::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
     }
 }
