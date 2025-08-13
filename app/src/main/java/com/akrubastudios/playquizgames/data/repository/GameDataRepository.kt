@@ -97,27 +97,4 @@ class GameDataRepository @Inject constructor(
             return emptyList()
         }
     }
-
-    suspend fun getLevelCompletionData(levelId: String): UserLevelCompletion? {
-        // Obtenemos el ID del usuario actual. Si no hay usuario, no hay progreso.
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
-
-        // El ID del documento es una combinación del ID de usuario y el ID del nivel.
-        val documentId = "${uid}_${levelId}"
-
-        return try {
-            // Apuntamos a la nueva colección y al documento específico.
-            val document = db.collection("user_level_completion")
-                .document(documentId)
-                .get()
-                .await()
-
-            // Si el documento existe, lo convertimos a nuestro objeto.
-            // Si no existe, toObject devolverá null, que es lo que queremos.
-            document.toObject(UserLevelCompletion::class.java)
-        } catch (e: Exception) {
-            Log.e("GameDataRepository", "Error al obtener datos de completado de nivel", e)
-            null
-        }
-    }
 }

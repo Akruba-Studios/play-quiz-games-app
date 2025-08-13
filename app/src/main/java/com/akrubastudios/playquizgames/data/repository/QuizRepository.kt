@@ -13,8 +13,7 @@ import javax.inject.Inject
 
 // NOTA: AHORA DEPENDE DE FIRESTORE Y CONTEXT
 class QuizRepository @Inject constructor(
-    private val db: FirebaseFirestore,
-    private val context: Context
+    private val db: FirebaseFirestore
 ) {
 
     private val json = Json { ignoreUnknownKeys = true }

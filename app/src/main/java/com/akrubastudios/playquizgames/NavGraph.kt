@@ -17,17 +17,17 @@ import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
 import androidx.compose.ui.platform.LocalView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}"
-    const val GAME_SCREEN = "game"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}"
+    const val GAME_SCREEN = "game/{levelId}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
-
     const val RANKING_SCREEN = "ranking"
 }
 
@@ -51,7 +51,12 @@ fun NavGraph() {
             // Solo necesitamos pasarle las acciones de navegación.
             CountryScreen(
                 onPlayClick = {
-                    navController.navigate(Routes.GAME_SCREEN)
+                    // --- AÑADE LA LÓGICA AQUÍ ---
+                    val levelToPlay = "logos_1" // Hardcodeado por ahora
+                    navController.navigate(
+                        Routes.GAME_SCREEN.replace("{levelId}", levelToPlay)
+                    )
+                    // --------------------------
                 },
                 onBackClick = {
                     navController.popBackStack()
@@ -73,8 +78,10 @@ fun NavGraph() {
             MapScreen(navController = navController) // Por ahora no hace nada más
         }
 
-        composable(Routes.GAME_SCREEN) {
-            // Le pasamos el navController a la GameScreen
+        composable(
+            route = Routes.GAME_SCREEN, // <-- USA LA NUEVA RUTA
+            arguments = listOf(navArgument("levelId") { type = NavType.StringType }) // <-- AÑADE ESTO
+        ) {
             GameScreen(navController = navController)
         }
 
@@ -84,7 +91,9 @@ fun NavGraph() {
             arguments = listOf(
                 navArgument("score") { type = NavType.IntType },
                 navArgument("totalQuestions") { type = NavType.IntType },
-                navArgument("correctAnswers") { type = NavType.IntType }
+                navArgument("correctAnswers") { type = NavType.IntType },
+                navArgument("starsEarned") { type = NavType.IntType },
+                navArgument("levelId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -93,16 +102,19 @@ fun NavGraph() {
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val correctAnswers = backStackEntry.arguments?.getInt("correctAnswers") ?: 0
+            val starsEarned = backStackEntry.arguments?.getInt("starsEarned") ?: 0
+            val levelId = backStackEntry.arguments?.getString("levelId") ?: "logos_1"
 
             // Mostramos la ResultScreen con los datos extraídos
             ResultScreen(
                 score = score,
                 totalQuestions = totalQuestions,
                 correctAnswers = correctAnswers,
+                starsEarned = starsEarned,
                 onPlayAgain = {
-                    // Navega al juego y limpia la pila para que no se pueda volver al resultado anterior
-                    navController.navigate(Routes.GAME_SCREEN) {
-                        popUpTo(Routes.MAP_SCREEN) // <-- CAMBIO 2: Limpia hasta el menú
+                    // --- AJUSTA ESTA NAVEGACIÓN ---
+                    navController.navigate(Routes.GAME_SCREEN.replace("{levelId}", levelId)) {
+                        popUpTo(Routes.MAP_SCREEN)
                     }
                 },
                 onBackToMenu = {

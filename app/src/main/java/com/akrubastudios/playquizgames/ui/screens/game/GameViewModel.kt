@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.game
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.AdManager
@@ -16,14 +17,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val repository: QuizRepository,
-    private val functions: FirebaseFunctions,
+    private val db: FirebaseFirestore,       // <-- AÑADE ESTO
+    private val auth: FirebaseAuth,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
+    val levelId: String = savedStateHandle.get<String>("levelId")!!
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
     }
@@ -46,7 +52,7 @@ class GameViewModel @Inject constructor(
     private fun loadLevel() {
         // Lanzamos una coroutine para llamar a nuestra función suspendida
         viewModelScope.launch {
-            val loadedLevel = repository.getLevel("Jdneptg2H9iyLervZ6LG") // Llama a la nueva función suspend
+            val loadedLevel = repository.getLevel(levelId) // Llama a la nueva función suspend
 
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
@@ -98,6 +104,9 @@ class GameViewModel @Inject constructor(
                 currentState.copy(userAnswer = currentState.userAnswer + letter)
             }
 
+            // Log para ver la respuesta del usuario mientras la construye
+            Log.d("GameViewModel_Debug", "Letra '${letter}' añadida. Respuesta actual: ${uiState.value.userAnswer}")
+
             if (uiState.value.userAnswer.length == currentAnswerLength) {
                 checkAnswer()
             }
@@ -108,10 +117,23 @@ class GameViewModel @Inject constructor(
         stopTimer() // Detiene el temporizador inmediatamente
         viewModelScope.launch {
             val state = uiState.value
+
+            // --- LOGS CRÍTICOS PARA DIAGNÓSTICO ---
+            Log.d("GameViewModel_Debug", "--- INICIANDO CHECKANSWER ---")
+            Log.d("GameViewModel_Debug", "Respuesta del Usuario: '${state.userAnswer.lowercase()}'")
+            Log.d("GameViewModel_Debug", "Respuesta Correcta (base): '${state.currentQuestion?.correctAnswer}'")
+            Log.d("GameViewModel_Debug", "Respuestas Válidas: ${state.currentQuestion?.validAnswers}")
+            // ------------------------------------
+
+
             val isCorrect = state.currentQuestion?.validAnswers?.contains(state.userAnswer.lowercase()) == true
 
+            // --- LOG DEL RESULTADO DE LA COMPARACIÓN ---
+            Log.d("GameViewModel_Debug", "Resultado de la verificación (isCorrect): $isCorrect")
+            // -----------------------------------------
+
             if (isCorrect) {
-                Log.d("GameViewModel", "¡Respuesta Correcta!")
+                Log.d("GameViewModel_Debug", "✅ ¡Respuesta Correcta! Calculando puntos...")
                 // El puntaje base es 1000.
                 // Se añade una bonificación basada en el tiempo restante.
                 // Puntaje Ganado = 1000 (base) + (Tiempo Restante * 100)
@@ -124,12 +146,16 @@ class GameViewModel @Inject constructor(
                     )
                 }
 
+                Log.d("GameViewModel_Debug", "Puntos ganados: $pointsWon. Nuevo puntaje: ${uiState.value.score}")
+
+
             } else {
-                Log.d("GameViewModel", "Respuesta Incorrecta.")
+                Log.d("GameViewModel_Debug", "❌ Respuesta Incorrecta.")
             }
 
             delay(1000L)
             moveToNextQuestion()
+            Log.d("GameViewModel_Debug", "--- FIN CHECKANSWER ---")
         }
     }
 
@@ -151,18 +177,65 @@ class GameViewModel @Inject constructor(
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
 
-            val data = hashMapOf(
-                "score" to uiState.value.score,
-                "countryId" to "br" // Por ahora, hardcodeado a Brasil
-            )
+            // 1. Calcular el porcentaje de aciertos
+            val correctAnswers = uiState.value.correctAnswersCount
+            val totalQuestions = uiState.value.totalQuestions
+            val accuracy = if (totalQuestions > 0) {
+                (correctAnswers.toFloat() / totalQuestions.toFloat()) * 100
+            } else {
+                0f
+            }
 
-            functions.getHttpsCallable("submitScore").call(data)
+            // 2. Aplicar la regla para calcular las estrellas ganadas
+            val starsEarned = when {
+                accuracy >= 100f -> 3
+                accuracy >= 80f -> 2
+                accuracy >= 50f -> 1
+                else -> 0
+            }
 
-            _gameResult.value = GameResult(
+            // 3. Preparamos el objeto GameResult con toda la información
+            val result = GameResult(
                 score = uiState.value.score,
-                correctAnswers = uiState.value.correctAnswersCount,
-                totalQuestions = uiState.value.totalQuestions
+                correctAnswers = correctAnswers,
+                totalQuestions = totalQuestions,
+                starsEarned = starsEarned
             )
+
+            sendScoreRequestToFirebase(result)
+
+            // 4. En lugar de llamar a la Cloud Function aquí, simplemente actualizamos
+            // el estado _gameResult. La UI reaccionará a este cambio.
+            // La llamada a la Cloud Function la hará la ResultScreen o su futuro ViewModel.
+            _gameResult.value = result
+        }
+    }
+
+    // --- AÑADE ESTA NUEVA FUNCIÓN COMPLETA ---
+    private fun sendScoreRequestToFirebase(result: GameResult) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("GameViewModel", "Error: no se puede enviar puntaje, usuario nulo.")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val scoreRequest = hashMapOf(
+                    "userId" to uid,
+                    "score" to result.score,
+                    "starsEarned" to result.starsEarned,
+                    "levelId" to levelId,
+                    "countryId" to "br", // Esto lo haremos dinámico después
+                    "timestamp" to System.currentTimeMillis()
+                )
+
+                db.collection("score_requests").add(scoreRequest).await()
+                Log.d("GameViewModel", "✅ Petición de puntaje enviada con éxito.")
+
+            } catch (e: Exception) {
+                Log.e("GameViewModel", "❌ Error al enviar petición de puntaje.", e)
+            }
         }
     }
 
@@ -185,5 +258,9 @@ class GameViewModel @Inject constructor(
 
     private fun stopTimer() {
         timerJob?.cancel()
+    }
+
+    fun levelIdForNav(): String {
+        return levelId
     }
 }

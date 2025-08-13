@@ -58,6 +58,8 @@ fun GameScreen(
                 .replace("{score}", result.score.toString())
                 .replace("{totalQuestions}", result.totalQuestions.toString())
                 .replace("{correctAnswers}", result.correctAnswers.toString())
+                .replace("{starsEarned}", result.starsEarned.toString())
+                .replace("{levelId}", viewModel.levelIdForNav())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }
