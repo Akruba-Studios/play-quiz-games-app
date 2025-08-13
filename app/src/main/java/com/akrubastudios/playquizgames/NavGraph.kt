@@ -51,15 +51,11 @@ fun NavGraph() {
             // Aquí no necesitamos el backStackEntry porque el ViewModel lo maneja
 
             CountryScreen(
-                onPlayClick = { selectedCategoryId ->
-                    Log.d("NavGraph", "Categoría seleccionada: $selectedCategoryId")
-
-                    // Lógica de prueba: no importa qué categoría se elija,
-                    // siempre jugamos el mismo nivel por ahora.
-                    val levelToPlay = "logos_1"
-
-                    val gameRoute = Routes.GAME_SCREEN.replace("{levelId}", levelToPlay)
-                    navController.navigate(gameRoute)
+                onPlayClick = { levelId -> // <-- Recibe el levelId dinámico
+                    Log.d("NavGraph", "Iniciando nivel: $levelId")
+                    navController.navigate(
+                        Routes.GAME_SCREEN.replace("{levelId}", levelId) // <-- Usa el levelId dinámico
+                    )
                 },
                 onBackClick = {
                     navController.popBackStack()

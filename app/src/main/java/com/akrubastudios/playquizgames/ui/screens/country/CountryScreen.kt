@@ -43,13 +43,22 @@ fun CountryScreen(
             )
 
             Spacer(modifier = Modifier.height(64.dp))
-            uiState.availableCategories.forEach { category ->
+            uiState.availableLevels.forEach { (category, nextLevelId) ->
                 Button(
-                    onClick = { onPlayClick(category.categoryId) }, // Pasa el ID de la categoría
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = {
+                        if (nextLevelId != null) {
+                            onPlayClick(nextLevelId) // Pasa el ID del siguiente nivel
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = nextLevelId != null // El botón se deshabilita si no hay más niveles
                 ) {
-                    // Muestra el nombre de la categoría en español
-                    Text(category.name["es"] ?: "Categoría")
+                    val buttonText = if (nextLevelId != null) {
+                        category.name["es"] ?: "Categoría"
+                    } else {
+                        "${category.name["es"]} (¡Completado!)"
+                    }
+                    Text(buttonText)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

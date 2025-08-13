@@ -7,6 +7,7 @@ import com.akrubastudios.playquizgames.domain.User
 import com.akrubastudios.playquizgames.domain.UserCountryProgress
 import com.akrubastudios.playquizgames.domain.UserLevelCompletion
 import com.akrubastudios.playquizgames.domain.Category
+import com.akrubastudios.playquizgames.domain.LevelMetadata
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
@@ -106,6 +107,39 @@ class GameDataRepository @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
+        }
+    }
+
+    suspend fun getLevelsForCategory(categoryId: String): List<LevelMetadata> {
+        return try {
+            db.collection("levels").whereEqualTo("categoryId", categoryId).get().await()
+                .toObjects(LevelMetadata::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    // Obtiene TODOS los registros de completado del usuario actual de una vez
+    suspend fun getAllLevelCompletionData(): List<UserLevelCompletion> {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
+        return try {
+            db.collection("user_level_completion").whereEqualTo("userId", uid).get().await()
+                .toObjects(UserLevelCompletion::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    // Obtiene los datos de una sola categoría (para el título)
+    suspend fun getCategory(categoryId: String): Category? {
+        return try {
+            db.collection("categories").document(categoryId).get().await()
+                .toObject(Category::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
