@@ -63,6 +63,7 @@ class GameViewModel @Inject constructor(
                     currentState.copy(
                         isLoading = false,
                         currentQuestion = firstQuestion,
+                        questionText = firstQuestion.questionText_es,
                         totalQuestions = loadedLevel.questions.size,
                         questionNumber = currentQuestionIndex + 1,
                         generatedHintLetters = hints
@@ -168,6 +169,7 @@ class GameViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     currentQuestion = nextQuestion,
+                    questionText = nextQuestion.questionText_es,
                     questionNumber = currentQuestionIndex + 1,
                     userAnswer = "",
                     generatedHintLetters = hints

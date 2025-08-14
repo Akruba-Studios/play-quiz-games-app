@@ -92,6 +92,12 @@ fun GameScreen(
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
 
+            Text(
+                text = uiState.questionText,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+
             AnswerSlots(
                 correctAnswer = uiState.currentQuestion!!.correctAnswer,
                 userAnswer = uiState.userAnswer
