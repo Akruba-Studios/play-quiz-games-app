@@ -17,9 +17,12 @@ import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
 import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
+import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 
 
@@ -31,7 +34,7 @@ object Routes {
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
     const val RANKING_SCREEN = "ranking"
-    const val LEVEL_SELECTION_SCREEN = "level_selection/{countryId}/{categoryId}"
+    const val LEVEL_SELECTION_SCREEN = "level_selection/{countryId}/{categoryId}/{continentId}"
 }
 
 @Composable
@@ -51,11 +54,17 @@ fun NavGraph() {
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })
         ) { backStackEntry ->
             val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+            val viewModel: CountryViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsState()
+
             CountryScreen(
+                viewModel = viewModel,
                 onPlayClick = { categoryId ->
+                    val continentId = uiState.country?.continentId ?: ""
                     val route = Routes.LEVEL_SELECTION_SCREEN
                         .replace("{countryId}", countryId)
                         .replace("{categoryId}", categoryId)
+                        .replace("{continentId}", continentId)
                     navController.navigate(route)
                 },
                 onBackClick = { navController.popBackStack() }

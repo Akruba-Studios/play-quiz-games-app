@@ -32,7 +32,7 @@ fun CountryScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = uiState.countryName, style = MaterialTheme.typography.displayMedium)
+            Text(text = uiState.country?.name?.get("es") ?: "País", style = MaterialTheme.typography.displayMedium)
             Spacer(modifier = Modifier.height(32.dp))
 
             // Barra de progreso real

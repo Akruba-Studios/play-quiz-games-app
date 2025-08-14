@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Category
+import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.LevelMetadata
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class CountryState(
-    val countryName: String = "",
+    val country: Country? = null,
     val availableLevels: Map<Category, String?> = emptyMap(),
     val currentPc: Long = 0,
     val pcRequired: Long = 50000,
@@ -76,7 +77,7 @@ class CountryViewModel @Inject constructor(
                 Log.d("CountryVM_Debug", "Mapa final de botones: $nextLevelsMap")
 
                 _uiState.value = CountryState(
-                    countryName = country.name["es"] ?: "País",
+                    country = country,
                     availableLevels = nextLevelsMap,
                     currentPc = gameDataRepository.getUserProgressForCountry(countryId)?.currentPc ?: 0,
                     pcRequired = country.pcRequired,

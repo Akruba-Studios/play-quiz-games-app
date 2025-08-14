@@ -27,6 +27,7 @@ class LevelSelectionViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     private val categoryId: String = savedStateHandle.get<String>("categoryId")!!
+    private val continentId: String = savedStateHandle.get<String>("continentId")!!
 
     init {
         loadLevels()
@@ -34,35 +35,29 @@ class LevelSelectionViewModel @Inject constructor(
 
     private fun loadLevels() {
         viewModelScope.launch {
-            // --- INICIO DE LA CORRECCIÓN ---
-
-            // 1. Obtenemos TODOS los niveles
+            // 1. Obtenemos TODOS los niveles de la base de datos
             val allLevels = gameDataRepository.getAllLevels()
-
-            // 2. Filtramos para quedarnos solo con los de la categoría actual
-            val allLevelsInCategory = allLevels.filter { level ->
-                level.levelId.startsWith(categoryId)
-            }.sortedBy { it.levelId } // Ordenamos por ID para asegurar la secuencia
-
-            // --- FIN DE LA CORRECCIÓN ---
-
             val userCompletions = gameDataRepository.getAllLevelCompletionData()
             val category = gameDataRepository.getCategory(categoryId)
 
-            val completionsMap = userCompletions.associateBy { it.levelId }
+            // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
+            // 2. Filtramos para quedarnos solo con los del continente y categoría correctos
+            val levelsForThisScreen = allLevels.filter { level ->
+                level.tierId == continentId && level.levelId.startsWith(categoryId)
+            }.sortedBy { levelId -> // Ordenamos numéricamente
+                levelId.levelId.filter { it.isDigit() }.toIntOrNull() ?: 0
+            }
+            // ----------------------------------------
 
-            // --- CORRECCIÓN DE LA LÓGICA DE DESBLOQUEO ---
-            // La lógica anterior dependía de 'levelNumber', que ya no tenemos.
-            // La adaptamos para que funcione con la lista ordenada.
-            val levelStatuses = allLevelsInCategory.mapIndexed { index, level ->
-                val completion = completionsMap[level.levelId]
-                val starsEarned = completion?.starsEarned ?: 0
+            // (El resto de la lógica de desbloqueo y mapeo se queda igual)
+            val completionsMap = userCompletions.associateBy { it.levelId }
+            val levelStatuses = levelsForThisScreen.mapIndexed { index, level ->
+                val starsEarned = completionsMap[level.levelId]?.starsEarned ?: 0
 
                 val isLocked = if (index == 0) {
                     false
                 } else {
-                    // Miramos las estrellas del nivel anterior en la lista 'allLevelsInCategory'
-                    val previousLevelId = allLevelsInCategory[index - 1].levelId
+                    val previousLevelId = levelsForThisScreen[index - 1].levelId
                     val previousLevelStars = completionsMap[previousLevelId]?.starsEarned ?: 0
                     previousLevelStars < 2
                 }
@@ -74,7 +69,6 @@ class LevelSelectionViewModel @Inject constructor(
                     isLocked = isLocked
                 )
             }
-            // ------------------------------------------
 
             _uiState.value = LevelSelectionState(
                 levels = levelStatuses,
