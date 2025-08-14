@@ -46,9 +46,7 @@ fun CountryScreen(
             uiState.availableLevels.forEach { (category, nextLevelId) ->
                 Button(
                     onClick = {
-                        if (nextLevelId != null) {
-                            onPlayClick(nextLevelId) // Pasa el ID del siguiente nivel
-                        }
+                        onPlayClick(category.categoryId)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = nextLevelId != null // El botón se deshabilita si no hay más niveles

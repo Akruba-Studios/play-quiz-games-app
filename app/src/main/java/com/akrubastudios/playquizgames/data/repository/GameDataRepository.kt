@@ -110,10 +110,12 @@ class GameDataRepository @Inject constructor(
         }
     }
 
-    suspend fun getLevelsForCategory(categoryId: String): List<LevelMetadata> {
+    suspend fun getAllLevels(): List<LevelMetadata> {
         return try {
-            db.collection("levels").whereEqualTo("categoryId", categoryId).get().await()
-                .toObjects(LevelMetadata::class.java)
+            val snapshot = db.collection("quizzes").get().await()
+            val levels = snapshot.toObjects(LevelMetadata::class.java)
+            Log.d("Repo_Debug", "getAllLevels: Se encontraron ${levels.size} niveles en la colección 'quizzes'.")
+            return levels
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -124,8 +126,11 @@ class GameDataRepository @Inject constructor(
     suspend fun getAllLevelCompletionData(): List<UserLevelCompletion> {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
         return try {
-            db.collection("user_level_completion").whereEqualTo("userId", uid).get().await()
-                .toObjects(UserLevelCompletion::class.java)
+            val snapshot = db.collection("user_level_completion").whereEqualTo("userId", uid).get().await()
+            val completions = snapshot.toObjects(UserLevelCompletion::class.java)
+            Log.d("Repo_Debug", "getAllLevelCompletionData: Se encontraron ${completions.size} registros de completado para el usuario.")
+            completions.forEach { Log.d("Repo_Debug", "  - Progreso: ${it.levelId} tiene ${it.starsEarned} estrellas.") }
+            return completions
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

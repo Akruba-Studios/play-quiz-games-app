@@ -20,6 +20,7 @@ import android.util.Log
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
+import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 
 
 object Routes {
@@ -30,6 +31,7 @@ object Routes {
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
     const val RANKING_SCREEN = "ranking"
+    const val LEVEL_SELECTION_SCREEN = "level_selection/{countryId}/{categoryId}"
 }
 
 @Composable
@@ -47,22 +49,34 @@ fun NavGraph() {
         composable(
             route = Routes.COUNTRY_SCREEN,
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })
-        ) {
-            // Aquí no necesitamos el backStackEntry porque el ViewModel lo maneja
-
+        ) { backStackEntry ->
+            val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
             CountryScreen(
-                onPlayClick = { levelId -> // <-- Recibe el levelId dinámico
-                    Log.d("NavGraph", "Iniciando nivel: $levelId")
-                    navController.navigate(
-                        Routes.GAME_SCREEN.replace("{levelId}", levelId) // <-- Usa el levelId dinámico
-                    )
+                onPlayClick = { categoryId ->
+                    val route = Routes.LEVEL_SELECTION_SCREEN
+                        .replace("{countryId}", countryId)
+                        .replace("{categoryId}", categoryId)
+                    navController.navigate(route)
                 },
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
+        composable(
+            route = Routes.LEVEL_SELECTION_SCREEN,
+            arguments = listOf(
+                navArgument("countryId") { type = NavType.StringType },
+                navArgument("categoryId") { type = NavType.StringType }
+            )
+        ) {
+            LevelSelectionScreen(
+                onLevelClick = { levelId ->
+                    val route = Routes.GAME_SCREEN.replace("{levelId}", levelId)
+                    navController.navigate(route)
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
 
         composable(Routes.LOGIN_SCREEN) {
             LoginScreen(

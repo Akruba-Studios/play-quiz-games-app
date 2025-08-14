@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.country
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,34 +38,42 @@ class CountryViewModel @Inject constructor(
 
     private fun loadCountryData() {
         viewModelScope.launch {
+            Log.d("CountryVM_Debug", "========================================")
+            Log.d("CountryVM_Debug", "INICIANDO DATOS PARA PAÍS: $countryId")
+
             val country = gameDataRepository.getCountry(countryId)
             val allCategories = gameDataRepository.getCategoryList()
             val userCompletions = gameDataRepository.getAllLevelCompletionData()
+            val allLevels = gameDataRepository.getAllLevels() // <-- NUEVO: Obtenemos todos los niveles
 
             if (country != null) {
-                val availableCats = allCategories.filter { category ->
-                    country.availableCategories.contains(category.categoryId)
+                val availableCats = allCategories.filter {
+                    country.availableCategories.contains(it.categoryId)
                 }
+                Log.d("CountryVM_Debug", "Categorías disponibles para '${country.name["es"]}': ${availableCats.size}")
 
-                // --- NUEVA LÓGICA PARA ENCONTRAR EL SIGUIENTE NIVEL ---
+                val completionsMap = userCompletions.associateBy { it.levelId }
                 val nextLevelsMap = mutableMapOf<Category, String?>()
-                availableCats.forEach { category ->
-                    // 1. Obtiene todos los niveles de esta categoría
-                    val allLevelsInCategory = gameDataRepository.getLevelsForCategory(category.categoryId)
-                        .sortedBy { it.levelNumber }
 
-                    // 2. Busca el primer nivel que el usuario NO ha completado (0 estrellas)
-                    var nextLevelId: String? = null
-                    for (level in allLevelsInCategory) {
-                        val completion = userCompletions.find { it.levelId == level.levelId }
-                        if (completion == null || completion.starsEarned == 0) {
-                            nextLevelId = level.levelId
-                            break // Encontramos el siguiente nivel, salimos del bucle
-                        }
+                for (category in availableCats) {
+                    Log.d("CountryVM_Debug", "--- Analizando Categoría: ${category.categoryId} ---")
+                    // --- LÓGICA DE FILTRADO EN LA APP ---
+                    // Filtramos la lista completa de niveles por el ID de la categoría
+                    val allLevelsInCategory = allLevels.filter { level ->
+                        level.levelId.startsWith(category.categoryId)
                     }
-                    nextLevelsMap[category] = nextLevelId
+                    Log.d("CountryVM_Debug", "   > Niveles filtrados para esta categoría: ${allLevelsInCategory.size}")
+
+                    val hasUnmasteredLevels = allLevelsInCategory.any { level ->
+                        val stars = completionsMap[level.levelId]?.starsEarned ?: 0
+                        stars < 3
+                    }
+                    Log.d("CountryVM_Debug", "   > ¿Tiene niveles no maestreados?: $hasUnmasteredLevels")
+
+                    nextLevelsMap[category] = if (hasUnmasteredLevels) category.categoryId else null
                 }
-                // ----------------------------------------------------
+
+                Log.d("CountryVM_Debug", "Mapa final de botones: $nextLevelsMap")
 
                 _uiState.value = CountryState(
                     countryName = country.name["es"] ?: "País",
@@ -74,6 +83,7 @@ class CountryViewModel @Inject constructor(
                     isLoading = false
                 )
             }
+            Log.d("CountryVM_Debug", "========================================")
         }
     }
 }

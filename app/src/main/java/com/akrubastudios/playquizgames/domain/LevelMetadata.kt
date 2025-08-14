@@ -2,8 +2,6 @@ package com.akrubastudios.playquizgames.domain
 
 data class LevelMetadata(
     val levelId: String = "",
-    val categoryId: String = "",
-    val tierId: String = "",
-    val levelNumber: Int = 0,
-    val name: Map<String, String> = emptyMap()
+    val levelName: Map<String, String> = emptyMap()
+    // No tiene categoryId ni levelNumber porque esos no están en el documento de Firestore
 )
