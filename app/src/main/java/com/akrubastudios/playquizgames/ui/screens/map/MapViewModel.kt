@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class MapState(
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
+    val availableCountryIds: List<String> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -37,9 +38,33 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val countryList = gameDataRepository.getCountryList()
             val userData = gameDataRepository.getUserData()
+
+            val conqueredIds = userData?.conqueredCountries ?: emptyList()
+
+            // --- NUEVA LÓGICA DE PAÍSES DISPONIBLES ---
+            val availableIds = mutableSetOf<String>()
+            if (conqueredIds.isEmpty()) {
+                // Si el jugador no ha conquistado nada, su país de origen está disponible
+                // (Necesitaremos una forma de saber cuál es, por ahora lo hardcodeamos)
+                val startingCountry = countryList.firstOrNull { it.continentId == "south_america" }?.countryId
+                if (startingCountry != null) {
+                    availableIds.add(startingCountry)
+                }
+            } else {
+                // Si ya ha conquistado países, sus vecinos están disponibles
+                conqueredIds.forEach { conqueredId ->
+                    val conqueredCountry = countryList.find { it.countryId == conqueredId }
+                    conqueredCountry?.neighbors?.forEach { neighborId ->
+                        availableIds.add(neighborId)
+                    }
+                }
+            }
+            // ------------------------------------------
+
             _uiState.value = MapState(
                 countries = countryList,
-                conqueredCountryIds = userData?.conqueredCountries ?: emptyList(), // <-- AÑADE ESTA LÍNEA
+                conqueredCountryIds = conqueredIds,
+                availableCountryIds = availableIds.toList(), // <-- USA LA NUEVA LISTA
                 isLoading = false
             )
         }

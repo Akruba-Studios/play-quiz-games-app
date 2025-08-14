@@ -96,14 +96,25 @@ fun MapContent(
         )
 
         uiState.countries.forEach { country ->
-            if (country.countryId == "br") {
+            val isConquered = uiState.conqueredCountryIds.contains(country.countryId)
+            val isAvailable = uiState.availableCountryIds.contains(country.countryId)
+
+            if (isConquered || isAvailable) {
+                // Definimos el modifier aquí dentro, donde 'align' sí existe
+                val modifier = when (country.countryId) {
+                    "br" -> Modifier.align(Alignment.Center).offset(x = (-50).dp, y = 100.dp)
+                    "es" -> Modifier.align(Alignment.Center).offset(x = (-100).dp, y = (-80).dp)
+                    "bo" -> Modifier.align(Alignment.Center).offset(x = (-80).dp, y = 80.dp)
+                    "ar" -> Modifier.align(Alignment.Center).offset(x = (-70).dp, y = 150.dp)
+                    // Añade más casos para otros países aquí
+                    else -> Modifier.align(Alignment.Center)
+                }
+
                 CountryButton(
                     country = country,
-                    isConquered = uiState.conqueredCountryIds.contains(country.countryId),
+                    isConquered = isConquered,
                     onClick = { onCountryClick(country.countryId) },
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(x = (-50).dp, y = 100.dp)
+                    modifier = modifier // Usamos el modifier que acabamos de crear
                 )
             }
         }
