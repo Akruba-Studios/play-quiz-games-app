@@ -125,9 +125,7 @@ fun NavGraph() {
             arguments = listOf(navArgument("continentId") { type = NavType.StringType })
         ) {
             CountrySelectionScreen(
-                onCountrySelected = { countryId ->
-                    // Aquí llamaremos a la nueva Cloud Function
-                    // Por ahora, solo navegamos al mapa
+                onNavigateToMap = {
                     navController.navigate(Routes.MAP_SCREEN) {
                         popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                     }
