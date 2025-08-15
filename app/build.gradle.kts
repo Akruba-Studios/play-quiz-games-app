@@ -22,6 +22,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Configuración para el compilador de Kotlin
+    kotlinOptions {
+        // Le decimos al compilador que ignore las advertencias de deprecación
+        // añadiendo este argumento
+        freeCompilerArgs += "-Xsuppress-version-warnings"
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
