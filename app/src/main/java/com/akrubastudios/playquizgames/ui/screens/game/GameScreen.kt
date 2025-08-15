@@ -39,7 +39,7 @@ import com.akrubastudios.playquizgames.core.AdManager
 
 @Composable
 fun GameScreen(
-    viewModel: GameViewModel = hiltViewModel(),
+    viewModel: GameViewModel,
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -60,6 +60,7 @@ fun GameScreen(
                 .replace("{correctAnswers}", result.correctAnswers.toString())
                 .replace("{starsEarned}", result.starsEarned.toString())
                 .replace("{levelId}", viewModel.levelIdForNav())
+                .replace("{countryId}", viewModel.countryId)
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

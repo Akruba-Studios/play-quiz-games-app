@@ -30,6 +30,7 @@ class GameViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
+    val countryId: String = savedStateHandle.get<String>("countryId")!!
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
     }
@@ -228,7 +229,7 @@ class GameViewModel @Inject constructor(
                     "score" to result.score,
                     "starsEarned" to result.starsEarned,
                     "levelId" to levelId,
-                    "countryId" to "br", // Esto lo haremos dinámico después
+                    "countryId" to countryId,
                     "timestamp" to System.currentTimeMillis()
                 )
 

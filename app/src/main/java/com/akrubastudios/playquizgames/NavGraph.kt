@@ -25,13 +25,14 @@ import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
+import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}"
-    const val GAME_SCREEN = "game/{levelId}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}"
+    const val GAME_SCREEN = "game/{countryId}/{levelId}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
@@ -79,15 +80,21 @@ fun NavGraph() {
             route = Routes.LEVEL_SELECTION_SCREEN,
             arguments = listOf(
                 navArgument("countryId") { type = NavType.StringType },
-                navArgument("categoryId") { type = NavType.StringType }
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("continentId") { type = NavType.StringType }
             )
-        ) {
+        ) { backStackEntry -> // <-- Usamos backStackEntry
             LevelSelectionScreen(
                 onLevelClick = { levelId ->
-                    val route = Routes.GAME_SCREEN.replace("{levelId}", levelId)
+                    val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+                    val route = Routes.GAME_SCREEN
+                        .replace("{countryId}", countryId)
+                        .replace("{levelId}", levelId)
                     navController.navigate(route)
                 },
-                onBackClick = { navController.popBackStack() }
+                onBackClick = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -138,10 +145,19 @@ fun NavGraph() {
         }
 
         composable(
-            route = Routes.GAME_SCREEN, // <-- USA LA NUEVA RUTA
-            arguments = listOf(navArgument("levelId") { type = NavType.StringType }) // <-- AÑADE ESTO
-        ) {
-            GameScreen(navController = navController)
+            route = Routes.GAME_SCREEN,
+            arguments = listOf(
+                navArgument("countryId") { type = NavType.StringType },
+                navArgument("levelId") { type = NavType.StringType }
+            )
+        ) { backStackEntry -> // <-- PASO 1: Nombramos el backStackEntry
+
+            // --- PASO 2: Le pasamos el backStackEntry a hiltViewModel ---
+            // Esto le permite a Hilt leer los argumentos de la ruta
+            // y pasarlos al SavedStateHandle del ViewModel.
+            val viewModel: GameViewModel = hiltViewModel(backStackEntry)
+
+            GameScreen(viewModel = viewModel, navController = navController)
         }
 
         // Definimos la pantalla de resultados y cómo extraer sus argumentos
@@ -152,7 +168,8 @@ fun NavGraph() {
                 navArgument("totalQuestions") { type = NavType.IntType },
                 navArgument("correctAnswers") { type = NavType.IntType },
                 navArgument("starsEarned") { type = NavType.IntType },
-                navArgument("levelId") { type = NavType.StringType }
+                navArgument("levelId") { type = NavType.StringType },
+                navArgument("countryId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -163,6 +180,7 @@ fun NavGraph() {
             val correctAnswers = backStackEntry.arguments?.getInt("correctAnswers") ?: 0
             val starsEarned = backStackEntry.arguments?.getInt("starsEarned") ?: 0
             val levelId = backStackEntry.arguments?.getString("levelId") ?: "logos_1"
+            val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
 
             // Mostramos la ResultScreen con los datos extraídos
             ResultScreen(
@@ -171,8 +189,11 @@ fun NavGraph() {
                 correctAnswers = correctAnswers,
                 starsEarned = starsEarned,
                 onPlayAgain = {
-                    // --- AJUSTA ESTA NAVEGACIÓN ---
-                    navController.navigate(Routes.GAME_SCREEN.replace("{levelId}", levelId)) {
+                    // --- AHORA SÍ TENEMOS TODOS LOS DATOS ---
+                    val route = Routes.GAME_SCREEN
+                        .replace("{countryId}", countryId)
+                        .replace("{levelId}", levelId)
+                    navController.navigate(route) {
                         popUpTo(Routes.MAP_SCREEN)
                     }
                 },
