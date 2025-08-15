@@ -3,6 +3,7 @@ package com.akrubastudios.playquizgames.ui.screens.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
+import com.akrubastudios.playquizgames.data.repository.SignInResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +13,7 @@ import javax.inject.Inject
 
 data class LoginState(
     val isLoading: Boolean = false,
-    val signInSuccess: Boolean = false,
+    val signInResult: SignInResult? = null,
     val error: String? = null
 )
 
@@ -33,8 +34,10 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val result = repository.signInWithGoogle(idToken)
-            result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, signInSuccess = true) }
+            result.onSuccess { signInResult ->
+                _uiState.update {
+                    it.copy(isLoading = false, signInResult = signInResult)
+                }
             }
             result.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = e.message) }

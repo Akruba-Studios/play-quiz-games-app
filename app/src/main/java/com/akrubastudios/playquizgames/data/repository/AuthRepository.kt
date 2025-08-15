@@ -8,15 +8,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+data class SignInResult(
+    val user: User,
+    val isNewUser: Boolean
+)
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore // <-- AÑADE FIRESTORE AQUÍ
 ) {
-
     val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    suspend fun signInWithGoogle(idToken: String): Result<User> {
+    suspend fun signInWithGoogle(idToken: String): Result<SignInResult> {
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = auth.signInWithCredential(credential).await()
@@ -29,7 +32,9 @@ class AuthRepository @Inject constructor(
             val document = userRef.get().await()
 
             val user: User
+            var isNewUser = false
             if (!document.exists()) {
+                isNewUser = true
                 // 2. Si el usuario NO existe, lo creamos
                 user = User(
                     uid = firebaseUser.uid,
@@ -47,18 +52,12 @@ class AuthRepository @Inject constructor(
                 )
                 userRef.set(newUserMap).await()
             } else {
-                // 3. Si el usuario SÍ existe, simplemente creamos nuestro objeto local
-                // (En el futuro, aquí podríamos actualizar su nombre o foto si ha cambiado)
-                user = User(
-                    uid = document.getString("uid")!!,
-                    displayName = document.getString("displayName"),
-                    photoUrl = document.getString("photoUrl")
-                )
+                isNewUser = false // <-- Confirmamos que no es nuevo
+                user = document.toObject(User::class.java)!!
             }
 
-            // --- FIN DE LA NUEVA LÓGICA ---
-
-            Result.success(user)
+            val signInResult = SignInResult(user = user, isNewUser = isNewUser)
+            Result.success(signInResult)
         } catch (e: Exception) {
             Result.failure(e)
         }

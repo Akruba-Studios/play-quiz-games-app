@@ -21,15 +21,15 @@ import com.google.android.gms.common.api.ApiException
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
-    onSignInSuccess: () -> Unit
+    onSignInComplete: (isNewUser: Boolean) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     // Efecto para navegar cuando el inicio de sesión es exitoso
-    LaunchedEffect(key1 = uiState.signInSuccess) {
-        if (uiState.signInSuccess) {
-            onSignInSuccess()
+    LaunchedEffect(key1 = uiState.signInResult) {
+        uiState.signInResult?.let { result ->
+            onSignInComplete(result.isNewUser)
         }
     }
 
