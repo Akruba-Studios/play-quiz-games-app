@@ -83,7 +83,7 @@ class GameViewModel @Inject constructor(
         val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         // 2. Decide cuántas letras señuelo añadir (ej. entre 6 y 8).
-        val totalLettersInBank = 12
+        val totalLettersInBank = 15
         val decoyLettersCount = totalLettersInBank - correctAnswer.length
 
         // 3. Coge las letras de la respuesta correcta.

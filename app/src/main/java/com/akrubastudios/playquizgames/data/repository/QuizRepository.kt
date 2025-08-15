@@ -22,17 +22,69 @@ class QuizRepository @Inject constructor(
     // Esto es para la transición. En el siguiente paso la cambiaremos.
     suspend fun getLevel(levelId: String): QuizLevelPackage? {
         return try {
-            // Apuntamos a la colección 'quizzes' y al documento específico
             val document = db.collection("quizzes").document(levelId).get().await()
+            val levelPackage = document.toObject(QuizLevelPackage::class.java)
 
-            // Usamos la utilidad de Firebase KTX para convertir el documento
-            // directamente en nuestro objeto QuizLevelPackage.
-            // Ahora que las data classes tienen valores por defecto, esto debería funcionar.
-            document.toObject(QuizLevelPackage::class.java)
+            // --- AÑADE ESTAS LÍNEAS ---
+            if (validateLevelPackage(levelPackage, levelId)) {
+                levelPackage // Es válido, lo devolvemos
+            } else {
+                null // No es válido, devolvemos null
+            }
+            // -------------------------
+
         } catch (e: Exception) {
-            Log.e("QuizRepository", "Error al convertir el documento de Firestore.", e)
+            Log.e("DataValidation", "Nivel '$levelId': Crash al convertir el documento.", e)
             e.printStackTrace()
             null
         }
+    }
+
+    private fun validateLevelPackage(level: QuizLevelPackage?, levelId: String): Boolean {
+        val TAG = "DataValidation"
+
+        if (level == null) {
+            Log.e(TAG, "Nivel '$levelId': El documento no existe o no se pudo convertir.")
+            return false
+        }
+
+        var isValid = true
+
+        if (level.levelId.isBlank()) {
+            Log.w(TAG, "Nivel '$levelId': El campo 'levelId' está vacío.")
+            isValid = false
+        }
+        if (level.levelName.isEmpty()) {
+            Log.w(TAG, "Nivel '$levelId': El mapa 'levelName' está vacío.")
+            isValid = false
+        }
+        if (level.questions.isEmpty()) {
+            Log.e(TAG, "Nivel '$levelId': El array 'questions' está vacío. ¡No hay preguntas!")
+            isValid = false
+        }
+
+        level.questions.forEachIndexed { index, question ->
+            if (question.id.isBlank()) {
+                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1}: El campo 'id' está vacío.")
+                isValid = false
+            }
+            if (question.correctAnswer.isBlank()) {
+                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1} ('${question.id}'): El campo 'correctAnswer' está vacío.")
+                isValid = false
+            }
+            if (question.validAnswers.isEmpty()) {
+                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1} ('${question.id}'): El array 'validAnswers' está vacío.")
+                isValid = false
+            }
+            if (question.questionText_es.isBlank()) { // <-- Añadimos validación para el texto
+                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1} ('${question.id}'): El campo 'questionText_es' está vacío.")
+                isValid = false
+            }
+        }
+
+        if (isValid) {
+            Log.d(TAG, "Nivel '$levelId': Validación de datos exitosa.")
+        }
+        return isValid
     }
 }
