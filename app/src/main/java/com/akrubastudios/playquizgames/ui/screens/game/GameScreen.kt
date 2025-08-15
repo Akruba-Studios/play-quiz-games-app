@@ -153,17 +153,20 @@ fun QuestionImage(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AnswerSlots(
     correctAnswer: String,
     userAnswer: String,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    // --- CAMBIA 'Row' POR 'FlowRow' ---
+    FlowRow(
         modifier = modifier.padding(vertical = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre casillas
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), // Centra las casillas
+        verticalArrangement = Arrangement.spacedBy(8.dp) // Añade espacio vertical si hay más de una línea
     ) {
-        // Creamos una casilla por cada letra de la respuesta correcta
+        // El bucle forEachIndexed se queda exactamente igual
         correctAnswer.forEachIndexed { index, _ ->
             val charToShow = userAnswer.getOrNull(index) ?: ' '
             AnswerSlot(char = charToShow)
