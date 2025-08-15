@@ -11,6 +11,9 @@ import com.akrubastudios.playquizgames.domain.LevelMetadata
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -73,6 +76,36 @@ class GameDataRepository @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    fun getUserDataFlow(): Flow<User?> {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            return callbackFlow { trySend(null); close() }
+        }
+
+        // callbackFlow nos permite convertir un listener de Firebase en un Flow de Kotlin
+        return callbackFlow {
+            val userRef = db.collection("users").document(uid)
+
+            // addSnapshotListener se activa cada vez que el documento cambia
+            val subscription = userRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Si hay un error, lo cerramos
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    // Si hay datos, los convertimos y los emitimos al Flow
+                    trySend(snapshot.toObject(User::class.java))
+                } else {
+                    trySend(null) // Emitimos null si el documento no existe
+                }
+            }
+
+            // Cuando el Flow se cancela, cerramos la suscripción a Firebase
+            awaitClose { subscription.remove() }
         }
     }
     @Suppress("UNCHECKED_CAST")

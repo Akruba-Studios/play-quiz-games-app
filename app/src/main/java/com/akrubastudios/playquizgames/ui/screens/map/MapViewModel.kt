@@ -31,40 +31,42 @@ class MapViewModel @Inject constructor(
     val uiState: StateFlow<MapState> = _uiState.asStateFlow()
 
     init {
-        loadCountries()
+        listenToUserData()
     }
 
-    private fun loadCountries() {
+    private fun listenToUserData() {
         viewModelScope.launch {
             val countryList = gameDataRepository.getCountryList()
-            val userData = gameDataRepository.getUserData()
 
-            val conqueredIds = userData?.conqueredCountries ?: emptyList()
+            // Ponemos el estado de carga explícitamente al empezar a escuchar
+            _uiState.value = MapState(isLoading = true)
 
-            // --- NUEVA LÓGICA DE PAÍSES DISPONIBLES ---
-            val availableIds = mutableSetOf<String>()
+            gameDataRepository.getUserDataFlow().collect { userData ->
 
-            // 1. Añadimos los países que están explícitamente en la lista
-            //    'availableCountries' del perfil del usuario (nuestro país inicial).
-            (userData?.availableCountries ?: emptyList()).forEach { countryId ->
-                availableIds.add(countryId)
-            }
+                // Si userData es null la primera vez, el estado de carga se mantendrá
+                // y la UI mostrará el indicador.
 
-            // 2. Añadimos los vecinos de los países que ya han sido conquistados.
-            conqueredIds.forEach { conqueredId ->
-                val conqueredCountry = countryList.find { it.countryId == conqueredId }
-                conqueredCountry?.neighbors?.forEach { neighborId ->
-                    availableIds.add(neighborId)
+                if (userData != null) {
+                    val conqueredIds = userData.conqueredCountries
+                    val availableIdsFromDB = userData.availableCountries
+
+                    val availableIds = mutableSetOf<String>()
+                    availableIdsFromDB.forEach { availableIds.add(it) }
+                    conqueredIds.forEach { conqueredId ->
+                        val conqueredCountry = countryList.find { it.countryId == conqueredId }
+                        conqueredCountry?.neighbors?.forEach { neighborId ->
+                            availableIds.add(neighborId)
+                        }
+                    }
+
+                    _uiState.value = MapState(
+                        countries = countryList,
+                        conqueredCountryIds = conqueredIds,
+                        availableCountryIds = availableIds.toList(),
+                        isLoading = false // <-- Solo ponemos isLoading a false cuando tenemos datos
+                    )
                 }
             }
-            // ------------------------------------------
-
-            _uiState.value = MapState(
-                countries = countryList,
-                conqueredCountryIds = conqueredIds,
-                availableCountryIds = availableIds.toList(), // <-- USA LA NUEVA LISTA
-                isLoading = false
-            )
         }
     }
 }
