@@ -14,6 +14,7 @@ import com.akrubastudios.playquizgames.ui.screens.login.LoginScreen
 import com.akrubastudios.playquizgames.ui.screens.map.MapScreen
 import com.akrubastudios.playquizgames.ui.screens.ranking.RankingScreen
 import com.akrubastudios.playquizgames.ui.screens.onboarding.ContinentSelectionScreen
+import com.akrubastudios.playquizgames.ui.screens.onboarding.CountrySelectionScreen
 import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
@@ -36,8 +37,8 @@ object Routes {
     const val COUNTRY_SCREEN = "country/{countryId}"
     const val RANKING_SCREEN = "ranking"
     const val LEVEL_SELECTION_SCREEN = "level_selection/{countryId}/{categoryId}/{continentId}"
-
     const val CONTINENT_SELECTION_SCREEN = "continent_selection"
+    const val COUNTRY_SELECTION_SCREEN = "country_selection/{continentId}"
 }
 
 @Composable
@@ -111,10 +112,24 @@ fun NavGraph() {
         composable(Routes.CONTINENT_SELECTION_SCREEN) {
             ContinentSelectionScreen(
                 onContinentSelected = { continentId ->
-                    // Aquí llamaremos a la Cloud Function para guardar la elección
-                    // Por ahora, solo navegamos al mapa.
+                    // Navega a la nueva pantalla de selección de país
+                    val route = Routes.COUNTRY_SELECTION_SCREEN.replace("{continentId}", continentId)
+                    navController.navigate(route)
+                }
+            )
+        }
+
+        // --- AÑADE EL NUEVO COMPOSABLE ---
+        composable(
+            route = Routes.COUNTRY_SELECTION_SCREEN,
+            arguments = listOf(navArgument("continentId") { type = NavType.StringType })
+        ) {
+            CountrySelectionScreen(
+                onCountrySelected = { countryId ->
+                    // Aquí llamaremos a la nueva Cloud Function
+                    // Por ahora, solo navegamos al mapa
                     navController.navigate(Routes.MAP_SCREEN) {
-                        popUpTo(Routes.CONTINENT_SELECTION_SCREEN) { inclusive = true }
+                        popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                     }
                 }
             )

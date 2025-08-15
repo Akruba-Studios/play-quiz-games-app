@@ -41,6 +41,16 @@ class GameDataRepository @Inject constructor(
         }
     }
 
+    suspend fun getCountriesForContinent(continentId: String): List<Country> {
+        return try {
+            db.collection("countries").whereEqualTo("continentId", continentId).get().await()
+                .toObjects(Country::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
     // Obtiene el progreso del usuario actual para un país específico
     suspend fun getUserProgressForCountry(countryId: String): UserCountryProgress? {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
