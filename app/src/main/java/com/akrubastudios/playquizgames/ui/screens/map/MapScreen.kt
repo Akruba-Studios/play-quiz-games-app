@@ -319,8 +319,8 @@ fun InteractiveWorldMap(
 
             val centerX = canvasSize.width / 2f
             val centerY = canvasSize.height / 2f
-            val left = centerX - (scaledWidth / 2f) + offset.x
-            val top = centerY - (scaledHeight / 2f) + offset.y
+            val left = centerX - (scaledWidth / 2f) + offset.x + 150 // +150 fue manual para centrar el mapa, tiene que ser el mismo numero en canvas
+            val top = centerY - (scaledHeight / 2f) + offset.y - 100 // -100 fue manual para centrar el mapa, tiene que ser el mismo numero en canvas
 
             val svgX = (tapOffset.x - left) / (scaleFactor * scale)
             val svgY = (tapOffset.y - top) / (scaleFactor * scale)
@@ -415,8 +415,8 @@ fun InteractiveWorldMap(
 
                 val centerX = size.width / 2f
                 val centerY = size.height / 2f
-                val left = centerX - (scaledWidth / 2f) + offset.x
-                val top = centerY - (scaledHeight / 2f) + offset.y
+                val left = centerX - (scaledWidth / 2f) + offset.x + 150f // +150 fue manual para centrar el mapa, tiene que ser el mismo numero en detectcountryfromtap
+                val top = centerY - (scaledHeight / 2f) + offset.y - 100f // -100 fue manual para centrar el mapa, tiene que ser el mismo numero en detectcountryfromtap
 
                 android.util.Log.d("DEBUG_MAP", "Final left position: $left")
                 android.util.Log.d("DEBUG_MAP", "Center X: $centerX, Scaled width: $scaledWidth")
