@@ -37,6 +37,9 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -71,18 +74,13 @@ fun MapScreen(
         }
     ) { innerPadding -> // El contenido principal debe usar este padding
 
-        Column(
+        // CAMBIO: Usar Box en lugar de Column para layering correcto
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding), // Usa el padding proporcionado por el Scaffold
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(innerPadding) // Usa el padding proporcionado por el Scaffold
         ) {
-            Text(
-                text = "Mapa del Conocimiento",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-
+            // CAPA 1: El mapa de fondo
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -96,7 +94,25 @@ fun MapScreen(
                         navController.navigate(
                             Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
                         )
-                    }
+                    },
+                    modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
+                )
+            }
+
+            // CAPA 2: El título ENCIMA del mapa
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp
+            ) {
+                Text(
+                    text = "Mapa del Conocimiento",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -115,6 +131,9 @@ fun InteractiveWorldMap(
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1.6f) } // 1.5f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
+
+    var canvasWidth by remember { mutableStateOf(1080f) }
+    var canvasHeight by remember { mutableStateOf(1812f) }
 
     // Estados para el SVG y su procesamiento
     var svgDocument by remember { mutableStateOf<SVG?>(null) }
@@ -355,10 +374,14 @@ fun InteractiveWorldMap(
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
         val newScale = (scale * zoomChange).coerceIn(0.8f, 3f)
-        val maxOffset = 1000f * newScale
+
+        // Usar valores fijos basados en una pantalla promedio (más simple)
+        val maxOffsetX = canvasWidth * 0.18f * newScale   // 18% para hacer drag en horizontal
+        val maxOffsetY = canvasHeight * 0.10f * newScale  // 12% para hacer drag en vertical
+
         val newOffset = (offset + panChange).copy(
-            x = (offset.x + panChange.x).coerceIn(-maxOffset, maxOffset),
-            y = (offset.y + panChange.y).coerceIn(-maxOffset, maxOffset)
+            x = (offset.x + panChange.x).coerceIn(-maxOffsetX, maxOffsetX),
+            y = (offset.y + panChange.y).coerceIn(-maxOffsetY, maxOffsetY)
         )
         scale = newScale
         offset = newOffset
@@ -381,6 +404,9 @@ fun InteractiveWorldMap(
                 }
             }
     ) {
+        canvasWidth = size.width
+        canvasHeight = size.height
+
         // Fondo gris claro
         drawRect(
             color = Color.White,
@@ -429,6 +455,7 @@ fun InteractiveWorldMap(
                 )
 
                 // Debug info (opcional - puedes removarlo)
+                /*
                 drawContext.canvas.nativeCanvas.drawText(
                     "Scale: ${String.format("%.1f", scale)} | Países: ${pathColorMap.size}",
                     20f,
@@ -439,6 +466,7 @@ fun InteractiveWorldMap(
                         isAntiAlias = true
                     }
                 )
+                 */
             }
         }
     }
