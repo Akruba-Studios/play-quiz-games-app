@@ -369,7 +369,7 @@ fun InteractiveWorldMap(
 
     // Configurar gestos de transformación
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-        val newScale = (scale * zoomChange).coerceIn(0.5f, 5f)
+        val newScale = (scale * zoomChange).coerceIn(0.8f, 3f)
 
         val maxOffset = 1000f * newScale
         val newOffset = (offset + panChange).copy(
@@ -388,7 +388,7 @@ fun InteractiveWorldMap(
             .transformable(transformableState)
             .pointerInput(Unit) {
                 detectTapGestures { tapOffset ->
-                    processedSvgBitmap?.let { bitmap ->
+                    processedSvgBitmap?.takeIf { pathColorMap.isNotEmpty() }?.let { bitmap ->
                         detectCountryFromTap(tapOffset, bitmap, size.toSize())?.let { countryId ->
                             onCountryClick(countryId)
                         }
