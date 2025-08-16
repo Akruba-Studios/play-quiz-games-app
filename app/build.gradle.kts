@@ -83,4 +83,5 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.play.services.ads)
     implementation(platform(libs.firebase.bom))
+    implementation("com.caverock:androidsvg-aar:1.4")
 }

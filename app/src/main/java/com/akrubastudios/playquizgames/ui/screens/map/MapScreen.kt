@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,30 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.domain.Country
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import com.caverock.androidsvg.SVG
+import java.io.IOException
+
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import android.graphics.Bitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
+import androidx.core.graphics.PathParser
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MapScreen(
@@ -65,8 +90,10 @@ fun MapScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                MapContent(
-                    uiState = uiState,
+                InteractiveWorldMap(
+                    countries = uiState.countries,
+                    conqueredCountryIds = uiState.conqueredCountryIds,
+                    availableCountryIds = uiState.availableCountryIds,
                     onCountryClick = { countryId ->
                         navController.navigate(
                             Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
@@ -136,5 +163,306 @@ fun CountryButton(
         )
     ) {
         Text(text = country.name["es"] ?: "")
+    }
+}
+
+
+@Composable
+fun InteractiveWorldMap(
+    countries: List<Country>,
+    conqueredCountryIds: List<String>,
+    availableCountryIds: List<String>,
+    onCountryClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Estados para zoom y pan
+    var scale by remember { mutableStateOf(1f) }
+
+    // Función para extraer coordenadas de paths del SVG
+    suspend fun extractPathCoordinates(
+        context: Context,
+        countryIds: Set<String>
+    ): Map<String, String> = withContext(Dispatchers.IO) {
+        val pathMap = mutableMapOf<String, String>()
+
+        try {
+            val inputStream = context.assets.open("world-map.min.svg")
+            val svgContent = inputStream.bufferedReader().use { it.readText() }
+            inputStream.close()
+
+            countryIds.forEach { countryId ->
+                var pathData: String? = null
+
+                // ESTRATEGIA 1: Buscar <path id="xx" d="..."> (como antes)
+                val directPathPattern = """<path[^>]*id=["']$countryId["'][^>]*d=["']([^"']*)["']""".toRegex()
+                directPathPattern.find(svgContent)?.let {
+                    pathData = it.groupValues[1]
+                    android.util.Log.d("InteractiveWorldMap", "Path directo encontrado para $countryId")
+                }
+
+                // ESTRATEGIA 2: Si no se encontró, buscar <g id="xx">...<path d="...">
+                if (pathData == null) {
+                    // Buscar el grupo completo
+                    val groupPattern = """<g[^>]*id=["']$countryId["'][^>]*>(.*?)</g>""".toRegex(RegexOption.DOT_MATCHES_ALL)
+                    groupPattern.find(svgContent)?.let { groupMatch ->
+                        val groupContent = groupMatch.groupValues[1]
+
+                        // Buscar TODOS los paths dentro del grupo
+                        val pathsInGroupPattern = """<path[^>]*d=["']([^"']*)["']""".toRegex()
+                        val allPaths = pathsInGroupPattern.findAll(groupContent).map { it.groupValues[1] }.toList()
+
+                        if (allPaths.isNotEmpty()) {
+                            // Si hay múltiples paths, combinarlos en uno solo
+                            pathData = allPaths.joinToString(" ")
+                            android.util.Log.d("InteractiveWorldMap", "Grupo encontrado para $countryId con ${allPaths.size} paths")
+                        }
+                    }
+                }
+
+                // Si se encontró path data (por cualquier estrategia), guardarlo
+                pathData?.let { data ->
+                    pathMap[countryId] = data
+                    android.util.Log.d("InteractiveWorldMap", "Path extraído para $countryId: ${data.take(50)}...")
+                } ?: run {
+                    android.util.Log.w("InteractiveWorldMap", "NO se encontró path para $countryId")
+                }
+            }
+
+            android.util.Log.d("InteractiveWorldMap", "Paths extraídos: ${pathMap.size}/${countryIds.size}")
+
+        } catch (e: Exception) {
+            android.util.Log.e("InteractiveWorldMap", "Error extrayendo paths", e)
+        }
+
+        pathMap
+    }
+
+    // Función para convertir path data SVG a Path de Android
+    fun parsePathData(pathData: String, path: android.graphics.Path) {
+        try {
+            // Usar PathParser de Android para convertir SVG path data a Path
+            androidx.core.graphics.PathParser.createPathFromPathData(pathData)?.let { parsedPath ->
+                path.set(parsedPath)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("InteractiveWorldMap", "Error parseando path data: ${pathData.take(50)}", e)
+
+            // Fallback: crear un rectángulo simple si el parsing falla
+            path.addRect(0f, 0f, 100f, 100f, android.graphics.Path.Direction.CW)
+        }
+    }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    // Estado para el SVG cargado
+    var svgDocument by remember { mutableStateOf<SVG?>(null) }
+    var processedSvgBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Cache de paths y colores
+    var pathColorMap by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    // Definir colores
+    val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
+    val availableColor = Color(0xFF2196F3).toArgb() // Azul
+    val defaultColor = Color(0xFF9E9E9E).toArgb() // Gris
+
+    // Cargar SVG original
+    LaunchedEffect(Unit) {
+        try {
+            android.util.Log.d("InteractiveWorldMap", "Iniciando carga de SVG...")
+
+            val inputStream = context.assets.open("world-map.min.svg")
+            val svg = SVG.getFromInputStream(inputStream)
+            svgDocument = svg
+
+            android.util.Log.d("InteractiveWorldMap", "SVG cargado exitosamente")
+            android.util.Log.d("InteractiveWorldMap", "Dimensiones SVG: ${svg.documentWidth} x ${svg.documentHeight}")
+
+        } catch (e: IOException) {
+            android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
+        }
+    }
+
+    // Recalcular colores cuando cambien las listas
+    LaunchedEffect(conqueredCountryIds, availableCountryIds, countries) {
+        val newColorMap = mutableMapOf<String, Int>()
+
+        // Colorear países conquistados
+        conqueredCountryIds.forEach { countryId ->
+            newColorMap[countryId] = conqueredColor
+        }
+
+        // Colorear países disponibles (que no estén conquistados)
+        availableCountryIds.forEach { countryId ->
+            if (!conqueredCountryIds.contains(countryId)) {
+                newColorMap[countryId] = availableColor
+            }
+        }
+
+        // Todos los demás países en gris por defecto
+        countries.forEach { country ->
+            if (!newColorMap.containsKey(country.countryId)) {
+                newColorMap[country.countryId] = defaultColor
+            }
+        }
+
+        pathColorMap = newColorMap
+        android.util.Log.d("InteractiveWorldMap", "Mapa de colores actualizado: ${pathColorMap.size} países")
+    }
+
+    // Procesar SVG con colores dinámicos - ESTRATEGIA PRECISA
+    LaunchedEffect(svgDocument, pathColorMap) {
+        svgDocument?.let { svg ->
+            if (pathColorMap.isNotEmpty()) {
+                try {
+                    // Evitar múltiples procesamiento simultáneos
+                    processedSvgBitmap = null
+
+                    // Extraer coordenadas de paths del SVG original
+                    val pathCoordinates = extractPathCoordinates(context, pathColorMap.keys)
+
+                    if (!isActive) return@LaunchedEffect
+
+                    // Crear bitmap y renderizar SVG base
+                    val width = 1200
+                    val height = (width * svg.documentHeight / svg.documentWidth).toInt()
+
+                    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    val canvas = android.graphics.Canvas(bitmap)
+                    canvas.drawColor(android.graphics.Color.WHITE)
+
+                    // Configurar y renderizar el SVG original
+                    svg.setDocumentViewBox(0f, 0f, svg.documentWidth, svg.documentHeight)
+                    svg.renderToCanvas(canvas)
+
+                    if (!isActive) return@LaunchedEffect
+
+                    // Aplicar colores usando las formas reales de los paths
+                    val paint = android.graphics.Paint().apply {
+                        isAntiAlias = true
+                        style = android.graphics.Paint.Style.FILL
+                    }
+
+                    pathColorMap.forEach { (countryId, color) ->
+                        pathCoordinates[countryId]?.let { pathData ->
+                            paint.color = color
+
+                            // Crear Path de Android desde los datos SVG
+                            val path = android.graphics.Path()
+                            parsePathData(pathData, path)
+
+                            // Dibujar el path con el color correspondiente
+                            canvas.drawPath(path, paint)
+
+                            android.util.Log.d("InteractiveWorldMap", "País $countryId coloreado con forma precisa")
+                        }
+                    }
+
+                    if (isActive) {
+                        processedSvgBitmap = bitmap
+                        android.util.Log.d("InteractiveWorldMap", "Bitmap con colores precisos creado: ${width}x${height}")
+                        android.util.Log.d("InteractiveWorldMap", "Paths precisos aplicados: ${pathCoordinates.size}/${pathColorMap.size}")
+                    }
+
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    android.util.Log.d("InteractiveWorldMap", "Procesamiento SVG cancelado")
+                    throw e
+                } catch (e: Exception) {
+                    android.util.Log.e("InteractiveWorldMap", "Error procesando SVG con colores", e)
+                }
+            }
+        }
+    }
+
+    // Configurar gestos de transformación
+    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+        val newScale = (scale * zoomChange).coerceIn(0.5f, 5f)
+
+        val maxOffset = 1000f * newScale
+        val newOffset = (offset + panChange).copy(
+            x = (offset.x + panChange.x).coerceIn(-maxOffset, maxOffset),
+            y = (offset.y + panChange.y).coerceIn(-maxOffset, maxOffset)
+        )
+
+        scale = newScale
+        offset = newOffset
+    }
+
+    // Canvas principal
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .transformable(transformableState)
+    ) {
+        // Fondo gris claro
+        drawRect(
+            color = Color(0xFFF5F5F5),
+            size = size
+        )
+
+        processedSvgBitmap?.let { bitmap ->
+            // Calcular escala para centrar el mapa
+            val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
+            val canvasAspectRatio = size.width / size.height
+
+            val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                size.width / bitmap.width
+            } else {
+                size.height / bitmap.height
+            }
+
+            val scaledWidth = bitmap.width * scaleFactor * scale
+            val scaledHeight = bitmap.height * scaleFactor * scale
+
+            // Centrar el mapa
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
+            val left = centerX - (scaledWidth / 2f) + offset.x
+            val top = centerY - (scaledHeight / 2f) + offset.y
+
+            // Dibujar el mapa coloreado
+            drawImage(
+                image = bitmap.asImageBitmap(),
+                dstOffset = IntOffset(left.toInt(), top.toInt()),
+                dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
+                filterQuality = FilterQuality.High
+            )
+
+            // Debug info
+            drawContext.canvas.nativeCanvas.drawText(
+                "Scale: ${String.format("%.1f", scale)} | Países coloreados: ${pathColorMap.size}",
+                20f,
+                40f,
+                android.graphics.Paint().apply {
+                    color = android.graphics.Color.BLACK
+                    textSize = 30f
+                    isAntiAlias = true
+                }
+            )
+        } ?: run {
+            // Mostrar loading
+            drawRect(
+                color = Color.Gray,
+                size = size * 0.8f,
+                topLeft = Offset(
+                    x = size.center.x - (size.width * 0.4f),
+                    y = size.center.y - (size.height * 0.4f)
+                )
+            )
+
+            drawContext.canvas.nativeCanvas.drawText(
+                "Procesando mapa...",
+                size.center.x - 150f,
+                size.center.y,
+                android.graphics.Paint().apply {
+                    color = android.graphics.Color.WHITE
+                    textSize = 40f
+                    isAntiAlias = true
+                    textAlign = android.graphics.Paint.Align.CENTER
+                }
+            )
+        }
     }
 }
