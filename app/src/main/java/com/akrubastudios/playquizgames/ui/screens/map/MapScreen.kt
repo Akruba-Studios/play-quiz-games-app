@@ -387,6 +387,8 @@ fun InteractiveWorldMap(
             size = size
         )
 
+        android.util.Log.d("DEBUG_MAP", "Canvas size: ${size.width} x ${size.height}")
+
         // MODIFICADO: Renderizado condicional mejorado
         when {
             // Mostrar el mapa solo cuando esté completamente listo
@@ -405,10 +407,19 @@ fun InteractiveWorldMap(
                 val scaledWidth = bitmap.width * scaleFactor * scale
                 val scaledHeight = bitmap.height * scaleFactor * scale
 
+                // AGREGAR MÁS LOGS AQUÍ:
+                android.util.Log.d("DEBUG_MAP", "Bitmap size: ${bitmap.width} x ${bitmap.height}")
+                android.util.Log.d("DEBUG_MAP", "Bitmap aspect ratio: $bitmapAspectRatio")
+                android.util.Log.d("DEBUG_MAP", "Canvas aspect ratio: $canvasAspectRatio")
+                android.util.Log.d("DEBUG_MAP", "Scale factor: $scaleFactor")
+
                 val centerX = size.width / 2f
                 val centerY = size.height / 2f
                 val left = centerX - (scaledWidth / 2f) + offset.x
                 val top = centerY - (scaledHeight / 2f) + offset.y
+
+                android.util.Log.d("DEBUG_MAP", "Final left position: $left")
+                android.util.Log.d("DEBUG_MAP", "Center X: $centerX, Scaled width: $scaledWidth")
 
                 drawImage(
                     image = bitmap.asImageBitmap(),
