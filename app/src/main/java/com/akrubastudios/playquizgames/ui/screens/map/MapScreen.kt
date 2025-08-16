@@ -25,6 +25,7 @@ import com.akrubastudios.playquizgames.domain.Country
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Offset
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
 import com.caverock.androidsvg.SVG
 import java.io.IOException
 
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
+import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.isActive
@@ -177,6 +180,25 @@ fun InteractiveWorldMap(
 ) {
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    // Estado para el SVG cargado
+    var svgDocument by remember { mutableStateOf<SVG?>(null) }
+    var processedSvgBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Cache de paths y colores
+    var pathColorMap by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+
+    // Cache de paths para hit testing
+    var countryPaths by remember { mutableStateOf<Map<String, android.graphics.Path>>(emptyMap()) }
+
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    // Definir colores
+    val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
+    val availableColor = Color(0xFF2196F3).toArgb() // Azul
+    val defaultColor = Color(0xFF9E9E9E).toArgb() // Gris
 
     // Función para extraer coordenadas de paths del SVG
     suspend fun extractPathCoordinates(
@@ -251,22 +273,6 @@ fun InteractiveWorldMap(
             path.addRect(0f, 0f, 100f, 100f, android.graphics.Path.Direction.CW)
         }
     }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-
-    // Estado para el SVG cargado
-    var svgDocument by remember { mutableStateOf<SVG?>(null) }
-    var processedSvgBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-    // Cache de paths y colores
-    var pathColorMap by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-
-    val context = LocalContext.current
-    val density = LocalDensity.current
-
-    // Definir colores
-    val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
-    val availableColor = Color(0xFF2196F3).toArgb() // Azul
-    val defaultColor = Color(0xFF9E9E9E).toArgb() // Gris
 
     // Cargar SVG original
     LaunchedEffect(Unit) {
@@ -345,6 +351,9 @@ fun InteractiveWorldMap(
                         style = android.graphics.Paint.Style.FILL
                     }
 
+                    // Cache para hit testing - crear paths de Android
+                    val newCountryPaths = mutableMapOf<String, android.graphics.Path>()
+
                     pathColorMap.forEach { (countryId, color) ->
                         pathCoordinates[countryId]?.let { pathData ->
                             paint.color = color
@@ -352,6 +361,9 @@ fun InteractiveWorldMap(
                             // Crear Path de Android desde los datos SVG
                             val path = android.graphics.Path()
                             parsePathData(pathData, path)
+
+                            // Guardar path para hit testing
+                            newCountryPaths[countryId] = path
 
                             // Dibujar el path con el color correspondiente
                             canvas.drawPath(path, paint)
@@ -362,8 +374,10 @@ fun InteractiveWorldMap(
 
                     if (isActive) {
                         processedSvgBitmap = bitmap
+                        countryPaths = newCountryPaths
                         android.util.Log.d("InteractiveWorldMap", "Bitmap con colores precisos creado: ${width}x${height}")
                         android.util.Log.d("InteractiveWorldMap", "Paths precisos aplicados: ${pathCoordinates.size}/${pathColorMap.size}")
+                        android.util.Log.d("InteractiveWorldMap", "Paths para hit testing: ${newCountryPaths.size}")
                     }
 
                 } catch (e: kotlinx.coroutines.CancellationException) {
@@ -373,6 +387,75 @@ fun InteractiveWorldMap(
                     android.util.Log.e("InteractiveWorldMap", "Error procesando SVG con colores", e)
                 }
             }
+        }
+    }
+
+    // Función para detectar qué país fue tocado
+    fun detectCountryFromTap(
+        tapOffset: Offset,
+        svgBitmap: Bitmap,
+        canvasSize: androidx.compose.ui.geometry.Size
+    ): String? {
+        return try {
+            // Calcular transformación de coordenadas de pantalla a SVG
+            val bitmapAspectRatio = svgBitmap.width.toFloat() / svgBitmap.height.toFloat()
+            val canvasAspectRatio = canvasSize.width / canvasSize.height
+
+            val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                canvasSize.width / svgBitmap.width
+            } else {
+                canvasSize.height / svgBitmap.height
+            }
+
+            val scaledWidth = svgBitmap.width * scaleFactor * scale
+            val scaledHeight = svgBitmap.height * scaleFactor * scale
+
+            // Centrar el mapa
+            val centerX = canvasSize.width / 2f
+            val centerY = canvasSize.height / 2f
+            val left = centerX - (scaledWidth / 2f) + offset.x
+            val top = centerY - (scaledHeight / 2f) + offset.y
+
+            // Convertir coordenadas de tap a coordenadas del bitmap SVG
+            val svgX = (tapOffset.x - left) / (scaleFactor * scale)
+            val svgY = (tapOffset.y - top) / (scaleFactor * scale)
+
+            android.util.Log.d("HitTesting", "Tap en pantalla: (${tapOffset.x}, ${tapOffset.y})")
+            android.util.Log.d("HitTesting", "Tap en SVG: ($svgX, $svgY)")
+            android.util.Log.d("HitTesting", "Scale: $scale, Offset: $offset")
+
+            // Verificar límites
+            if (svgX < 0 || svgX >= svgBitmap.width || svgY < 0 || svgY >= svgBitmap.height) {
+                android.util.Log.d("HitTesting", "Tap fuera de límites del SVG")
+                return null
+            }
+
+            // Buscar en los paths de países disponibles e interactuables
+            val interactableCountries = (conqueredCountryIds + availableCountryIds).toSet()
+
+            for (countryId in interactableCountries) {
+                countryPaths[countryId]?.let { path ->
+                    // Crear región para hit testing preciso
+                    val region = android.graphics.Region()
+                    val clipRegion = android.graphics.Region(
+                        0, 0, svgBitmap.width, svgBitmap.height
+                    )
+
+                    region.setPath(path, clipRegion)
+
+                    if (region.contains(svgX.toInt(), svgY.toInt())) {
+                        android.util.Log.d("HitTesting", "¡País detectado: $countryId!")
+                        return countryId
+                    }
+                }
+            }
+
+            android.util.Log.d("HitTesting", "Ningún país interactuable detectado en esta posición")
+            null
+
+        } catch (e: Exception) {
+            android.util.Log.e("HitTesting", "Error en detección de tap", e)
+            null
         }
     }
 
@@ -395,6 +478,16 @@ fun InteractiveWorldMap(
         modifier = modifier
             .fillMaxSize()
             .transformable(transformableState)
+            .pointerInput(Unit) {
+                detectTapGestures { tapOffset ->
+                    processedSvgBitmap?.let { bitmap ->
+                        detectCountryFromTap(tapOffset, bitmap, size.toSize())?.let { countryId ->
+                            android.util.Log.d("InteractiveWorldMap", "Usuario tocó país: $countryId")
+                            onCountryClick(countryId)
+                        }
+                    }
+                }
+            }
     ) {
         // Fondo gris claro
         drawRect(
