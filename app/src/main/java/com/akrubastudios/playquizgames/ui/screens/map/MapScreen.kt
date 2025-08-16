@@ -1,8 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
 import android.content.Context
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -16,9 +14,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.ImageLoader
-import coil.compose.rememberAsyncImagePainter
-import coil.decode.SvgDecoder
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.domain.Country
 
@@ -107,68 +102,6 @@ fun MapScreen(
         }
     }
 }
-
-@Composable
-fun MapContent(
-    uiState: MapState,
-    onCountryClick: (String) -> Unit
-) {
-    val context = LocalContext.current
-    val imageLoader = ImageLoader.Builder(context)
-        .components { add(SvgDecoder.Factory()) }
-        .build()
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = rememberAsyncImagePainter(model = "file:///android_asset/world_globe.svg", imageLoader = imageLoader),
-            contentDescription = "Mapa del Mundo",
-            modifier = Modifier.fillMaxSize()
-        )
-
-        uiState.countries.forEach { country ->
-            val isConquered = uiState.conqueredCountryIds.contains(country.countryId)
-            val isAvailable = uiState.availableCountryIds.contains(country.countryId)
-
-            if (isConquered || isAvailable) {
-                // Definimos el modifier aquí dentro, donde 'align' sí existe
-                val modifier = when (country.countryId) {
-                    "br" -> Modifier.align(Alignment.Center).offset(x = (-50).dp, y = 100.dp)
-                    "es" -> Modifier.align(Alignment.Center).offset(x = (-100).dp, y = (-80).dp)
-                    "bo" -> Modifier.align(Alignment.Center).offset(x = (-80).dp, y = 80.dp)
-                    "ar" -> Modifier.align(Alignment.Center).offset(x = (-70).dp, y = 150.dp)
-                    // Añade más casos para otros países aquí
-                    else -> Modifier.align(Alignment.Center)
-                }
-
-                CountryButton(
-                    country = country,
-                    isConquered = isConquered,
-                    onClick = { onCountryClick(country.countryId) },
-                    modifier = modifier // Usamos el modifier que acabamos de crear
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun CountryButton(
-    country: Country,
-    isConquered: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isConquered) Color(0xFFD4AF37) else MaterialTheme.colorScheme.primary // Dorado si está conquistado
-        )
-    ) {
-        Text(text = country.name["es"] ?: "")
-    }
-}
-
 
 @Composable
 fun InteractiveWorldMap(
