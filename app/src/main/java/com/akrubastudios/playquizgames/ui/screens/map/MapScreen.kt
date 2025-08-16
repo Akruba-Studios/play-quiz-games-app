@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.R.attr.path
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,7 @@ import kotlinx.coroutines.isActive
 import androidx.core.graphics.PathParser
 import kotlinx.coroutines.withContext
 
+import androidx.compose.animation.core.*
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -147,13 +149,15 @@ fun InteractiveWorldMap(
     var pathColorMap by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var countryPaths by remember { mutableStateOf<Map<String, android.graphics.Path>>(emptyMap()) }
 
+    var pulseAlpha by remember { mutableStateOf(0.7f) }
+
     val context = LocalContext.current
     val density = LocalDensity.current
 
     // Definir colores
     val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
     val availableColor = Color(0xFF2196F3).toArgb() // Azul
-    val defaultColor = Color(0xFF9E9E9E).toArgb() // Gris
+    val defaultColor = Color(0xFF4A5568).toArgb() // Gris azulado congelado
 
     // Función para extraer coordenadas de paths del SVG
     suspend fun extractPathCoordinates(
@@ -293,6 +297,18 @@ fun InteractiveWorldMap(
                             parsePathData(pathData, path)
                             newCountryPaths[countryId] = path
                             canvas.drawPath(path, paint)
+
+                            // NUEVO: Agregar grietas para países grises
+                            if (color == defaultColor) {
+                                val crackPaint = android.graphics.Paint().apply {
+                                    isAntiAlias = true
+                                    style = android.graphics.Paint.Style.STROKE
+                                    strokeWidth = 2f
+                                    setColor(android.graphics.Color.argb(64, 255, 0, 0)) // Blanco 25% transparente
+                                    pathEffect = android.graphics.DashPathEffect(floatArrayOf(8f, 4f), 0f)
+                                }
+                                canvas.drawPath(path, crackPaint)
+                            }
                         }
                     }
 
@@ -313,6 +329,26 @@ fun InteractiveWorldMap(
                     android.util.Log.e("InteractiveWorldMap", "Error procesando SVG con colores", e)
                     isInitialProcessing = false
                 }
+            }
+        }
+    }
+
+    // NUEVO: Animación de pulso para candados
+    LaunchedEffect(Unit) {
+        while (true) {
+            animate(
+                initialValue = 0.3f,
+                targetValue = 0.7f,
+                animationSpec = tween(1500, easing = FastOutSlowInEasing)
+            ) { value, _ ->
+                pulseAlpha = value
+            }
+            animate(
+                initialValue = 0.7f,
+                targetValue = 0.3f,
+                animationSpec = tween(1500, easing = FastOutSlowInEasing)
+            ) { value, _ ->
+                pulseAlpha = value
             }
         }
     }
@@ -413,8 +449,6 @@ fun InteractiveWorldMap(
             size = size
         )
 
-        android.util.Log.d("DEBUG_MAP", "Canvas size: ${size.width} x ${size.height}")
-
         // MODIFICADO: Renderizado condicional mejorado
         when {
             // Mostrar el mapa solo cuando esté completamente listo
@@ -433,19 +467,10 @@ fun InteractiveWorldMap(
                 val scaledWidth = bitmap.width * scaleFactor * scale
                 val scaledHeight = bitmap.height * scaleFactor * scale
 
-                // AGREGAR MÁS LOGS AQUÍ:
-                android.util.Log.d("DEBUG_MAP", "Bitmap size: ${bitmap.width} x ${bitmap.height}")
-                android.util.Log.d("DEBUG_MAP", "Bitmap aspect ratio: $bitmapAspectRatio")
-                android.util.Log.d("DEBUG_MAP", "Canvas aspect ratio: $canvasAspectRatio")
-                android.util.Log.d("DEBUG_MAP", "Scale factor: $scaleFactor")
-
                 val centerX = size.width / 2f
                 val centerY = size.height / 2f
                 val left = centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
                 val top = centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
-
-                android.util.Log.d("DEBUG_MAP", "Final left position: $left")
-                android.util.Log.d("DEBUG_MAP", "Center X: $centerX, Scaled width: $scaledWidth")
 
                 drawImage(
                     image = bitmap.asImageBitmap(),
@@ -453,6 +478,69 @@ fun InteractiveWorldMap(
                     dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
                     filterQuality = FilterQuality.High
                 )
+
+                // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
+                countries.forEach { country ->
+                    if (pathColorMap[country.countryId] == defaultColor) {
+                        countryPaths[country.countryId]?.let { path ->
+                            // Coordenadas manuales para países problemáticos
+                            val (centerX, centerY) = when (country.countryId) {
+                                "es" -> Pair(395f, 420f)  // España - coordenadas ajustadas manualmente
+                                "fr" -> Pair(410f, 410f)  // Francia - coordenadas ajustadas manualmente
+                                else -> {
+                                    // Para el resto usar cálculo automático
+                                    val bounds = android.graphics.RectF()
+                                    path.computeBounds(bounds, true)
+                                    Pair(bounds.centerX(), bounds.centerY())
+                                }
+                            }
+
+                            // USAR LA MISMA LÓGICA EXACTA QUE EL BITMAP
+                            val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
+                            val canvasAspectRatio = size.width / size.height
+
+                            val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                                size.width / bitmap.width
+                            } else {
+                                size.height / bitmap.height
+                            }
+
+                            val transformedX = left + (centerX * scaleFactor * scale)
+                            val transformedY = top + (centerY * scaleFactor * scale)
+
+                            val lockSize = 4.dp.toPx() * scale // 6. Tamaño del candado
+
+                            drawContext.canvas.nativeCanvas.apply {
+                                val lockPaint = android.graphics.Paint().apply {
+                                    isAntiAlias = true
+                                    setColor(android.graphics.Color.argb(
+                                        (255 * pulseAlpha).toInt(), 255, 0, 0 // Color candados: rgb 220,220,220 = gris blanco
+                                    ))
+                                    style = android.graphics.Paint.Style.STROKE
+                                    strokeWidth = 3f * scale
+                                }
+
+                                // Dibujar candado simple
+                                val lockRect = android.graphics.RectF(
+                                    transformedX - lockSize/2,
+                                    transformedY - lockSize/4,
+                                    transformedX + lockSize/2,
+                                    transformedY + lockSize/2
+                                )
+                                drawRoundRect(lockRect, 4f * scale, 4f * scale, lockPaint)
+
+                                // Arco del candado
+                                val arcRect = android.graphics.RectF(
+                                    transformedX - lockSize/3,
+                                    transformedY - lockSize/2,
+                                    transformedX + lockSize/3,
+                                    transformedY
+                                )
+                                drawArc(arcRect, 180f, 180f, false, lockPaint)
+                            }
+                        }
+                    }
+                }
 
                 // Debug info (opcional - puedes removarlo)
                 /*
