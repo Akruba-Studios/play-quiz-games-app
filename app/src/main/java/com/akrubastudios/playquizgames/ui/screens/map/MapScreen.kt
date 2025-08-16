@@ -113,7 +113,7 @@ fun InteractiveWorldMap(
     modifier: Modifier = Modifier
 ) {
     // Estados para zoom y pan
-    var scale by remember { mutableStateOf(1f) }
+    var scale by remember { mutableStateOf(1.6f) } // 1.5f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
 
     // Estados para el SVG y su procesamiento
@@ -319,7 +319,7 @@ fun InteractiveWorldMap(
 
             val centerX = canvasSize.width / 2f
             val centerY = canvasSize.height / 2f
-            val left = centerX - (scaledWidth / 2f) + offset.x + (canvasSize.width * 0.14f) // + (150/1080=0.14) +150 es el offset manual para centrar el mapa, tiene que ser el mismo valor en canvas
+            val left = centerX - (scaledWidth / 2f) + offset.x + (canvasSize.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en canvas
             val top = centerY - (scaledHeight / 2f) + offset.y - (canvasSize.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en canvas
 
             val svgX = (tapOffset.x - left) / (scaleFactor * scale)
@@ -415,7 +415,7 @@ fun InteractiveWorldMap(
 
                 val centerX = size.width / 2f
                 val centerY = size.height / 2f
-                val left = centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.14f) // + (150/1080=0.14) +150 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
+                val left = centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
                 val top = centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
 
                 android.util.Log.d("DEBUG_MAP", "Final left position: $left")
