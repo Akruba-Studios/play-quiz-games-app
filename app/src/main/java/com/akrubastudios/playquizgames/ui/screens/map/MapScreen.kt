@@ -253,7 +253,7 @@ fun InteractiveWorldMap(
 
                     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                     val canvas = android.graphics.Canvas(bitmap)
-                    canvas.drawColor(android.graphics.Color.WHITE)
+                    canvas.drawColor(android.graphics.Color.TRANSPARENT)
 
                     svg.setDocumentViewBox(0f, 0f, svg.documentWidth, svg.documentHeight)
                     svg.renderToCanvas(canvas)
@@ -383,7 +383,7 @@ fun InteractiveWorldMap(
     ) {
         // Fondo gris claro
         drawRect(
-            color = Color(0xFFF5F5F5),
+            color = Color.White,
             size = size
         )
 
