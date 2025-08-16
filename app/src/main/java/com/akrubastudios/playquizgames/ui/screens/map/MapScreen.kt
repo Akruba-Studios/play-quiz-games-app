@@ -152,7 +152,6 @@ fun InteractiveWorldMap(
                 val directPathPattern = """<path[^>]*id=["']$countryId["'][^>]*d=["']([^"']*)["']""".toRegex()
                 directPathPattern.find(svgContent)?.let {
                     pathData = it.groupValues[1]
-                    android.util.Log.d("InteractiveWorldMap", "Path directo encontrado para $countryId")
                 }
 
                 // ESTRATEGIA 2: Si no se encontró, buscar <g id="xx">...<path d="...">
@@ -169,7 +168,6 @@ fun InteractiveWorldMap(
                         if (allPaths.isNotEmpty()) {
                             // Si hay múltiples paths, combinarlos en uno solo
                             pathData = allPaths.joinToString(" ")
-                            android.util.Log.d("InteractiveWorldMap", "Grupo encontrado para $countryId con ${allPaths.size} paths")
                         }
                     }
                 }
@@ -177,13 +175,9 @@ fun InteractiveWorldMap(
                 // Si se encontró path data (por cualquier estrategia), guardarlo
                 pathData?.let { data ->
                     pathMap[countryId] = data
-                    android.util.Log.d("InteractiveWorldMap", "Path extraído para $countryId: ${data.take(50)}...")
                 } ?: run {
-                    android.util.Log.w("InteractiveWorldMap", "NO se encontró path para $countryId")
                 }
             }
-
-            android.util.Log.d("InteractiveWorldMap", "Paths extraídos: ${pathMap.size}/${countryIds.size}")
 
         } catch (e: Exception) {
             android.util.Log.e("InteractiveWorldMap", "Error extrayendo paths", e)
@@ -210,14 +204,10 @@ fun InteractiveWorldMap(
     // Cargar SVG original
     LaunchedEffect(Unit) {
         try {
-            android.util.Log.d("InteractiveWorldMap", "Iniciando carga de SVG...")
 
             val inputStream = context.assets.open("world-map.min.svg")
             val svg = SVG.getFromInputStream(inputStream)
             svgDocument = svg
-
-            android.util.Log.d("InteractiveWorldMap", "SVG cargado exitosamente")
-            android.util.Log.d("InteractiveWorldMap", "Dimensiones SVG: ${svg.documentWidth} x ${svg.documentHeight}")
 
         } catch (e: IOException) {
             android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
@@ -248,7 +238,6 @@ fun InteractiveWorldMap(
         }
 
         pathColorMap = newColorMap
-        android.util.Log.d("InteractiveWorldMap", "Mapa de colores actualizado: ${pathColorMap.size} países")
     }
 
     // Procesar SVG con colores dinámicos - ESTRATEGIA PRECISA
@@ -300,21 +289,15 @@ fun InteractiveWorldMap(
 
                             // Dibujar el path con el color correspondiente
                             canvas.drawPath(path, paint)
-
-                            android.util.Log.d("InteractiveWorldMap", "País $countryId coloreado con forma precisa")
                         }
                     }
 
                     if (isActive) {
                         processedSvgBitmap = bitmap
                         countryPaths = newCountryPaths
-                        android.util.Log.d("InteractiveWorldMap", "Bitmap con colores precisos creado: ${width}x${height}")
-                        android.util.Log.d("InteractiveWorldMap", "Paths precisos aplicados: ${pathCoordinates.size}/${pathColorMap.size}")
-                        android.util.Log.d("InteractiveWorldMap", "Paths para hit testing: ${newCountryPaths.size}")
                     }
 
                 } catch (e: kotlinx.coroutines.CancellationException) {
-                    android.util.Log.d("InteractiveWorldMap", "Procesamiento SVG cancelado")
                     throw e
                 } catch (e: Exception) {
                     android.util.Log.e("InteractiveWorldMap", "Error procesando SVG con colores", e)
@@ -353,13 +336,8 @@ fun InteractiveWorldMap(
             val svgX = (tapOffset.x - left) / (scaleFactor * scale)
             val svgY = (tapOffset.y - top) / (scaleFactor * scale)
 
-            android.util.Log.d("HitTesting", "Tap en pantalla: (${tapOffset.x}, ${tapOffset.y})")
-            android.util.Log.d("HitTesting", "Tap en SVG: ($svgX, $svgY)")
-            android.util.Log.d("HitTesting", "Scale: $scale, Offset: $offset")
-
             // Verificar límites
             if (svgX < 0 || svgX >= svgBitmap.width || svgY < 0 || svgY >= svgBitmap.height) {
-                android.util.Log.d("HitTesting", "Tap fuera de límites del SVG")
                 return null
             }
 
@@ -377,13 +355,10 @@ fun InteractiveWorldMap(
                     region.setPath(path, clipRegion)
 
                     if (region.contains(svgX.toInt(), svgY.toInt())) {
-                        android.util.Log.d("HitTesting", "¡País detectado: $countryId!")
                         return countryId
                     }
                 }
             }
-
-            android.util.Log.d("HitTesting", "Ningún país interactuable detectado en esta posición")
             null
 
         } catch (e: Exception) {
@@ -415,7 +390,6 @@ fun InteractiveWorldMap(
                 detectTapGestures { tapOffset ->
                     processedSvgBitmap?.let { bitmap ->
                         detectCountryFromTap(tapOffset, bitmap, size.toSize())?.let { countryId ->
-                            android.util.Log.d("InteractiveWorldMap", "Usuario tocó país: $countryId")
                             onCountryClick(countryId)
                         }
                     }
