@@ -303,9 +303,9 @@ fun InteractiveWorldMap(
                                 val crackPaint = android.graphics.Paint().apply {
                                     isAntiAlias = true
                                     style = android.graphics.Paint.Style.STROKE
-                                    strokeWidth = 2f
-                                    setColor(android.graphics.Color.argb(64, 255, 0, 0)) // Blanco 25% transparente
-                                    pathEffect = android.graphics.DashPathEffect(floatArrayOf(8f, 4f), 0f)
+                                    strokeWidth = 4f
+                                    setColor(android.graphics.Color.argb(128, 255, 255, 255)) // Blanco 25% transparente
+                                    pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 6f), 0f)
                                 }
                                 canvas.drawPath(path, crackPaint)
                             }
@@ -514,7 +514,7 @@ fun InteractiveWorldMap(
                                 val lockPaint = android.graphics.Paint().apply {
                                     isAntiAlias = true
                                     setColor(android.graphics.Color.argb(
-                                        (255 * pulseAlpha).toInt(), 255, 0, 0 // Color candados: rgb 220,220,220 = gris blanco
+                                        (255 * pulseAlpha).toInt(), 220, 220, 220 // Color candados: rgb 220,220,220 = gris blanco
                                     ))
                                     style = android.graphics.Paint.Style.STROKE
                                     strokeWidth = 3f * scale
