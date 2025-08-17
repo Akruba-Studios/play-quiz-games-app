@@ -55,6 +55,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -144,36 +147,38 @@ fun MapScreen(
         AlertDialog(
             onDismissRequest = { viewModel.dismissExpeditionDialog() },
             title = { Text(text = "¡Nuevos Horizontes!") },
-            text = { Text(text = "Tu fama como explorador crece. Es hora de embarcarse en una nueva gran expedición. Elige tu próximo destino:") },
+
+            // --- INICIO DE LA MODIFICACIÓN CLAVE ---
+            // 1. Movemos la lista de botones al parámetro 'text', que es el área de contenido.
+            text = {
+                // 2. Hacemos la columna deslizable (scrollable).
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "Tu fama como explorador crece. Elige tu próximo destino:")
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Iteramos sobre la lista de expediciones disponibles que nos pasa el ViewModel.
+                    uiState.availableExpeditions.forEach { (continentId, continentName) ->
+                        Button(
+                            onClick = { viewModel.onExpeditionContinentSelected(continentId) },
+                            modifier = Modifier.fillMaxWidth().height(50.dp)
+                        ) {
+                            Text(continentName)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            },
+
             confirmButton = {
-                // Este botón es solo para cerrar, la confirmación real está en las opciones.
                 TextButton(onClick = { viewModel.dismissExpeditionDialog() }) {
                     Text("Más Tarde")
                 }
             },
-            // Usamos el `dismissButton` para nuestras opciones personalizadas.
-            dismissButton = {
-                Column(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // TODO: Esta lista debe ser dinámica en el futuro, filtrando los
-                    // continentes que el usuario ya ha desbloqueado.
-                    Button(
-                        onClick = { viewModel.onExpeditionContinentSelected("europe") },
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        Text("Explorar Europa")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { viewModel.onExpeditionContinentSelected("north_america") },
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        Text("Explorar Norteamérica")
-                    }
-                }
-            }
+            // El dismissButton ya no es necesario aquí.
+            dismissButton = null
         )
     }
 }
