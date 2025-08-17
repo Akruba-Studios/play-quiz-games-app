@@ -24,9 +24,10 @@ android {
 
     // Configuración para el compilador de Kotlin
     kotlinOptions {
-        // Le decimos al compilador que ignore las advertencias de deprecación
-        // añadiendo este argumento
+        jvmTarget = "1.8"
+        // Versión compatible que añade cada argumento en su propia línea.
         freeCompilerArgs += "-Xsuppress-version-warnings"
+        freeCompilerArgs += "-Xlint:deprecation=false"
     }
 
     buildTypes {
