@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.domain.Country
+import com.akrubastudios.playquizgames.ui.components.PlayerLevelIndicator
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -116,6 +117,19 @@ fun MapScreen(
                     modifier = Modifier.padding(16.dp),
                     textAlign = TextAlign.Center
                 )
+            }
+            // CAPA 3: El indicador de nivel del jugador
+            // Solo mostramos el indicador si ya hemos cargado la información del nivel desde el ViewModel.
+            uiState.playerLevelInfo?.let { levelInfo ->
+                // Usamos una Columna para poder alinearla fácilmente en la parte superior
+                // y añadirle un padding para que se sitúe debajo del título.
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp) // Ajusta este valor si es necesario
+                ) {
+                    PlayerLevelIndicator(levelInfo = levelInfo)
+                }
             }
         }
     }

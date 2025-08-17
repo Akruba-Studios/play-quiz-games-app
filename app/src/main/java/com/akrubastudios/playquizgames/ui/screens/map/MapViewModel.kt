@@ -7,6 +7,7 @@ import javax.inject.Inject
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Country
+import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,8 @@ data class MapState(
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val availableCountryIds: List<String> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val playerLevelInfo: PlayerLevelManager.LevelInfo? = null
 )
 
 @HiltViewModel
@@ -47,6 +49,10 @@ class MapViewModel @Inject constructor(
                 // y la UI mostrará el indicador.
 
                 if (userData != null) {
+                    // 1. Llamamos a nuestro gestor para calcular toda la información del nivel
+                    //    basándonos en el XP total del usuario que acabamos de recibir.
+                    val levelInfo = PlayerLevelManager.calculateLevelInfo(userData.totalXp)
+
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
 
@@ -63,7 +69,8 @@ class MapViewModel @Inject constructor(
                         countries = countryList,
                         conqueredCountryIds = conqueredIds,
                         availableCountryIds = availableIds.toList(),
-                        isLoading = false // <-- Solo ponemos isLoading a false cuando tenemos datos
+                        isLoading = false, // <-- Solo ponemos isLoading a false cuando tenemos datos
+                        playerLevelInfo = levelInfo
                     )
                 }
             }
