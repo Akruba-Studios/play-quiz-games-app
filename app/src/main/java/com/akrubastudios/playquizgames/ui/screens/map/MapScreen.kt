@@ -58,6 +58,8 @@ import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+
+import androidx.compose.material.icons.filled.SwapHoriz
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -75,6 +77,18 @@ fun MapScreen(
                     icon = { Icon(Icons.Filled.Leaderboard, contentDescription = "Ranking") },
                     label = { Text("Ranking") }
                 )
+
+                NavigationBarItem(
+                    // El botón solo está habilitado si el nivel del jugador es 5 o superior.
+                    // El operador "?." (safe call) se asegura de que no haya un error si
+                    // playerLevelInfo es nulo durante la carga.
+                    enabled = (uiState.playerLevelInfo?.level ?: 0) >= 5,
+                    selected = false,
+                    onClick = { navController.navigate(Routes.FREE_MODE_SCREEN) },
+                    icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = "Modo Libre") },
+                    label = { Text("Modo Libre") }
+                )
+
                 NavigationBarItem(
                     selected = false,
                     onClick = { /* Navegar a Perfil en el futuro */ },

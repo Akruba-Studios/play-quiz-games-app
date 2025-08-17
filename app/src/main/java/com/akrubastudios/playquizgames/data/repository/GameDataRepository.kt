@@ -223,5 +223,23 @@ class GameDataRepository @Inject constructor(
             0
         }
     }
-
+    /**
+     * Obtiene una lista de todos los niveles que el usuario ha completado con 3 estrellas.
+     * La consulta está optimizada para devolver documentos que ya contienen
+     * el nombre del nivel y el puntaje máximo.
+     */
+    suspend fun getMasteredLevels(): List<UserLevelCompletion> {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
+        return try {
+            val snapshot = db.collection("user_level_completion")
+                .whereEqualTo("userId", uid)
+                .whereEqualTo("starsEarned", 3)
+                .get().await()
+            // La conversión usará la data class UserLevelCompletion actualizada en el paso anterior.
+            snapshot.toObjects(UserLevelCompletion::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList() // Devuelve una lista vacía si hay algún error.
+        }
+    }
 }

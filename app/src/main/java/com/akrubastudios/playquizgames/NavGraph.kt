@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
+import com.akrubastudios.playquizgames.ui.screens.freemode.FreeModeScreen
 import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 
@@ -40,6 +41,7 @@ object Routes {
     const val LEVEL_SELECTION_SCREEN = "level_selection/{countryId}/{categoryId}/{continentId}"
     const val CONTINENT_SELECTION_SCREEN = "continent_selection"
     const val COUNTRY_SELECTION_SCREEN = "country_selection/{continentId}"
+    const val FREE_MODE_SCREEN = "free_mode"
 }
 
 @Composable
@@ -52,6 +54,18 @@ fun NavGraph() {
 
         composable(Routes.RANKING_SCREEN) {
             RankingScreen()
+        }
+
+        composable(Routes.FREE_MODE_SCREEN) {
+            FreeModeScreen(
+                onNavigateToGame = { levelId, countryId ->
+                    // Navega a la pantalla del juego con los datos del nivel seleccionado.
+                    val route = Routes.GAME_SCREEN
+                        .replace("{countryId}", countryId) // Usará "freemode"
+                        .replace("{levelId}", levelId)
+                    navController.navigate(route)
+                }
+            )
         }
 
         composable(
