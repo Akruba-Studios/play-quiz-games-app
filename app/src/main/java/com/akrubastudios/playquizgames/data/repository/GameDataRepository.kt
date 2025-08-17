@@ -8,6 +8,7 @@ import com.akrubastudios.playquizgames.domain.UserCountryProgress
 import com.akrubastudios.playquizgames.domain.UserLevelCompletion
 import com.akrubastudios.playquizgames.domain.Category
 import com.akrubastudios.playquizgames.domain.LevelMetadata
+import com.akrubastudios.playquizgames.domain.UserLevelCountryProgress
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
@@ -190,4 +191,37 @@ class GameDataRepository @Inject constructor(
             null
         }
     }
+
+    /**
+     * Obtiene el récord de estrellas GLOBAL de un usuario para un nivel específico.
+     * Consulta la colección 'user_level_completion'.
+     */
+    suspend fun getUserGlobalLevelProgress(levelId: String): Int {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return 0
+        val completionDocId = "${uid}_${levelId}"
+        return try {
+            val document = db.collection("user_level_completion").document(completionDocId).get().await()
+            document.toObject(UserLevelCompletion::class.java)?.starsEarned ?: 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
+        }
+    }
+
+    /**
+     * Obtiene el contador de estrellas LOCAL de un usuario para un nivel en un país específico.
+     * Consulta la nueva colección 'user_level_country_progress'.
+     */
+    suspend fun getUserLevelCountryProgress(levelId: String, countryId: String): Int {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return 0
+        val progressDocId = "${uid}_${levelId}_${countryId}"
+        return try {
+            val document = db.collection("user_level_country_progress").document(progressDocId).get().await()
+            document.toObject(UserLevelCountryProgress::class.java)?.starsEarnedInCountry ?: 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
+        }
+    }
+
 }
