@@ -50,6 +50,11 @@ import androidx.core.graphics.PathParser
 import kotlinx.coroutines.withContext
 
 import androidx.compose.animation.core.*
+
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -132,6 +137,44 @@ fun MapScreen(
                 }
             }
         }
+    }
+
+    // Lógica condicional para mostrar el diálogo de expedición.
+    if (uiState.expeditionAvailable) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissExpeditionDialog() },
+            title = { Text(text = "¡Nuevos Horizontes!") },
+            text = { Text(text = "Tu fama como explorador crece. Es hora de embarcarse en una nueva gran expedición. Elige tu próximo destino:") },
+            confirmButton = {
+                // Este botón es solo para cerrar, la confirmación real está en las opciones.
+                TextButton(onClick = { viewModel.dismissExpeditionDialog() }) {
+                    Text("Más Tarde")
+                }
+            },
+            // Usamos el `dismissButton` para nuestras opciones personalizadas.
+            dismissButton = {
+                Column(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // TODO: Esta lista debe ser dinámica en el futuro, filtrando los
+                    // continentes que el usuario ya ha desbloqueado.
+                    Button(
+                        onClick = { viewModel.onExpeditionContinentSelected("europe") },
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Text("Explorar Europa")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.onExpeditionContinentSelected("north_america") },
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Text("Explorar Norteamérica")
+                    }
+                }
+            }
+        )
     }
 }
 

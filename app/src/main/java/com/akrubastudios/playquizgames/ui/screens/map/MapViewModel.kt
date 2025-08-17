@@ -18,7 +18,8 @@ data class MapState(
     val conqueredCountryIds: List<String> = emptyList(),
     val availableCountryIds: List<String> = emptyList(),
     val isLoading: Boolean = true,
-    val playerLevelInfo: PlayerLevelManager.LevelInfo? = null
+    val playerLevelInfo: PlayerLevelManager.LevelInfo? = null,
+    val expeditionAvailable: Boolean = false
 )
 
 @HiltViewModel
@@ -56,6 +57,8 @@ class MapViewModel @Inject constructor(
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
 
+                    val isExpeditionAvailable = conqueredIds.size >= 3 && levelInfo.level >= 5
+
                     val availableIds = mutableSetOf<String>()
                     availableIdsFromDB.forEach { availableIds.add(it) }
                     conqueredIds.forEach { conqueredId ->
@@ -70,10 +73,32 @@ class MapViewModel @Inject constructor(
                         conqueredCountryIds = conqueredIds,
                         availableCountryIds = availableIds.toList(),
                         isLoading = false, // <-- Solo ponemos isLoading a false cuando tenemos datos
-                        playerLevelInfo = levelInfo
+                        playerLevelInfo = levelInfo,
+                        expeditionAvailable = isExpeditionAvailable
                     )
                 }
             }
         }
     }
+
+    /**
+     * Se llama cuando el usuario selecciona un continente en el diálogo de expedición.
+     * TODO: La lógica para desbloquear el contenido se implementará en el siguiente paso.
+     */
+    fun onExpeditionContinentSelected(continentId: String) {
+        // Por ahora, solo cerramos el diálogo y dejamos un registro para depuración.
+        _uiState.value = _uiState.value.copy(expeditionAvailable = false)
+        android.util.Log.d("MapViewModel", "Expedición seleccionada: $continentId. Lógica pendiente.")
+    }
+
+    /**
+     * Se llama cuando el usuario decide posponer la expedición.
+     * Oculta el diálogo para la sesión actual.
+     */
+    fun dismissExpeditionDialog() {
+        // Ponemos expeditionAvailable a false en el estado de la UI para ocultar el diálogo.
+        // La próxima vez que se carguen los datos del usuario, la condición se re-evaluará.
+        _uiState.value = _uiState.value.copy(expeditionAvailable = false)
+    }
 }
+
