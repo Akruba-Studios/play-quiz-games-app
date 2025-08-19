@@ -13,5 +13,6 @@ data class GameState(
     val generatedHintLetters: String = "",
     val userAnswer: String = "",
     val remainingTime: Long = 15L, // <-- Tiempo 15 segundos por respuesta
-    val difficulty: String = "principiante"
+    val difficulty: String = "principiante",
+    val usedLetterIndices: Set<Int> = emptySet()
 )

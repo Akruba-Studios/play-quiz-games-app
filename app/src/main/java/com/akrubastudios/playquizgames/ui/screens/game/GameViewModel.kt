@@ -113,11 +113,18 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun onLetterClick(letter: Char) {
+    fun onLetterClick(letter: Char, index: Int) {
+        // Si el índice ya ha sido usado, no hacemos nada.
+        if (uiState.value.usedLetterIndices.contains(index)) return
+
         val currentAnswerLength = uiState.value.currentQuestion?.correctAnswer?.length ?: 0
         if (uiState.value.userAnswer.length < currentAnswerLength) {
             _uiState.update { currentState ->
-                currentState.copy(userAnswer = currentState.userAnswer + letter)
+                currentState.copy(
+                    userAnswer = currentState.userAnswer + letter,
+                    // Añadimos el índice del botón pulsado al set de usados.
+                    usedLetterIndices = currentState.usedLetterIndices + index
+                )
             }
 
             // Log para ver la respuesta del usuario mientras la construye
@@ -126,6 +133,15 @@ class GameViewModel @Inject constructor(
             if (uiState.value.userAnswer.length == currentAnswerLength) {
                 checkAnswer()
             }
+        }
+    }
+
+    fun clearUserAnswer() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                userAnswer = "",
+                usedLetterIndices = emptySet() // Reseteamos los índices usados.
+            )
         }
     }
 
@@ -193,7 +209,8 @@ class GameViewModel @Inject constructor(
                     questionNumber = currentQuestionIndex + 1,
                     userAnswer = "",
                     generatedHintLetters = hints,
-                    difficulty = difficulty
+                    difficulty = difficulty,
+                    usedLetterIndices = emptySet()
                 )
             }
             startTimer() // Inicia el temporizador para la nueva pregunta

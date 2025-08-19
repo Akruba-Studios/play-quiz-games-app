@@ -36,6 +36,7 @@ import com.akrubastudios.playquizgames.Routes
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
+import androidx.compose.foundation.clickable
 
 @Composable
 fun GameScreen(
@@ -102,11 +103,16 @@ fun GameScreen(
 
             AnswerSlots(
                 correctAnswer = uiState.currentQuestion!!.correctAnswer,
-                userAnswer = uiState.userAnswer
+                userAnswer = uiState.userAnswer,
+                onClear = { viewModel.clearUserAnswer() }
             )
             LetterBank(
                 hintLetters = uiState.generatedHintLetters,
-                onLetterClick = { letter -> viewModel.onLetterClick(letter) }
+                usedIndices = uiState.usedLetterIndices,
+                difficulty = uiState.difficulty, // Borrar para habilitar letras bloqueadas en Modo Dificil
+                onLetterClick = { letter, index -> // <-- MODIFICADO
+                    viewModel.onLetterClick(letter, index)
+                }
             )
         }
     }
@@ -167,11 +173,14 @@ fun QuestionImage(
 fun AnswerSlots(
     correctAnswer: String,
     userAnswer: String,
+    onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // --- CAMBIA 'Row' POR 'FlowRow' ---
     FlowRow(
-        modifier = modifier.padding(vertical = 24.dp),
+        modifier = modifier
+            .padding(vertical = 24.dp)
+            .clickable { onClear() },
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), // Centra las casillas
         verticalArrangement = Arrangement.spacedBy(8.dp) // Añade espacio vertical si hay más de una línea
     ) {
@@ -202,7 +211,9 @@ fun AnswerSlot(char: Char) {
 @Composable
 fun LetterBank(
     hintLetters: String,
-    onLetterClick: (Char) -> Unit, // Una función que se llamará cuando se toque una letra
+    usedIndices: Set<Int>,
+    difficulty: String, // Borrar para habilitar letras bloqueadas en Modo Dificil
+    onLetterClick: (Char, Int) -> Unit, // Una función que se llamará cuando se toque una letra
     modifier: Modifier = Modifier
 ) {
     // FlowRow es como una Row, pero si no caben los elementos,
@@ -216,8 +227,18 @@ fun LetterBank(
         maxItemsInEachRow = 7 // Intentará poner 7 letras por fila
     ) {
         // Creamos un botón por cada letra de nuestras pistas
-        hintLetters.forEach { letter ->
-            LetterButton(letter = letter, onClick = { onLetterClick(letter) })
+        hintLetters.forEachIndexed { index, letter ->
+            LetterButton(
+                letter = letter,
+                // Si el modo es principiante Y el índice está en la lista de usados,
+                // el botón se deshabilita.
+                enabled = if (difficulty == "principiante") { // Reemplazar por esto: "enabled = usedIndices.contains(index).not()," para habilitar letras bloqueads en modo hard
+                    usedIndices.contains(index).not()
+                } else {
+                    true
+                },
+                onClick = { onLetterClick(letter, index) }
+            )
         }
     }
 }
@@ -225,11 +246,13 @@ fun LetterBank(
 @Composable
 fun LetterButton(
     letter: Char,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = Modifier.padding(horizontal = 4.dp),
+        enabled = enabled
     ) {
         Text(text = letter.toString().uppercase(), fontSize = 18.sp)
     }
