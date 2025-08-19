@@ -36,6 +36,7 @@ import com.akrubastudios.playquizgames.Routes
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
+import com.akrubastudios.playquizgames.ui.components.KeepScreenOn
 import androidx.compose.foundation.clickable
 
 @Composable
@@ -43,6 +44,8 @@ fun GameScreen(
     viewModel: GameViewModel,
     navController: NavController
 ) {
+    KeepScreenOn()
+
     val uiState by viewModel.uiState.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
     val context = LocalContext.current
