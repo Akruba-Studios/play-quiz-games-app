@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
+import com.akrubastudios.playquizgames.ui.screens.boss.BossScreen
 import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
 import com.akrubastudios.playquizgames.ui.screens.freemode.FreeModeScreen
 import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
@@ -42,6 +43,7 @@ object Routes {
     const val CONTINENT_SELECTION_SCREEN = "continent_selection"
     const val COUNTRY_SELECTION_SCREEN = "country_selection/{continentId}"
     const val FREE_MODE_SCREEN = "free_mode"
+    const val BOSS_SCREEN = "boss/{countryId}/{levelId}"
 }
 
 @Composable
@@ -73,13 +75,12 @@ fun NavGraph() {
             route = Routes.COUNTRY_SCREEN,
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
             val viewModel: CountryViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsState()
 
             CountryScreen(
-                viewModel = viewModel,
-                onPlayClick = { categoryId ->
+                onPlayCategoryClick = { categoryId ->
+                    val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
                     val continentId = uiState.country?.continentId ?: ""
                     val route = Routes.LEVEL_SELECTION_SCREEN
                         .replace("{countryId}", countryId)
@@ -87,8 +88,27 @@ fun NavGraph() {
                         .replace("{continentId}", continentId)
                     navController.navigate(route)
                 },
+                onChallengeBossClick = { bossLevelId ->
+                    val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+                    // Construimos la ruta a la BossScreen.
+                    val route = Routes.BOSS_SCREEN
+                        .replace("{countryId}", countryId)
+                        .replace("{levelId}", bossLevelId)
+                    navController.navigate(route)
+                },
                 onBackClick = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route = Routes.BOSS_SCREEN,
+            arguments = listOf(
+                navArgument("countryId") { type = NavType.StringType },
+                navArgument("levelId") { type = NavType.StringType }
+            )
+        ) {
+            // El BossViewModel se inyecta automáticamente gracias a Hilt.
+            BossScreen(navController = navController)
         }
 
         composable(

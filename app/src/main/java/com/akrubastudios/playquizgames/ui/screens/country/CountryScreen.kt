@@ -14,10 +14,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
+import com.akrubastudios.playquizgames.ui.screens.country.CountryStatus
+
 @Composable
 fun CountryScreen(
     viewModel: CountryViewModel = hiltViewModel(),
-    onPlayClick: (categoryId: String) -> Unit,
+    // MODIFICADO: Necesitamos nuevas lambdas para la navegación
+    onPlayCategoryClick: (categoryId: String) -> Unit,
+    onChallengeBossClick: (bossLevelId: String) -> Unit,
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -26,44 +45,162 @@ fun CountryScreen(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
+    } else if (uiState.country == null) {
+        // Estado de error si el país no se pudo cargar
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Error al cargar los datos del país.")
+        }
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+        // Usamos una LazyColumn para contenido que podría ser largo
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = uiState.country?.name?.get("es") ?: "País", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Barra de progreso real
-            Text(text = "Progreso de Conquista: ${uiState.currentPc} / ${uiState.pcRequired} PC")
-            LinearProgressIndicator(
-                progress = { (uiState.currentPc.toFloat() / uiState.pcRequired.toFloat()) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(64.dp))
-            uiState.availableLevels.forEach { (category, nextLevelId) ->
-                Button(
-                    onClick = {
-                        onPlayClick(category.categoryId)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = nextLevelId != null // El botón se deshabilita si no hay más niveles
-                ) {
-                    val buttonText = if (nextLevelId != null) {
-                        category.name["es"] ?: "Categoría"
-                    } else {
-                        "${category.name["es"]} (¡Completado!)"
-                    }
-                    Text(buttonText)
-                }
+            item {
+                Text(
+                    text = uiState.country?.name?.get("es") ?: "País",
+                    style = MaterialTheme.typography.displayMedium
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onBackClick, modifier = Modifier.fillMaxWidth()) {
-                Text("Volver al Mapa")
+            // --- LÓGICA DE UI BASADA EN EL ESTADO DEL PAÍS ---
+            when (uiState.countryStatus) {
+                CountryStatus.AVAILABLE -> {
+                    item {
+                        CountryProgress(
+                            current = uiState.currentPc,
+                            total = uiState.pcRequired,
+                            statusText = "Progreso de Conquista"
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        CategoryList(
+                            categories = uiState.availableCategories,
+                            onCategoryClick = onPlayCategoryClick
+                        )
+                    }
+                }
+                CountryStatus.CONQUERED -> {
+                    item {
+                        CountryProgress(
+                            current = uiState.pcRequired,
+                            total = uiState.pcRequired,
+                            statusText = "¡País Conquistado!"
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                        ChallengeBossButton(
+                            bossLevelId = uiState.country?.bossLevelId ?: "",
+                            onChallengeClick = onChallengeBossClick
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        StudyTopics(topics = uiState.studyTopics)
+                    }
+                }
+                CountryStatus.DOMINATED -> {
+                    item {
+                        CountryProgress(
+                            current = uiState.pcRequired,
+                            total = uiState.pcRequired,
+                            statusText = "¡PAÍS DOMINADO!"
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("Has desbloqueado todo el contenido de este país.", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CategoryList(
+                            categories = uiState.availableCategories,
+                            onCategoryClick = onPlayCategoryClick
+                        )
+                    }
+                }
+                CountryStatus.LOCKED -> {
+                    item {
+                        Icon(Icons.Default.Lock, contentDescription = "Bloqueado", modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Este país está bloqueado.", style = MaterialTheme.typography.headlineSmall)
+                        Text("Conquista países vecinos para desbloquearlo.")
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(onClick = onBackClick) {
+                    Text("Volver al Mapa")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CountryProgress(current: Long, total: Long, statusText: String) {
+    Text(text = statusText, style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    LinearProgressIndicator(
+        progress = { current.toFloat() / total.toFloat() },
+        modifier = Modifier.fillMaxWidth(0.8f).height(8.dp),
+        strokeCap = StrokeCap.Round
+    )
+    Text(
+        text = "$current / $total PC",
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.padding(top = 4.dp)
+    )
+}
+
+@Composable
+private fun CategoryList(categories: List<com.akrubastudios.playquizgames.domain.Category>, onCategoryClick: (String) -> Unit) {
+    Text("Categorías Disponibles", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(16.dp))
+    categories.forEach { category ->
+        Button(
+            onClick = { onCategoryClick(category.categoryId) },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Text(category.name["es"] ?: "Categoría")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ChallengeBossButton(bossLevelId: String, onChallengeClick: (String) -> Unit) {
+    Button(
+        onClick = { onChallengeClick(bossLevelId) },
+        modifier = Modifier.fillMaxWidth(0.9f).height(50.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+    ) {
+        Text("Desafiar al Guardián", fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun StudyTopics(topics: List<String>) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    if (topics.isNotEmpty()) {
+        Column(modifier = Modifier.fillMaxWidth(0.9f)) {
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            Row(
+                modifier = Modifier.clickable { isExpanded = !isExpanded },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Info, contentDescription = "Información")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Reunir Intel (Pistas para el Jefe)", style = MaterialTheme.typography.titleSmall)
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                )
+            }
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp)) {
+                    topics.forEach { topic ->
+                        Text("• $topic", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
         }
     }
