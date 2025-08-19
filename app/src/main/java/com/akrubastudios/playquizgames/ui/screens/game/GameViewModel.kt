@@ -85,9 +85,17 @@ class GameViewModel @Inject constructor(
         val allCharsInAnswer = correctAnswer.uppercase().toList()
 
         if (difficulty == "principiante") {
-            // Modo Anagrama: Simplemente desordenamos todos los caracteres de la respuesta,
-            // incluyendo los espacios, para que el usuario los coloque.
-            return allCharsInAnswer.shuffled().joinToString("")
+            // Modo Anagrama con "Barajado Garantizado"
+            val originalString = allCharsInAnswer.joinToString("")
+            var shuffledString: String
+
+            do {
+                shuffledString = allCharsInAnswer.shuffled().joinToString("")
+            } while (shuffledString == originalString && originalString.length > 1)
+            // La condición "originalString.length > 1" evita un bucle infinito
+            // para respuestas de una sola letra, donde barajar no tiene efecto.
+
+            return shuffledString
 
         } else { // Modo Difícil
             // Se utiliza tu lógica original, pero con un ajuste en el conteo de letras.
