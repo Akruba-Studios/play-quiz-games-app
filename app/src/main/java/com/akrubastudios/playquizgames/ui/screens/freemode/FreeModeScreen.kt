@@ -105,6 +105,7 @@ fun FreeModeScreen(
                 items(uiState.masteredLevels) { level ->
                     MasteredLevelItem(
                         level = level,
+                        selectedDifficulty = selectedDifficulty,
                         onPlayClick = {
                             // Usamos un countryId genérico o vacío, ya que en este modo
                             // no afecta la recompensa de PC.
@@ -120,6 +121,7 @@ fun FreeModeScreen(
 @Composable
 fun MasteredLevelItem(
     level: UserLevelCompletion,
+    selectedDifficulty: String,
     onPlayClick: () -> Unit
 ) {
     Card(
@@ -134,13 +136,21 @@ fun MasteredLevelItem(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Lógica para la barra de progreso de puntaje
-            val progress = if (level.maxScore > 0) {
-                level.highScore.toFloat() / level.maxScore.toFloat()
+            // 1. Definimos nuestros máximos teóricos.
+            val maxScorePrincipiante = level.maxScore
+            val maxScoreDificil = (level.maxScore * 1.5).toInt()
+
+            // 2. La barra de progreso SIEMPRE es relativa al máximo de Difícil.
+            val progress = if (maxScoreDificil > 0) {
+                (level.highScore.toFloat() / maxScoreDificil.toFloat()).coerceAtMost(1f)
             } else {
                 0f
             }
             val animatedProgress by animateFloatAsState(targetValue = progress, label = "ScoreProgress")
+
+            // 3. Definimos la condición para mostrar el aviso.
+            val threshold = maxScorePrincipiante * 0.8
+            val shouldShowHint = level.highScore >= threshold
 
             LinearProgressIndicator(
                 progress = { animatedProgress },
@@ -157,10 +167,23 @@ fun MasteredLevelItem(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Máximo: ${formatNumber(level.maxScore)}",
+                    // Siempre mostramos el máximo real (de Difícil).
+                    text = "Máximo: ${formatNumber(maxScoreDificil)}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+
+            // 4. Mostramos el texto de ayuda solo si AMBAS condiciones se cumplen.
+            if (shouldShowHint && selectedDifficulty == "principiante") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "(Máx. en Principiante: ${formatNumber(maxScorePrincipiante)})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
