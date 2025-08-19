@@ -29,6 +29,17 @@ class FreeModeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FreeModeState())
     val uiState = _uiState.asStateFlow()
 
+    // Estado para guardar la dificultad seleccionada.
+    private val _selectedDifficulty = MutableStateFlow("principiante")
+    val selectedDifficulty = _selectedDifficulty.asStateFlow()
+
+    /**
+     * Se llama desde la UI cuando el usuario cambia la selección de dificultad.
+     */
+    fun onDifficultyChange(difficulty: String) {
+        _selectedDifficulty.value = difficulty
+    }
+
     init {
         loadMasteredLevels()
     }

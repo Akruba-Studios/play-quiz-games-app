@@ -88,7 +88,8 @@ fun GameScreen(
                 questionNumber = uiState.questionNumber,
                 totalQuestions = uiState.totalQuestions,
                 score = uiState.score,
-                remainingTime = uiState.remainingTime
+                remainingTime = uiState.remainingTime,
+                difficulty = uiState.difficulty
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -117,6 +118,7 @@ fun TopBar(
     totalQuestions: Int,
     score: Int,
     remainingTime: Long,
+    difficulty: String,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
@@ -133,7 +135,14 @@ fun TopBar(
             style = MaterialTheme.typography.headlineMedium,
             color = if (remainingTime <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
-        Text(text = "Puntaje: $score")
+        Column(horizontalAlignment = Alignment.End) {
+            Text(text = "Puntaje: $score")
+            // Mostramos la dificultad actual con un estilo más pequeño.
+            Text(
+                text = difficulty.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
     }
 }
 

@@ -1,5 +1,8 @@
 package com.akrubastudios.playquizgames.ui.screens.freemode
 
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,9 +39,10 @@ import java.util.Locale
 fun FreeModeScreen(
     viewModel: FreeModeViewModel = hiltViewModel(),
     // Pasamos una función lambda para manejar la navegación hacia el juego.
-    onNavigateToGame: (levelId: String, countryId: String) -> Unit
+    onNavigateToGame: (levelId: String, countryId: String, difficulty: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
@@ -54,6 +58,27 @@ fun FreeModeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val difficulties = listOf("principiante", "dificil")
+        val selectedIndex = difficulties.indexOf(selectedDifficulty)
+
+        TabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            difficulties.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedIndex == index,
+                    onClick = { viewModel.onDifficultyChange(difficulties[index]) },
+                    text = { Text(text = title.replaceFirstChar { it.uppercase() }) }
+                )
+            }
+        }
+        Text(
+            text = if (selectedDifficulty == "dificil") "Modo Difícil: ¡+50% XP!" else "Modo Principiante: ¡Ideal para aprender!",
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        )
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -83,7 +108,7 @@ fun FreeModeScreen(
                         onPlayClick = {
                             // Usamos un countryId genérico o vacío, ya que en este modo
                             // no afecta la recompensa de PC.
-                            onNavigateToGame(level.levelId, "freemode")
+                            onNavigateToGame(level.levelId, "freemode", selectedDifficulty)
                         }
                     )
                 }

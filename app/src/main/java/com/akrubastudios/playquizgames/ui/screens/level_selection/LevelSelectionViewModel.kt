@@ -26,6 +26,17 @@ class LevelSelectionViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LevelSelectionState())
     val uiState = _uiState.asStateFlow()
 
+    // Estado para guardar la dificultad seleccionada. Por defecto, "principiante".
+    private val _selectedDifficulty = MutableStateFlow("principiante")
+    val selectedDifficulty = _selectedDifficulty.asStateFlow()
+
+    /**
+     * Se llama desde la UI cuando el usuario cambia la selección de dificultad.
+     */
+    fun onDifficultyChange(difficulty: String) {
+        _selectedDifficulty.value = difficulty
+    }
+
     private val categoryId: String = savedStateHandle.get<String>("categoryId")!!
     private val continentId: String = savedStateHandle.get<String>("continentId")!!
 

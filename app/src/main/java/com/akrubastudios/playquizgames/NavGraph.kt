@@ -33,7 +33,7 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}"
-    const val GAME_SCREEN = "game/{countryId}/{levelId}"
+    const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
@@ -58,11 +58,12 @@ fun NavGraph() {
 
         composable(Routes.FREE_MODE_SCREEN) {
             FreeModeScreen(
-                onNavigateToGame = { levelId, countryId ->
+                onNavigateToGame = { levelId, countryId, difficulty ->
                     // Navega a la pantalla del juego con los datos del nivel seleccionado.
                     val route = Routes.GAME_SCREEN
                         .replace("{countryId}", countryId) // Usará "freemode"
                         .replace("{levelId}", levelId)
+                        .replace("{difficulty}", difficulty)
                     navController.navigate(route)
                 }
             )
@@ -99,11 +100,14 @@ fun NavGraph() {
             )
         ) { backStackEntry -> // <-- Usamos backStackEntry
             LevelSelectionScreen(
-                onLevelClick = { levelId ->
+                // La lambda ahora provee levelId y difficulty
+                onLevelClick = { levelId, difficulty ->
                     val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+                    // Construimos la nueva ruta completa
                     val route = Routes.GAME_SCREEN
                         .replace("{countryId}", countryId)
                         .replace("{levelId}", levelId)
+                        .replace("{difficulty}", difficulty) // <-- NUEVA LÍNEA
                     navController.navigate(route)
                 },
                 onBackClick = {
@@ -162,7 +166,8 @@ fun NavGraph() {
             route = Routes.GAME_SCREEN,
             arguments = listOf(
                 navArgument("countryId") { type = NavType.StringType },
-                navArgument("levelId") { type = NavType.StringType }
+                navArgument("levelId") { type = NavType.StringType },
+                navArgument("difficulty") { type = NavType.StringType }
             )
         ) { backStackEntry -> // <-- PASO 1: Nombramos el backStackEntry
 

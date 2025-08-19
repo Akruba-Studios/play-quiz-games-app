@@ -31,6 +31,7 @@ class GameViewModel @Inject constructor(
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
+    private val difficulty: String = savedStateHandle.get<String>("difficulty")!!
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
     }
@@ -67,7 +68,8 @@ class GameViewModel @Inject constructor(
                         questionText = firstQuestion.questionText_es,
                         totalQuestions = loadedLevel.questions.size,
                         questionNumber = currentQuestionIndex + 1,
-                        generatedHintLetters = hints
+                        generatedHintLetters = hints,
+                        difficulty = difficulty
                     )
                 }
                 startTimer()
@@ -79,24 +81,36 @@ class GameViewModel @Inject constructor(
     }
 
     private fun generateHintLetters(correctAnswer: String): String {
-        // 1. Define el alfabeto para las letras aleatorias.
-        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        // CORRECCIÓN: Mantenemos los espacios en la lista de caracteres inicial.
+        // Ya no usamos .replace(" ", "") aquí.
+        val allCharsInAnswer = correctAnswer.uppercase().toList()
 
-        // 2. Decide cuántas letras señuelo añadir (ej. entre 6 y 8).
-        val totalLettersInBank = 15
-        val decoyLettersCount = totalLettersInBank - correctAnswer.length
+        if (difficulty == "principiante") {
+            // Modo Anagrama: Simplemente desordenamos todos los caracteres de la respuesta,
+            // incluyendo los espacios, para que el usuario los coloque.
+            return allCharsInAnswer.shuffled().joinToString("")
 
-        // 3. Coge las letras de la respuesta correcta.
-        val answerLetters = correctAnswer.uppercase().toList()
+        } else { // Modo Difícil
+            // Se utiliza tu lógica original, pero con un ajuste en el conteo de letras.
+            val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            val totalLettersInBank = 15
 
-        // 4. Coge letras aleatorias del alfabeto que NO estén en la respuesta.
-        val randomLetters = alphabet.toList()
-            .filter { !answerLetters.contains(it) } // Filtra las que ya están
-            .shuffled() // Baraja el resto del alfabeto
-            .take(decoyLettersCount) // Coge el número de señuelos que necesitamos
+            // CORRECCIÓN CLAVE: Para calcular cuántos señuelos añadir, contamos
+            // únicamente los caracteres que son letras, ignorando los espacios.
+            val letterCountInAnswer = allCharsInAnswer.count { it.isLetter() }
+            val decoyLettersCount = (totalLettersInBank - letterCountInAnswer).coerceAtLeast(4)
 
-        // 5. Junta las letras de la respuesta y las aleatorias, y barájalas.
-        return (answerLetters + randomLetters).shuffled().joinToString("")
+            // Obtenemos solo las letras de la respuesta para el filtro del alfabeto.
+            val answerLettersOnly = allCharsInAnswer.filter { it.isLetter() }
+            val randomLetters = alphabet.toList()
+                .filter { !answerLettersOnly.contains(it) }
+                .shuffled()
+                .take(decoyLettersCount)
+
+            // Juntamos TODOS los caracteres de la respuesta (letras + espacios)
+            // con las letras señuelo y desordenamos el resultado final.
+            return (allCharsInAnswer + randomLetters).shuffled().joinToString("")
+        }
     }
 
     fun onLetterClick(letter: Char) {
@@ -136,21 +150,26 @@ class GameViewModel @Inject constructor(
 
             if (isCorrect) {
                 Log.d("GameViewModel_Debug", "✅ ¡Respuesta Correcta! Calculando puntos...")
-                // El puntaje base es 1000.
-                // Se añade una bonificación basada en el tiempo restante.
-                // Puntaje Ganado = 1000 (base) + (Tiempo Restante * 100)
-                // (remainingTime * 100) -> Si quedan 10 seg, suma 1000 extra. Si queda 1 seg, suma 100.
-                val pointsWon = 1000 + (uiState.value.remainingTime * 100).toInt()
+
+                // Calcula el puntaje base con el bono de tiempo.
+                val basePoints = 1000 + (uiState.value.remainingTime * 100).toInt()
+
+                // Aplica el bono de dificultad si corresponde.
+                val pointsWon = if (difficulty == "dificil") {
+                    Log.d("GameViewModel_Debug", "Bono de dificultad aplicado.")
+                    (basePoints * 1.5).toInt()
+                } else {
+                    basePoints
+                }
+
                 _uiState.update {
                     it.copy(
                         score = it.score + pointsWon,
-                        correctAnswersCount = it.correctAnswersCount + 1 // <-- AÑADE ESTA LÍNEA
+                        correctAnswersCount = it.correctAnswersCount + 1
                     )
                 }
 
                 Log.d("GameViewModel_Debug", "Puntos ganados: $pointsWon. Nuevo puntaje: ${uiState.value.score}")
-
-
             } else {
                 Log.d("GameViewModel_Debug", "❌ Respuesta Incorrecta.")
             }
@@ -173,7 +192,8 @@ class GameViewModel @Inject constructor(
                     questionText = nextQuestion.questionText_es,
                     questionNumber = currentQuestionIndex + 1,
                     userAnswer = "",
-                    generatedHintLetters = hints
+                    generatedHintLetters = hints,
+                    difficulty = difficulty
                 )
             }
             startTimer() // Inicia el temporizador para la nueva pregunta
