@@ -62,6 +62,7 @@ fun GameScreen(
                 .replace("{starsEarned}", result.starsEarned.toString())
                 .replace("{levelId}", viewModel.levelIdForNav())
                 .replace("{countryId}", viewModel.countryId)
+                .replace("{difficulty}", viewModel.difficultyForNav())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

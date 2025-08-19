@@ -32,7 +32,7 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
@@ -188,7 +188,8 @@ fun NavGraph() {
                 navArgument("correctAnswers") { type = NavType.IntType },
                 navArgument("starsEarned") { type = NavType.IntType },
                 navArgument("levelId") { type = NavType.StringType },
-                navArgument("countryId") { type = NavType.StringType }
+                navArgument("countryId") { type = NavType.StringType },
+                navArgument("difficulty") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -200,6 +201,7 @@ fun NavGraph() {
             val starsEarned = backStackEntry.arguments?.getInt("starsEarned") ?: 0
             val levelId = backStackEntry.arguments?.getString("levelId") ?: "logos_1"
             val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
+            val difficulty = backStackEntry.arguments?.getString("difficulty") ?: "principiante"
 
             // Mostramos la ResultScreen con los datos extraídos
             ResultScreen(
@@ -212,12 +214,13 @@ fun NavGraph() {
                     val route = Routes.GAME_SCREEN
                         .replace("{countryId}", countryId)
                         .replace("{levelId}", levelId)
+                        .replace("{difficulty}", difficulty)
                     navController.navigate(route) {
                         popUpTo(Routes.MAP_SCREEN)
                     }
                 },
                 onBackToMenu = {
-                    // --- AÑADE ESTA LÓGICA ---
+                    // --- AÑADE ESTA LÓGICA DE TEST DE ANUNCIO---
                     AdManager.showInterstitialAd(activity)
 
                     navController.navigate(Routes.MAP_SCREEN) {

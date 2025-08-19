@@ -41,8 +41,7 @@ class GameViewModel @Inject constructor(
     private val _gameResult = MutableStateFlow<GameResult?>(null)
     val gameResult: StateFlow<GameResult?> = _gameResult.asStateFlow()
     private var timerJob: Job? = null // Para poder controlar (cancelar) el temporizador
-
-    // --- CORRECCIÓN: DECLARAMOS LAS VARIABLES AQUÍ ---
+    private var isAnswerProcessing = false
     private var levelPackage: QuizLevelPackage? = null
     private var currentQuestionIndex = 0
     // ---------------------------------------------
@@ -114,20 +113,29 @@ class GameViewModel @Inject constructor(
     }
 
     fun onLetterClick(letter: Char, index: Int) {
-        // Si el índice ya ha sido usado, no hacemos nada.
-        if (uiState.value.usedLetterIndices.contains(index)) return
+        // --- INICIO DE LA CORRECCIÓN ---
+        // La validación de "índice usado" AHORA SOLO APLICA en modo principiante.
+        if (difficulty == "principiante" && uiState.value.usedLetterIndices.contains(index)) {
+            return
+        }
+        // --- FIN DE LA CORRECCIÓN ---
 
         val currentAnswerLength = uiState.value.currentQuestion?.correctAnswer?.length ?: 0
         if (uiState.value.userAnswer.length < currentAnswerLength) {
             _uiState.update { currentState ->
+                // Creamos una variable para los índices, que solo se actualizará en principiante.
+                val newUsedIndices = if (difficulty == "principiante") {
+                    currentState.usedLetterIndices + index
+                } else {
+                    currentState.usedLetterIndices // En difícil, no añadimos nada.
+                }
+
                 currentState.copy(
                     userAnswer = currentState.userAnswer + letter,
-                    // Añadimos el índice del botón pulsado al set de usados.
-                    usedLetterIndices = currentState.usedLetterIndices + index
+                    usedLetterIndices = newUsedIndices
                 )
             }
 
-            // Log para ver la respuesta del usuario mientras la construye
             Log.d("GameViewModel_Debug", "Letra '${letter}' añadida. Respuesta actual: ${uiState.value.userAnswer}")
 
             if (uiState.value.userAnswer.length == currentAnswerLength) {
@@ -146,8 +154,15 @@ class GameViewModel @Inject constructor(
     }
 
     private fun checkAnswer() {
+        if (isAnswerProcessing) return
+        // Cerramos el cerrojo para que nadie más pueda entrar.
+        isAnswerProcessing = true
+
         stopTimer() // Detiene el temporizador inmediatamente
         viewModelScope.launch {
+            if (uiState.value.remainingTime == 0L) {
+                delay(500L) // Tiempo para que onLetterClick termine de actualizar userAnswer
+            }
             val state = uiState.value
 
             // --- LOGS CRÍTICOS PARA DIAGNÓSTICO ---
@@ -162,6 +177,9 @@ class GameViewModel @Inject constructor(
 
             // --- LOG DEL RESULTADO DE LA COMPARACIÓN ---
             Log.d("GameViewModel_Debug", "Resultado de la verificación (isCorrect): $isCorrect")
+            // AGREGA ESTOS LOGS AQUÍ:
+            Log.d("GameViewModel_Debug", "remainingTime cuando verifica: ${uiState.value.remainingTime}")
+            Log.d("GameViewModel_Debug", "basePoints que se calculará: ${1000 + (uiState.value.remainingTime * 100).toInt()}")
             // -----------------------------------------
 
             if (isCorrect) {
@@ -213,6 +231,7 @@ class GameViewModel @Inject constructor(
                     usedLetterIndices = emptySet()
                 )
             }
+            isAnswerProcessing = false
             startTimer() // Inicia el temporizador para la nueva pregunta
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
@@ -248,6 +267,7 @@ class GameViewModel @Inject constructor(
             // el estado _gameResult. La UI reaccionará a este cambio.
             // La llamada a la Cloud Function la hará la ResultScreen o su futuro ViewModel.
             _gameResult.value = result
+            isAnswerProcessing = false
         }
     }
 
@@ -292,7 +312,9 @@ class GameViewModel @Inject constructor(
             }
 
             // Si el tiempo llega a 0, se considera una respuesta incorrecta
-            checkAnswer()
+            if (!isAnswerProcessing) {
+                checkAnswer()
+            }
         }
     }
 
@@ -302,5 +324,9 @@ class GameViewModel @Inject constructor(
 
     fun levelIdForNav(): String {
         return levelId
+    }
+
+    fun difficultyForNav(): String {
+        return difficulty
     }
 }
