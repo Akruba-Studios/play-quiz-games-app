@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +23,8 @@ data class MapState(
     val isLoading: Boolean = true,
     val playerLevelInfo: PlayerLevelManager.LevelInfo? = null,
     val expeditionAvailable: Boolean = false,
-    val availableExpeditions: List<Pair<String, String>> = emptyList()
+    val availableExpeditions: List<Pair<String, String>> = emptyList(),
+    val pendingBossChallenge: String? = null
 )
 
 @HiltViewModel
@@ -107,9 +109,33 @@ class MapViewModel @Inject constructor(
                         isLoading = false, // <-- Solo ponemos isLoading a false cuando tenemos datos
                         playerLevelInfo = levelInfo,
                         expeditionAvailable = isExpeditionAvailable,
-                        availableExpeditions = filteredExpeditions
+                        availableExpeditions = filteredExpeditions,
+                        pendingBossChallenge = userData.pendingBossChallenge
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Limpia la "bandera" de desafío de jefe pendiente en Firestore.
+     * Se llama después de que el usuario interactúa con el AlertDialog.
+     */
+    fun clearPendingBossChallenge() {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("MapViewModel", "No se puede limpiar el desafío, usuario nulo.")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val userRef = db.collection("users").document(uid)
+                // Usamos FieldValue.delete() para eliminar completamente el campo del documento.
+                userRef.update("pendingBossChallenge", com.google.firebase.firestore.FieldValue.delete())
+                Log.d("MapViewModel", "✅ Bandera pendingBossChallenge eliminada.")
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "❌ Error al limpiar la bandera pendingBossChallenge.", e)
             }
         }
     }

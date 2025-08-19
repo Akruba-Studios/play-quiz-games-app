@@ -195,6 +195,47 @@ fun MapScreen(
             dismissButton = null
         )
     }
+
+    // Diálogo para el desafío de Jefe post-conquista
+    uiState.pendingBossChallenge?.let { countryId ->
+        // Obtenemos el nombre del país para mostrarlo en el diálogo.
+        val countryName = uiState.countries.find { it.countryId == countryId }?.name?.get("es") ?: "este país"
+
+        AlertDialog(
+            onDismissRequest = {
+                // Si el usuario toca fuera, consideramos que es "Más Tarde".
+                viewModel.clearPendingBossChallenge()
+            },
+            title = { Text(text = "¡País Conquistado!") },
+            text = { Text(text = "Has demostrado tu dominio sobre $countryName. Un último desafío te espera: el Guardián de la nación te reta a una prueba final. ¿Aceptas el desafío ahora?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearPendingBossChallenge()
+                        // Buscamos el bossLevelId para navegar a la pantalla correcta.
+                        val bossLevelId = uiState.countries.find { it.countryId == countryId }?.bossLevelId ?: ""
+                        if (bossLevelId.isNotEmpty()) {
+                            val route = Routes.BOSS_SCREEN
+                                .replace("{countryId}", countryId)
+                                .replace("{levelId}", bossLevelId)
+                            navController.navigate(route)
+                        }
+                    }
+                ) {
+                    Text("Desafiar Ahora")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearPendingBossChallenge()
+                    }
+                ) {
+                    Text("Más Tarde")
+                }
+            }
+        )
+    }
 }
 
 
