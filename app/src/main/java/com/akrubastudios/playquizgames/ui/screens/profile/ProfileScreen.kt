@@ -27,7 +27,8 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
@@ -77,7 +78,8 @@ fun ProfileScreen(
 
             item {
                 ActionsCard(
-                    onSignOutClick = { showSignOutDialog = true }
+                    onSignOutClick = { showSignOutDialog = true },
+                    onSettingsClick = onSettingsClick
                 )
             }
         }
@@ -138,11 +140,21 @@ private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
 }
 
 @Composable
-private fun ActionsCard(onSignOutClick: () -> Unit) {
+private fun ActionsCard(
+    onSignOutClick: () -> Unit,
+    onSettingsClick: () -> Unit // <-- NUEVO PARÁMETRO
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Cuenta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = onSettingsClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Ajustes")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = onSignOutClick,
                 modifier = Modifier.fillMaxWidth(),

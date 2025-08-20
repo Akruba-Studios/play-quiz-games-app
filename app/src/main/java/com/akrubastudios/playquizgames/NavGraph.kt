@@ -31,6 +31,7 @@ import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
+import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
 
 
 object Routes {
@@ -47,6 +48,7 @@ object Routes {
     const val FREE_MODE_SCREEN = "free_mode"
     const val BOSS_SCREEN = "boss/{countryId}/{levelId}"
     const val PROFILE_SCREEN = "profile"
+    const val SETTINGS_SCREEN = "settings"
 }
 
 @Composable
@@ -85,6 +87,17 @@ fun NavGraph() {
                             inclusive = true
                         }
                     }
+                },
+                onSettingsClick = {
+                    navController.navigate(Routes.SETTINGS_SCREEN)
+                }
+            )
+        }
+        composable(Routes.SETTINGS_SCREEN) {
+            SettingsScreen(
+                onBackClick = {
+                    // Simplemente vuelve a la pantalla anterior en la pila (ProfileScreen).
+                    navController.popBackStack()
                 }
             )
         }
