@@ -50,16 +50,6 @@ object AppModule {
         // QuizRepository ya no necesita Context porque no lee archivos locales
         return QuizRepository(db)
     }
-
-    @Provides
-    @Singleton
-    fun provideAuthRepository(
-        auth: FirebaseAuth,
-        db: FirebaseFirestore
-    ): AuthRepository {
-        return AuthRepository(auth, db)
-    }
-
     @Provides
     @Singleton
     fun provideGameDataRepository(
@@ -67,5 +57,14 @@ object AppModule {
         functions: FirebaseFunctions // <-- AÑADE ESTA LÍNEA DE NUEVO
     ): GameDataRepository {
         return GameDataRepository(db, functions)
+    }
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        auth: FirebaseAuth,
+        db: FirebaseFirestore,
+        gameDataRepository: GameDataRepository
+    ): AuthRepository {
+        return AuthRepository(auth, db, gameDataRepository)
     }
 }

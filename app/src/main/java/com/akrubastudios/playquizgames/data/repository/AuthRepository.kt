@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.data.repository
 
+import android.util.Log
 import com.akrubastudios.playquizgames.domain.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -14,7 +15,8 @@ data class SignInResult(
 )
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore // <-- AÑADE FIRESTORE AQUÍ
+    private val db: FirebaseFirestore, // <-- AÑADE FIRESTORE AQUÍ
+    private val gameDataRepository: GameDataRepository
 ) {
     val currentUser: FirebaseUser?
         get() = auth.currentUser
@@ -64,6 +66,14 @@ class AuthRepository @Inject constructor(
     }
 
     fun signOut() {
+        Log.d("SignOut_Debug", "[PASO 2] AuthRepository.signOut() llamado.")
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // 1. Primero, ordenamos explícitamente detener todas las escuchas.
+        gameDataRepository.stopUserDataListener()
+
+        // 2. Solo después, cerramos la sesión de forma segura.
         auth.signOut()
+        // --- FIN DE LA MODIFICACIÓN ---
+        Log.d("SignOut_Debug", "[PASO 3] auth.signOut() ejecutado.")
     }
 }

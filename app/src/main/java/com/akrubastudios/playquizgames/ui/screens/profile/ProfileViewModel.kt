@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
@@ -62,9 +63,11 @@ class ProfileViewModel @Inject constructor(
      * Cierra la sesión del usuario actual y envía un evento para notificar a la UI.
      */
     fun signOut() {
+        Log.d("SignOut_Debug", "[PASO 1] ProfileViewModel.signOut() llamado.")
         viewModelScope.launch {
             authRepository.signOut()
             _signOutEvent.send(Unit)
+            Log.d("SignOut_Debug", "[PASO 4] Evento de navegación enviado.")
         }
     }
 }
