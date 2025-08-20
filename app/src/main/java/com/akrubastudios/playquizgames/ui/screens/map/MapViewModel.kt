@@ -124,6 +124,7 @@ class MapViewModel @Inject constructor(
      * Se llama después de que el usuario interactúa con el AlertDialog.
      */
     fun clearPendingBossChallenge() {
+        _uiState.value = _uiState.value.copy(pendingBossChallenge = null)
         val uid = auth.currentUser?.uid
         if (uid == null) {
             Log.e("MapViewModel", "No se puede limpiar el desafío, usuario nulo.")
