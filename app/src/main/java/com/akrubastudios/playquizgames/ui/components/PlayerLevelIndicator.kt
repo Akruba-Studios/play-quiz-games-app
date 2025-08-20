@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,6 +39,7 @@ import java.util.Locale
 @Composable
 fun PlayerLevelIndicator(
     levelInfo: PlayerLevelManager.LevelInfo,
+    boostCount: Int,
     modifier: Modifier = Modifier
 ) {
     // --- LÓGICA DE CÁLCULO (sin cambios) ---
@@ -58,11 +64,29 @@ fun PlayerLevelIndicator(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Nivel ${levelInfo.level}",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            // Agrupamos el Nivel y el Boost en una Row anidada
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Nivel ${levelInfo.level}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                // Mostramos el indicador de boost solo si hay al menos uno
+                if (boostCount > 0) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Boost de Conquista",
+                        tint = Color(0xFFFFD700) // Color dorado para la estrella
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "x $boostCount",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
             Text(
                 text = "${(progress * 100).toInt()}%",
                 style = MaterialTheme.typography.titleMedium,
@@ -128,7 +152,10 @@ fun PlayerLevelIndicatorPreview() {
                 currentLevelThresholdXp = 10000,
                 nextLevelThresholdXp = 25000
             )
-            PlayerLevelIndicator(levelInfo = previewLevelInfo)
+            PlayerLevelIndicator(
+                levelInfo = previewLevelInfo,
+                boostCount = 1 // <-- AÑADIR UN VALOR DE EJEMPLO
+            )
         }
     }
 }

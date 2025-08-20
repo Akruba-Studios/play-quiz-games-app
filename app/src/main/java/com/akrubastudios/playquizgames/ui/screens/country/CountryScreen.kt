@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -37,11 +38,12 @@ fun CountryScreen(
     // MODIFICADO: Necesitamos nuevas lambdas para la navegación
     onPlayCategoryClick: (categoryId: String) -> Unit,
     onChallengeBossClick: (bossLevelId: String) -> Unit,
+    onApplyBoostClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.isLoading) {
+    if (uiState.isScreenLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
@@ -74,6 +76,31 @@ fun CountryScreen(
                             total = uiState.pcRequired,
                             statusText = "Progreso de Conquista"
                         )
+                        // Mostramos el botón solo si la condición se cumple.
+                        if (uiState.canApplyBoost) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = onApplyBoostClick,
+                                enabled = !uiState.isApplyingBoost,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            ) {
+                                if (uiState.isApplyingBoost) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.Star, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Usar Boost de 5,000 PC")
+                                    }
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(24.dp))
                         CategoryList(
                             categories = uiState.availableCategories,

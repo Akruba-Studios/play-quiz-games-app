@@ -144,36 +144,7 @@ fun MapScreen(
                     textAlign = TextAlign.Center
                 )
             }
-            // CAPA 3: Indicador de Boosts de PC disponibles
-            // Solo se muestra si el jugador tiene al menos un boost.
-            if (uiState.unassignedPcBoosts > 0) {
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd) // Lo alinea a la esquina superior derecha
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(50), // Forma de píldora
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    tonalElevation = 4.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = "Boost de Conquista",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "x ${uiState.unassignedPcBoosts}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
-            }
+
             // CAPA 4: El indicador de nivel del jugador
             // Solo mostramos el indicador si ya hemos cargado la información del nivel desde el ViewModel.
             uiState.playerLevelInfo?.let { levelInfo ->
@@ -184,7 +155,10 @@ fun MapScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 80.dp) // Ajusta este valor si es necesario
                 ) {
-                    PlayerLevelIndicator(levelInfo = levelInfo)
+                    PlayerLevelIndicator(
+                        levelInfo = levelInfo,
+                        boostCount = uiState.unassignedPcBoosts // <-- PASAR EL NUEVO DATO
+                    )
                 }
             }
         }

@@ -96,6 +96,7 @@ fun NavGraph() {
                         .replace("{levelId}", bossLevelId)
                     navController.navigate(route)
                 },
+                onApplyBoostClick = { viewModel.applyPcBoost() },
                 onBackClick = { navController.popBackStack() }
             )
         }
