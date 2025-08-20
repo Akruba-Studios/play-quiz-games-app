@@ -24,7 +24,8 @@ data class MapState(
     val playerLevelInfo: PlayerLevelManager.LevelInfo? = null,
     val expeditionAvailable: Boolean = false,
     val availableExpeditions: List<Pair<String, String>> = emptyList(),
-    val pendingBossChallenge: String? = null
+    val pendingBossChallenge: String? = null,
+    val unassignedPcBoosts: Int = 0
 )
 
 @HiltViewModel
@@ -110,7 +111,8 @@ class MapViewModel @Inject constructor(
                         playerLevelInfo = levelInfo,
                         expeditionAvailable = isExpeditionAvailable,
                         availableExpeditions = filteredExpeditions,
-                        pendingBossChallenge = userData.pendingBossChallenge
+                        pendingBossChallenge = userData.pendingBossChallenge,
+                        unassignedPcBoosts = userData.unassignedPcBoosts
                     )
                 }
             }
