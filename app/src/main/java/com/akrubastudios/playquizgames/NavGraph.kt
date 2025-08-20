@@ -29,6 +29,8 @@ import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
 import com.akrubastudios.playquizgames.ui.screens.freemode.FreeModeScreen
 import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
+import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
+import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
 
 
 object Routes {
@@ -44,6 +46,7 @@ object Routes {
     const val COUNTRY_SELECTION_SCREEN = "country_selection/{continentId}"
     const val FREE_MODE_SCREEN = "free_mode"
     const val BOSS_SCREEN = "boss/{countryId}/{levelId}"
+    const val PROFILE_SCREEN = "profile"
 }
 
 @Composable
@@ -70,7 +73,21 @@ fun NavGraph() {
                 }
             )
         }
-
+        composable(Routes.PROFILE_SCREEN) {
+            val viewModel: ProfileViewModel = hiltViewModel()
+            ProfileScreen(
+                onSignOut = {
+                    // Cuando el ViewModel nos notifica que la sesión se cerró,
+                    // navegamos a la pantalla de Login.
+                    navController.navigate(Routes.LOGIN_SCREEN) {
+                        // Limpiamos TODA la pila de navegación hasta la raíz.
+                        popUpTo(0) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
         composable(
             route = Routes.COUNTRY_SCREEN,
             arguments = listOf(navArgument("countryId") { type = NavType.StringType })

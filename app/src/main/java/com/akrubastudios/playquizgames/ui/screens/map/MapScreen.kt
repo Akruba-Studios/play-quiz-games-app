@@ -95,7 +95,7 @@ fun MapScreen(
 
                 NavigationBarItem(
                     selected = false,
-                    onClick = { /* Navegar a Perfil en el futuro */ },
+                    onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
                     icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Perfil") },
                     label = { Text("Perfil") }
                 )
