@@ -17,10 +17,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ResultScreen(
+    title: String,
     score: Int,
     totalQuestions: Int,
     correctAnswers: Int,
     starsEarned: Int,
+    showPlayAgainButton: Boolean,
+    playAgainText: String,
+    backButtonText: String,
     onPlayAgain: () -> Unit,
     onBackToMenu: () -> Unit
 ) {
@@ -29,7 +33,7 @@ fun ResultScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "¡Juego Terminado!", style = MaterialTheme.typography.headlineLarge)
+        Text(text = title, style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
         Text(text = "Puntaje Final", style = MaterialTheme.typography.titleMedium)
         Text(text = "$score", style = MaterialTheme.typography.displayMedium)
@@ -49,12 +53,15 @@ fun ResultScreen(
             }
         }
         Spacer(modifier = Modifier.height(48.dp))
-        Button(onClick = onPlayAgain) {
-            Text(text = "Jugar de Nuevo")
+        // El botón ahora se muestra condicionalmente
+        if (showPlayAgainButton) {
+            Button(onClick = onPlayAgain) {
+                Text(text = playAgainText)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onBackToMenu) {
-            Text(text = "Volver al Menú")
+            Text(text = backButtonText)
         }
     }
 }

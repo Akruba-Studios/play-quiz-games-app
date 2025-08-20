@@ -66,6 +66,8 @@ fun GameScreen(
                 .replace("{levelId}", viewModel.levelIdForNav())
                 .replace("{countryId}", viewModel.countryId)
                 .replace("{difficulty}", viewModel.difficultyForNav())
+                .replace("{isFromBossFight}", "false")
+                .replace("{victory}", "false") // Irrelevante en partidas normales
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

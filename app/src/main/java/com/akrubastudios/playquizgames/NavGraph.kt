@@ -33,7 +33,7 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
@@ -209,7 +209,9 @@ fun NavGraph() {
                 navArgument("starsEarned") { type = NavType.IntType },
                 navArgument("levelId") { type = NavType.StringType },
                 navArgument("countryId") { type = NavType.StringType },
-                navArgument("difficulty") { type = NavType.StringType }
+                navArgument("difficulty") { type = NavType.StringType },
+                navArgument("isFromBossFight") { type = NavType.BoolType },
+                navArgument("victory") { type = NavType.BoolType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -222,16 +224,51 @@ fun NavGraph() {
             val levelId = backStackEntry.arguments?.getString("levelId") ?: "logos_1"
             val countryId = backStackEntry.arguments?.getString("countryId") ?: ""
             val difficulty = backStackEntry.arguments?.getString("difficulty") ?: "principiante"
+            val isFromBossFight = backStackEntry.arguments?.getBoolean("isFromBossFight") ?: false
+            val victory = backStackEntry.arguments?.getBoolean("victory") ?: false
+
+            val title: String
+            val showPlayAgainButton: Boolean
+            val playAgainText: String
+            val backButtonText: String
+
+            if (isFromBossFight) {
+                if (victory) {
+                    title = "¡Guardián Derrotado!"
+                    showPlayAgainButton = false // No se puede rejugar una victoria
+                    playAgainText = ""
+                    backButtonText = "Celebrar Victoria"
+                } else {
+                    title = "Desafío Fallido"
+                    showPlayAgainButton = true
+                    playAgainText = "Reintentar Desafío"
+                    backButtonText = "Retirada"
+                }
+            } else {
+                title = "¡Juego Terminado!"
+                showPlayAgainButton = true
+                playAgainText = "Jugar de Nuevo"
+                backButtonText = "Volver al Menú"
+            }
 
             // Mostramos la ResultScreen con los datos extraídos
             ResultScreen(
+                title = title,
                 score = score,
                 totalQuestions = totalQuestions,
                 correctAnswers = correctAnswers,
                 starsEarned = starsEarned,
+                showPlayAgainButton = showPlayAgainButton,
+                playAgainText = playAgainText,
+                backButtonText = backButtonText,
                 onPlayAgain = {
-                    // --- AHORA SÍ TENEMOS TODOS LOS DATOS ---
-                    val route = Routes.GAME_SCREEN
+                    // --- LÓGICA DE NAVEGACIÓN CONDICIONAL ---
+                    val destinationRoute = if (isFromBossFight) {
+                        Routes.BOSS_SCREEN
+                    } else {
+                        Routes.GAME_SCREEN
+                    }
+                    val route = destinationRoute
                         .replace("{countryId}", countryId)
                         .replace("{levelId}", levelId)
                         .replace("{difficulty}", difficulty)
@@ -242,7 +279,6 @@ fun NavGraph() {
                 onBackToMenu = {
                     // --- AÑADE ESTA LÓGICA DE TEST DE ANUNCIO---
                     AdManager.showInterstitialAd(activity)
-
                     navController.navigate(Routes.MAP_SCREEN) {
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }

@@ -25,6 +25,7 @@ data class BossState(
     val bossHealth: Float = 1.0f, // Vida del jefe de 0.0f a 1.0f
     val playerMistakes: Int = 0,
     val maxMistakes: Int = 3,
+    val correctAnswersCount: Int = 0,
     val generatedHintLetters: String = "",
     val userAnswer: String = "",
     val usedLetterIndices: Set<Int> = emptySet()
@@ -104,7 +105,10 @@ class BossViewModel @Inject constructor(
 
             if (isCorrect) {
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0f)
-                _uiState.update { it.copy(bossHealth = newHealth) }
+                _uiState.update { it.copy(
+                    bossHealth = newHealth,
+                    correctAnswersCount = it.correctAnswersCount + 1 // <-- AÑADIR
+                ) }
                 if (newHealth <= 0.0f) {
                     endGame(victory = true)
                     return@launch
@@ -129,7 +133,7 @@ class BossViewModel @Inject constructor(
         // El score es simbólico, ya que la recompensa es la "dominación".
         val result = GameResult(
             score = if (victory) 10000 else 0,
-            correctAnswers = (uiState.value.totalQuestions * uiState.value.bossHealth).toInt(),
+            correctAnswers = uiState.value.correctAnswersCount,
             totalQuestions = uiState.value.totalQuestions,
             starsEarned = if (victory) 3 else 0
         )

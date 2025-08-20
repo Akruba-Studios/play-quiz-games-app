@@ -55,8 +55,9 @@ class FreeModeViewModel @Inject constructor(
             _uiState.value = FreeModeState(isLoading = true)
 
             // Obtenemos los datos desde el repositorio.
-            val levels = gameDataRepository.getMasteredLevels()
-
+            val allMasteredLevels = gameDataRepository.getMasteredLevels()
+            // Filtramos la lista para excluir cualquier nivel cuyo ID contenga "_boss_".
+            val levels = allMasteredLevels.filter { !it.levelId.contains("_boss_") }
             // Actualizamos el estado con los datos cargados y desactivamos 'isLoading'.
             _uiState.value = FreeModeState(isLoading = false, masteredLevels = levels)
         }

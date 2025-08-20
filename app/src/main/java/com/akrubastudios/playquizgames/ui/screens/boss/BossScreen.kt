@@ -55,7 +55,7 @@ fun BossScreen(
                 db.collection("score_requests").add(scoreRequest)
             }
             // ----------------------------------------------------
-
+            val isVictory = result.starsEarned == 3
             val route = Routes.RESULT_SCREEN
                 .replace("{score}", result.score.toString())
                 .replace("{totalQuestions}", result.totalQuestions.toString())
@@ -65,9 +65,11 @@ fun BossScreen(
                 .replace("{countryId}", viewModel.countryId)
                 // Dificultad es fija para los jefes
                 .replace("{difficulty}", "dificil")
+                .replace("{isFromBossFight}", "true")
+                .replace("{victory}", isVictory.toString())
 
             navController.navigate(route) {
-                popUpTo(Routes.COUNTRY_SCREEN) { inclusive = true }
+                popUpTo(Routes.MAP_SCREEN)
             }
         }
     }
