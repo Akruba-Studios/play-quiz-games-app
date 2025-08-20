@@ -52,46 +52,58 @@ class CountryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            // --- Realizamos todas las llamadas de red necesarias en paralelo ---
-            val countryAsync = gameDataRepository.getCountry(countryId)
-            val allCategoriesAsync = gameDataRepository.getCategoryList()
-            val userDataAsync = gameDataRepository.getUserData()
-            val userProgressAsync = gameDataRepository.getUserProgressForCountry(countryId)
-            // Obtenemos los datos del quiz del jefe para los studyTopics
-            val bossQuizAsync = countryAsync?.bossLevelId?.let {
+            // Obtenemos todos los datos necesarios
+            val country = gameDataRepository.getCountry(countryId)
+            val allCategories = gameDataRepository.getCategoryList()
+            val userData = gameDataRepository.getUserData()
+            val userProgress = gameDataRepository.getUserProgressForCountry(countryId)
+
+            // Hacemos la llamada al quizRepository directamente aquí
+            val bossQuiz = country?.bossLevelId?.let {
                 if (it.isNotBlank()) quizRepository.getLevel(it) else null
             }
 
-            // --- Esperamos a que todas las llamadas terminen ---
-            val country = countryAsync
-            val allCategories = allCategoriesAsync
-            val userData = userDataAsync
-            val userProgress = userProgressAsync
-            val bossQuiz = bossQuizAsync
-
             if (country == null || userData == null) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
+                // Opcional: Podríamos añadir un estado de error aquí
                 return@launch
             }
 
-            // --- LÓGICA PARA DETERMINAR EL ESTADO DEL PAÍS ---
+            // --- INICIO DE LA LÓGICA DE ESTADO MEJORADA ---
+
+            // 1. Obtenemos la lista completa de países para poder buscar vecinos.
+            val allCountries = gameDataRepository.getCountryList()
+
+            // 2. Creamos un Set con TODOS los países que deberían ser "jugables"
+            val playableCountryIds = mutableSetOf<String>()
+            playableCountryIds.addAll(userData.availableCountries)
+            playableCountryIds.addAll(userData.conqueredCountries)
+
+            // 3. Añadimos los vecinos de los países conquistados
+            userData.conqueredCountries.forEach { conqueredId ->
+                val conqueredCountry = allCountries.find { it.countryId == conqueredId }
+                conqueredCountry?.neighbors?.let { neighbors ->
+                    playableCountryIds.addAll(neighbors)
+                }
+            }
+
+            // 4. Determinamos el estado del país actual.
             val status = when {
                 userData.dominatedCountries.contains(countryId) -> CountryStatus.DOMINATED
                 userData.conqueredCountries.contains(countryId) -> CountryStatus.CONQUERED
-                (userData.availableCountries + userData.conqueredCountries).contains(countryId) -> CountryStatus.AVAILABLE
+                playableCountryIds.contains(countryId) -> CountryStatus.AVAILABLE
                 else -> CountryStatus.LOCKED
             }
+            // --- FIN DE LA LÓGICA DE ESTADO MEJORADA ---
 
-            // --- LÓGICA PARA FILTRAR CATEGORÍAS ---
+            // El resto de la lógica (filtrar categorías, etc.) no cambia.
             val filteredCategories = country.availableCategories.mapNotNull { (catId, isAvailable) ->
-                // Una categoría se muestra si:
-                // 1. Está marcada como 'true' (disponible para todos)
-                // 2. O si el país está DOMINADO (desbloquea las categorías 'false')
                 if (isAvailable || status == CountryStatus.DOMINATED) {
                     allCategories.find { it.categoryId == catId }
                 } else {
                     null
                 }
+
             }
 
             _uiState.value = CountryState(

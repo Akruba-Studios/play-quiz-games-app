@@ -139,8 +139,23 @@ class BossViewModel @Inject constructor(
 
     // --- Lógica de UI (similar a GameViewModel) ---
     private fun generateHintLetters(correctAnswer: String): String {
-        val answerLetters = correctAnswer.uppercase().replace(" ", "").toList()
-        return (answerLetters + "ABCDEFG".toList()).shuffled().joinToString("") // Un anagrama simple con señuelos
+        // CORRECCIÓN: Usamos la misma lógica robusta del GameViewModel.
+        val allCharsInAnswer = correctAnswer.uppercase().toList()
+
+        // Mantenemos la lógica de anagrama con señuelos, pero ahora respeta los espacios.
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        val totalLettersInBank = 15
+
+        val letterCountInAnswer = allCharsInAnswer.count { it.isLetter() }
+        val decoyLettersCount = (totalLettersInBank - letterCountInAnswer).coerceAtLeast(4)
+
+        val answerLettersOnly = allCharsInAnswer.filter { it.isLetter() }
+        val randomLetters = alphabet.toList()
+            .filter { !answerLettersOnly.contains(it) }
+            .shuffled()
+            .take(decoyLettersCount)
+
+        return (allCharsInAnswer + randomLetters).shuffled().joinToString("")
     }
 
     fun onLetterClick(letter: Char, index: Int) {
