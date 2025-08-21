@@ -539,7 +539,7 @@ fun BossScreen(
                 // 2. CONTENIDO DE LA PREGUNTA
                 uiState.currentQuestion?.let { question ->
                     // Imagen de la pregunta
-                    QuestionImageFixed(imageUrl = question.imageUrl)
+                    // QuestionImageFixed(imageUrl = question.imageUrl)
 
                     // Texto de la pregunta
                     QuestionTextFixed(questionText = question.questionText_es)
