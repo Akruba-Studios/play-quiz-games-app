@@ -11,11 +11,14 @@ import com.akrubastudios.playquizgames.domain.LevelMetadata
 import com.akrubastudios.playquizgames.domain.UserLevelCountryProgress
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.toObjects
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import com.google.firebase.functions.FirebaseFunctions
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -23,7 +26,60 @@ class GameDataRepository @Inject constructor(
     private val db: FirebaseFirestore,
     private val functions: FirebaseFunctions
 ) {
-    private var userSubscription: com.google.firebase.firestore.ListenerRegistration? = null
+    // --- INICIO DE LA NUEVA ARQUITECTURA DE DATOS DE USUARIO ---
+
+    // 1. StateFlow privado para gestionar el estado internamente.
+    private val _userStateFlow = MutableStateFlow<User?>(null)
+    // 2. StateFlow público e inmutable para que los ViewModels lo observen.
+    val userStateFlow: StateFlow<User?> = _userStateFlow
+
+    // 3. Referencia a la escucha de Firestore para poder cancelarla.
+    private var userListener: ListenerRegistration? = null
+
+    /**
+     * Inicia la escucha en tiempo real del documento del usuario.
+     * Debe llamarse cuando el usuario inicia sesión.
+     */
+    fun startUserDataListener() {
+        // Si ya hay una escucha, la detenemos antes de crear una nueva para evitar duplicados.
+        stopUserDataListener()
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            _userStateFlow.value = null
+            return
+        }
+
+        val userRef = db.collection("users").document(uid)
+        userListener = userRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("GameDataRepository", "Error en la escucha de datos del usuario.", error)
+                _userStateFlow.value = null // En caso de error, reseteamos.
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                _userStateFlow.value = snapshot.toObject(User::class.java)
+            } else {
+                Log.w("GameDataRepository", "El documento del usuario no existe.")
+                _userStateFlow.value = null
+            }
+        }
+        Log.d("GameDataRepository", "✅ Escucha de datos de usuario iniciada para $uid.")
+    }
+
+    /**
+     * Detiene la escucha en tiempo real del documento del usuario.
+     * Debe llamarse cuando el usuario cierra sesión.
+     */
+    fun stopUserDataListener() {
+        userListener?.remove()
+        userListener = null
+        _userStateFlow.value = null // Limpiamos el estado al detener la escucha.
+        Log.d("GameDataRepository", "⏹️ Escucha de datos de usuario detenida.")
+    }
+    // --- FIN DE LA NUEVA ARQUITECTURA ---
+
     // Esta función obtiene TODOS los documentos de la colección 'countries'
     suspend fun getCountryList(): List<Country> {
         return try {
@@ -79,46 +135,6 @@ class GameDataRepository @Inject constructor(
             e.printStackTrace()
             null
         }
-    }
-
-    fun getUserDataFlow(): Flow<User?> = callbackFlow {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid == null) {
-            trySend(null)
-            close()
-            return@callbackFlow
-        }
-
-        val userRef = db.collection("users").document(uid)
-
-        // Iniciamos la escucha y guardamos la referencia.
-        userSubscription = userRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                // Si ocurre un error (como PERMISSION_DENIED), lo cerramos.
-                close(error)
-                return@addSnapshotListener
-            }
-            if (snapshot != null && snapshot.exists()) {
-                trySend(snapshot.toObject(User::class.java))
-            } else {
-                trySend(null)
-            }
-        }
-
-        // Cuando el Flow es cancelado, nos aseguramos de que la escucha se quite.
-        awaitClose {
-            userSubscription?.remove()
-        }
-    }
-
-    /**
-     * Nueva función pública para detener explícitamente la escucha de datos del usuario.
-     * Esto es lo que llamaremos ANTES de cerrar la sesión.
-     */
-    fun stopUserDataListener() {
-        userSubscription?.remove()
-        userSubscription = null // Limpiamos la referencia.
-        Log.d("GameDataRepository", "Escucha de datos de usuario detenida explícitamente.")
     }
     @Suppress("UNCHECKED_CAST")
     suspend fun getRanking(): List<RankedUser> {

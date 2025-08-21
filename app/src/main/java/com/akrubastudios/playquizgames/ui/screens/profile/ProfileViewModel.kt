@@ -33,35 +33,38 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileState())
     val uiState = _uiState.asStateFlow()
 
-    // Un "Channel" para enviar eventos únicos, como la navegación de cierre de sesión.
     private val _signOutEvent = Channel<Unit>()
     val signOutEvent = _signOutEvent.receiveAsFlow()
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+
     init {
-        loadProfileData()
+        // Nos suscribimos al flujo de datos del usuario.
+        observeUserData()
     }
 
-    private fun loadProfileData() {
+    private fun observeUserData() {
         viewModelScope.launch {
-            _uiState.value = ProfileState(isLoading = true)
-            val currentUser = gameDataRepository.getUserData()
-            if (currentUser != null) {
-                val levelInfo = PlayerLevelManager.calculateLevelInfo(currentUser.totalXp)
-                _uiState.value = ProfileState(
-                    isLoading = false,
-                    user = currentUser,
-                    levelInfo = levelInfo
-                )
-            } else {
-                // Manejar el caso de que el usuario no se encuentre
-                _uiState.value = ProfileState(isLoading = false)
+            // 'collect' se ejecutará cada vez que los datos del usuario cambien.
+            gameDataRepository.userStateFlow.collect { currentUser ->
+
+                // Mientras los datos se cargan (currentUser es null), isLoading es true.
+                _uiState.value = _uiState.value.copy(isLoading = (currentUser == null))
+
+                if (currentUser != null) {
+                    val levelInfo = PlayerLevelManager.calculateLevelInfo(currentUser.totalXp)
+                    _uiState.value = ProfileState(
+                        isLoading = false,
+                        user = currentUser,
+                        levelInfo = levelInfo
+                    )
+                }
             }
         }
     }
 
-    /**
-     * Cierra la sesión del usuario actual y envía un evento para notificar a la UI.
-     */
+    // --- FIN DE LA MODIFICACIÓN ---
+
     fun signOut() {
         Log.d("SignOut_Debug", "[PASO 1] ProfileViewModel.signOut() llamado.")
         viewModelScope.launch {

@@ -34,7 +34,7 @@ data class CountryState(
     val currentPc: Long = 0,
     val pcRequired: Long = 1, // Evita división por cero
     val isScreenLoading: Boolean = true, // Para la carga inicial
-    val isApplyingBoost: Boolean = false, // Para la carga del botón
+    val isApplyingBoost: Boolean = false,
     val canApplyBoost: Boolean = false
 )
 
@@ -52,84 +52,89 @@ class CountryViewModel @Inject constructor(
 
     private val countryId: String = savedStateHandle.get<String>("countryId")!!
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+
     init {
-        loadCountryData()
+        // Lanza la corrutina principal que escuchará los cambios y actualizará la UI.
+        processCountryData()
     }
 
-    private fun loadCountryData() {
+    private fun processCountryData() {
         viewModelScope.launch {
+            // Ponemos el estado de carga al iniciar.
+            _uiState.value = _uiState.value.copy(isScreenLoading = true)
 
-            // Obtenemos todos los datos necesarios
+            // 1. Cargamos TODOS los datos estáticos PRIMERO y los guardamos.
             val country = gameDataRepository.getCountry(countryId)
             val allCategories = gameDataRepository.getCategoryList()
-            val userData = gameDataRepository.getUserData()
-            val userProgress = gameDataRepository.getUserProgressForCountry(countryId)
-
-            // Hacemos la llamada al quizRepository directamente aquí
+            val allCountries = gameDataRepository.getCountryList()
             val bossQuiz = country?.bossLevelId?.let {
                 if (it.isNotBlank()) quizRepository.getLevel(it) else null
             }
 
-            if (country == null || userData == null) {
+            // Si los datos estáticos cruciales fallan, salimos del estado de carga y mostramos error.
+            if (country == null) {
                 _uiState.value = _uiState.value.copy(isScreenLoading = false)
-                // Opcional: Podríamos añadir un estado de error aquí
                 return@launch
             }
 
-            // --- INICIO DE LA LÓGICA DE ESTADO MEJORADA ---
+            // 2. AHORA, nos suscribimos al flujo de datos dinámicos del usuario.
+            gameDataRepository.userStateFlow.collect { userData ->
+                if (userData != null) {
+                    // Solo cuando tenemos tanto los datos estáticos como los del usuario,
+                    // procedemos a calcular el estado final.
 
-            // 1. Obtenemos la lista completa de países para poder buscar vecinos.
-            val allCountries = gameDataRepository.getCountryList()
+                    val initialProgress = gameDataRepository.getUserProgressForCountry(countryId)
 
-            // 2. Creamos un Set con TODOS los países que deberían ser "jugables"
-            val playableCountryIds = mutableSetOf<String>()
-            playableCountryIds.addAll(userData.availableCountries)
-            playableCountryIds.addAll(userData.conqueredCountries)
+                    val playableCountryIds = mutableSetOf<String>()
+                    playableCountryIds.addAll(userData.availableCountries)
+                    playableCountryIds.addAll(userData.conqueredCountries)
+                    (userData.conqueredCountries + userData.dominatedCountries).toSet().forEach { influentialId ->
+                        val influentialCountry = allCountries.find { it.countryId == influentialId }
+                        influentialCountry?.neighbors?.forEach { neighborId ->
+                            playableCountryIds.add(neighborId)
+                        }
+                    }
 
-            // 3. Añadimos los vecinos de los países conquistados
-            userData.conqueredCountries.forEach { conqueredId ->
-                val conqueredCountry = allCountries.find { it.countryId == conqueredId }
-                conqueredCountry?.neighbors?.let { neighbors ->
-                    playableCountryIds.addAll(neighbors)
+                    val status = when {
+                        userData.dominatedCountries.contains(countryId) -> CountryStatus.DOMINATED
+                        userData.conqueredCountries.contains(countryId) -> CountryStatus.CONQUERED
+                        playableCountryIds.contains(countryId) -> CountryStatus.AVAILABLE
+                        else -> CountryStatus.LOCKED
+                    }
+
+                    val filteredCategories = country.availableCategories.mapNotNull { (catId, isAvailable) ->
+                        if (isAvailable || status == CountryStatus.DOMINATED) {
+                            allCategories.find { it.categoryId == catId }
+                        } else {
+                            null
+                        }
+                    }
+
+                    val canApplyBoost = (userData.unassignedPcBoosts > 0) && (status == CountryStatus.AVAILABLE)
+                    val currentProgress = gameDataRepository.getUserProgressForCountry(countryId)
+
+                    // 3. Actualizamos el estado final y APAGAMOS la carga.
+                    _uiState.value = _uiState.value.copy(
+                        country = country,
+                        countryStatus = status,
+                        availableCategories = filteredCategories,
+                        studyTopics = bossQuiz?.studyTopics ?: emptyList(),
+                        currentPc = currentProgress?.currentPc ?: initialProgress?.currentPc ?: 0,
+                        pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
+                        isScreenLoading = false,
+                        canApplyBoost = canApplyBoost
+                    )
                 }
+                // Si 'userData' es nulo, 'isScreenLoading' permanece en true,
+                // lo que es correcto hasta que tengamos un usuario válido.
             }
-
-            // 4. Determinamos el estado del país actual.
-            val status = when {
-                userData.dominatedCountries.contains(countryId) -> CountryStatus.DOMINATED
-                userData.conqueredCountries.contains(countryId) -> CountryStatus.CONQUERED
-                playableCountryIds.contains(countryId) -> CountryStatus.AVAILABLE
-                else -> CountryStatus.LOCKED
-            }
-
-            // El resto de la lógica (filtrar categorías, etc.) no cambia.
-            val filteredCategories = country.availableCategories.mapNotNull { (catId, isAvailable) ->
-                if (isAvailable || status == CountryStatus.DOMINATED) {
-                    allCategories.find { it.categoryId == catId }
-                } else {
-                    null
-                }
-
-            }
-            // El boost se puede aplicar si el jugador tiene boosts Y el país está disponible.
-            val canApplyBoost = (userData.unassignedPcBoosts > 0) && (status == CountryStatus.AVAILABLE)
-
-            _uiState.value = CountryState(
-                country = country,
-                countryStatus = status,
-                availableCategories = filteredCategories,
-                studyTopics = bossQuiz?.studyTopics ?: emptyList(),
-                currentPc = userProgress?.currentPc ?: 0,
-                pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
-                isScreenLoading = false,
-                isApplyingBoost = false,
-                canApplyBoost = canApplyBoost
-            )
         }
     }
+
     /**
-     * Crea una petición en Firestore para que la Cloud Function
-     * aplique un boost de PC a este país.
+     * La función 'applyPcBoost' ahora es mucho más simple.
+     * Ya no necesita el delay() ni la recarga forzada.
      */
     fun applyPcBoost() {
         val uid = auth.currentUser?.uid
@@ -138,33 +143,29 @@ class CountryViewModel @Inject constructor(
             return
         }
 
-        // Mostramos un indicador de carga mientras se procesa.
+        // Activamos el indicador del botón
         _uiState.value = _uiState.value.copy(isApplyingBoost = true)
 
         viewModelScope.launch {
             try {
-                // Preparamos el documento de la petición.
                 val boostRequest = hashMapOf(
                     "userId" to uid,
                     "countryId" to countryId,
                     "timestamp" to System.currentTimeMillis()
                 )
-                // Escribimos el documento en la nueva colección.
                 db.collection("pc_boost_requests").add(boostRequest).await()
-
-
-                // `loadCountryData` detectará el cambio en los datos del usuario
-                // (menos boosts, más PC) y refrescará el estado,
-
-                Log.d("CountryViewModel", "✅ Petición de boost enviada Esperando Actualización.")
-                delay(2000L) // 2 segundos para que la function termine
-                loadCountryData()
-
+                Log.d("CountryViewModel", "✅ Petición de boost enviada.")
+                // No hacemos nada más. La escucha en `processCountryData`
+                // detectará automáticamente el cambio en `unassignedPcBoosts`
+                // y refrescará toda la UI, apagando el `isApplyingBoost` y
+                // actualizando el botón.
             } catch (e: Exception) {
                 Log.e("CountryViewModel", "❌ Error al enviar la petición de boost.", e)
-                // Si falla, nos aseguramos de quitar el indicador de carga.
+            } finally {
+                // 2. PASE LO QUE PASE, apagamos el indicador al final.
                 _uiState.value = _uiState.value.copy(isApplyingBoost = false)
             }
         }
     }
+    // --- FIN DE LA MODIFICACIÓN ---
 }

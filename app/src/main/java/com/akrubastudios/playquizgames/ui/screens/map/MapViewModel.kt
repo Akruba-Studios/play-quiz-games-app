@@ -32,7 +32,7 @@ data class MapState(
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val gameDataRepository: GameDataRepository, // <-- Inyectamos el nuevo repo
+    private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
 ) : ViewModel() {
@@ -42,68 +42,60 @@ class MapViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MapState())
     val uiState: StateFlow<MapState> = _uiState.asStateFlow()
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+
     init {
-        listenToUserData()
+        // 1. Inicia la escucha global de datos del usuario
+        gameDataRepository.startUserDataListener()
+        // 2. Lanza la corrutina para procesar los datos
+        processUserData()
     }
 
-    private fun listenToUserData() {
+    private fun processUserData() {
         viewModelScope.launch {
+            // Carga la lista de países una sola vez, ya que es estática.
             val countryList = gameDataRepository.getCountryList()
 
-            // Ponemos el estado de carga explícitamente al empezar a escuchar
-            _uiState.value = MapState(isLoading = true)
+            // Se suscribe al StateFlow compartido del repositorio.
+            // 'collect' se ejecutará cada vez que los datos del usuario cambien en Firestore.
+            gameDataRepository.userStateFlow.collect { userData ->
 
-            gameDataRepository.getUserDataFlow().collect { userData ->
-
-                // Si userData es null la primera vez, el estado de carga se mantendrá
-                // y la UI mostrará el indicador.
+                // Ponemos el estado de carga solo si no tenemos datos de usuario aún.
+                if (_uiState.value.playerLevelInfo == null) {
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                }
 
                 if (userData != null) {
-                    // 1. Llamamos a nuestro gestor para calcular toda la información del nivel
-                    //    basándonos en el XP total del usuario que acabamos de recibir.
                     val levelInfo = PlayerLevelManager.calculateLevelInfo(userData.totalXp)
-
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
+                    val dominatedIds = userData.dominatedCountries
 
-                    // 1. Identificamos los continentes que el jugador ya ha "tocado".
+                    // --- La lógica de cálculo de expediciones y vecinos no cambia ---
                     val unlockedContinents = (conqueredIds + availableIdsFromDB)
                         .mapNotNull { countryId -> countryList.find { it.countryId == countryId }?.continentId }
                         .toSet()
 
-                    // --- INICIO DE LA LÓGICA DE FILTRADO DE EXPEDICIONES ---
                     val allPossibleExpeditions = mapOf(
                         "europe" to "Explorar Europa",
                         "north_america" to "Explorar Norteamérica",
                         "south_america" to "Explorar Sudamérica"
-                        // Añadir más continentes aquí en el futuro
                     )
 
-                    // Filtramos el mapa para quedarnos solo con las expediciones a continentes NO desbloqueados.
                     val filteredExpeditions = allPossibleExpeditions
                         .filter { !unlockedContinents.contains(it.key) }
-                        .map { Pair(it.key, it.value) } // Convertimos el mapa filtrado a una lista de pares.
+                        .map { Pair(it.key, it.value) }
 
-                    // 2. Definimos las reglas para las expediciones.
                     var isExpeditionAvailable = false
                     if (unlockedContinents.size == 1 && conqueredIds.size >= 3 && levelInfo.level >= 5) {
-                        // Condición para la PRIMERA expedición (desbloquear el 2º continente).
                         isExpeditionAvailable = true
                     } else if (unlockedContinents.size == 2 && conqueredIds.size >= 6 && levelInfo.level >= 10) {
-                        // Condición para la SEGUNDA expedición (desbloquear el 3er continente).
                         isExpeditionAvailable = true
                     }
-                    // ... Podemos añadir más reglas "else if" para futuras expediciones.
 
-                    val dominatedIds = userData.dominatedCountries
-
-                    // Creamos una lista única de países que desbloquean vecinos (Conquistados + Dominados)
                     val influentialCountryIds = (conqueredIds + dominatedIds).toSet()
-
                     val availableIds = mutableSetOf<String>()
                     availableIds.addAll(availableIdsFromDB)
-
-                    // Iteramos sobre la lista combinada para desbloquear vecinos
                     influentialCountryIds.forEach { influentialId ->
                         val influentialCountry = countryList.find { it.countryId == influentialId }
                         influentialCountry?.neighbors?.forEach { neighborId ->
@@ -116,7 +108,7 @@ class MapViewModel @Inject constructor(
                         conqueredCountryIds = conqueredIds,
                         dominatedCountryIds = dominatedIds,
                         availableCountryIds = availableIds.toList(),
-                        isLoading = false, // <-- Solo ponemos isLoading a false cuando tenemos datos
+                        isLoading = false,
                         playerLevelInfo = levelInfo,
                         expeditionAvailable = isExpeditionAvailable,
                         availableExpeditions = filteredExpeditions,
