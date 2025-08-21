@@ -64,6 +64,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.times
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -334,7 +336,10 @@ private fun LetterBankFixed(
     difficulty: String,
     onLetterClick: (Char, Int) -> Unit
 ) {
-    // Calculamos columnas dinámicamente
+    // Altura máxima disponible para el banco de letras
+    val maxAvailableHeight = 280.dp
+
+    // Calculamos columnas dinámicamente (tu lógica original)
     val columns = when {
         hintLetters.length <= 12 -> 4
         hintLetters.length <= 18 -> 5
@@ -342,38 +347,56 @@ private fun LetterBankFixed(
         else -> 7
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
+    // Calculamos cuántas filas necesitamos
+    val totalRows = (hintLetters.length + columns - 1) / columns
+
+    // Calculamos el tamaño exacto que necesita cada botón
+    val verticalSpacing = 6.dp
+    val totalVerticalSpacing = (totalRows - 1) * verticalSpacing
+    val contentPadding = 8.dp // 4dp arriba + 4dp abajo
+    val availableHeightForButtons = maxAvailableHeight - totalVerticalSpacing - contentPadding
+    val buttonSize = (availableHeightForButtons / totalRows).coerceAtLeast(28.dp).coerceAtMost(50.dp)
+
+    // Dividimos las letras en filas
+    val letterRows = hintLetters.chunked(columns)
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 300.dp)
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .height(maxAvailableHeight)
+            .padding(horizontal = 16.dp)
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        items(hintLetters.length) { index ->
-            val letter = hintLetters[index]
-            val isUsed = usedIndices.contains(index)
-
-            Button(
-                onClick = { if (!isUsed) onLetterClick(letter, index) },
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isUsed) Color.Gray else Color.Blue,
-                    disabledContainerColor = Color.Gray
-                ),
-                enabled = !isUsed,
-                contentPadding = PaddingValues(4.dp)
+        letterRows.forEachIndexed { rowIndex, rowLetters ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = letter.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                rowLetters.forEachIndexed { colIndex, letter ->
+                    val globalIndex = rowIndex * columns + colIndex
+                    val isUsed = usedIndices.contains(globalIndex)
+
+                    Button(
+                        onClick = { if (!isUsed) onLetterClick(letter, globalIndex) },
+                        modifier = Modifier.size(buttonSize),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isUsed) Color.Gray else Color.Blue,
+                            disabledContainerColor = Color.Gray
+                        ),
+                        enabled = !isUsed,
+                        contentPadding = PaddingValues(2.dp)
+                    ) {
+                        Text(
+                            text = letter.toString(),
+                            fontSize = (buttonSize.value * 0.32f).sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }
