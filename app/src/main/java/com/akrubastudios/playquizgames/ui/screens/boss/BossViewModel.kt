@@ -40,7 +40,7 @@ data class BossState(
     val totalQuestions: Int = 1,
     val bossHealth: Float = 1.0f,
     val playerMistakes: Int = 0,
-    val maxMistakes: Int = 3,
+    val maxMistakes: Int = 1,
     val correctAnswersCount: Int = 0,
     val generatedHintLetters: String = "",
     val userAnswer: String = "",
