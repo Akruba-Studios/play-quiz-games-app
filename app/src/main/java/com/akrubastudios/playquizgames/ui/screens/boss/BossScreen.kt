@@ -46,8 +46,10 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 import androidx.compose.foundation.layout.heightIn
-
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.unit.coerceAtLeast
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
@@ -57,7 +59,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
 // Datos para las partículas de confeti
@@ -71,181 +72,8 @@ data class Particle(
     val life: Float
 )
 
-@Composable
-fun BossScreen(
-    navController: NavController,
-    viewModel: BossViewModel = hiltViewModel()
-) {
-    KeepScreenOn()
-    val uiState by viewModel.uiState.collectAsState()
-    val gameResult by viewModel.gameResult.collectAsState()
-
-    // Navegación al final del juego
-    LaunchedEffect(gameResult) {
-        gameResult?.let { result ->
-            // Enviar score request
-            val uid = FirebaseAuth.getInstance().currentUser?.uid
-            if (uid != null) {
-                val db = FirebaseFirestore.getInstance()
-                val scoreRequest = hashMapOf(
-                    "userId" to uid,
-                    "score" to result.score,
-                    "starsEarned" to result.starsEarned,
-                    "levelId" to viewModel.levelId,
-                    "countryId" to viewModel.countryId,
-                    "timestamp" to System.currentTimeMillis()
-                )
-                db.collection("score_requests").add(scoreRequest)
-            }
-
-            val isVictory = result.starsEarned == 3
-            val route = Routes.RESULT_SCREEN
-                .replace("{score}", result.score.toString())
-                .replace("{totalQuestions}", result.totalQuestions.toString())
-                .replace("{correctAnswers}", result.correctAnswers.toString())
-                .replace("{starsEarned}", result.starsEarned.toString())
-                .replace("{levelId}", viewModel.levelId)
-                .replace("{countryId}", viewModel.countryId)
-                .replace("{difficulty}", "dificil")
-                .replace("{isFromBossFight}", "true")
-                .replace("{victory}", isVictory.toString())
-
-            navController.navigate(route) {
-                popUpTo(Routes.MAP_SCREEN)
-            }
-        }
-    }
-
-    if (uiState.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color(0xFFD4AF37))
-        }
-    } else {
-        Box(Modifier.fillMaxSize()) {
-            // Fondo dinámico por fases
-            DynamicBackground(
-                phase = uiState.currentPhase,
-                shakeEffect = uiState.showShakeEffect
-            )
-
-            // Contenido principal
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp), // ← REDUCIDO de 16dp a 8dp
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // 1. HEADER COMPACTO (20% del espacio)
-                Box(modifier = Modifier.fillMaxWidth().weight(0.2f)) {
-                    EpicBossHeaderCompact(
-                        guardianName = uiState.guardianTheme.name,
-                        health = uiState.bossHealth,
-                        mistakes = uiState.playerMistakes,
-                        maxMistakes = uiState.maxMistakes,
-                        phase = uiState.currentPhase
-                    )
-                }
-
-                // 2. TIMER COMPACTO (5% del espacio)
-                Box(modifier = Modifier.fillMaxWidth().weight(0.05f)) {
-                    TimerDisplayCompact(
-                        timeRemaining = uiState.timeRemaining,
-                        phase = uiState.currentPhase,
-                        isRunning = uiState.isTimerRunning
-                    )
-                }
-
-                // 3. DIÁLOGO COMPACTO (8% del espacio)
-                Box(modifier = Modifier.fillMaxWidth().weight(0.08f)) {
-                    GuardianDialogueCompact(
-                        dialogue = uiState.currentDialogue,
-                        phase = uiState.currentPhase
-                    )
-                }
-
-                // 4. CONTENIDO DE PREGUNTA (40% del espacio)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.4f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    uiState.currentQuestion?.let { question ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Imagen muy compacta
-                            QuestionImageCompact(imageUrl = question.imageUrl)
-
-                            // Texto muy compacto
-                            Text(
-                                text = question.questionText_es,
-                                style = MaterialTheme.typography.bodyMedium, // ← MÁS PEQUEÑO
-                                textAlign = TextAlign.Center,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2, // ← MÁXIMO 2 LÍNEAS
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 14.sp, // ← TAMAÑO FIJO PEQUEÑO
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-
-                            // AnswerSlots adaptables
-                            AnswerSlotsCompact(
-                                correctAnswer = question.correctAnswer,
-                                userAnswer = uiState.userAnswer,
-                                onClear = { viewModel.clearUserAnswer() }
-                            )
-                        }
-                    }
-                }
-
-                // 5. BOTONES DE LETRAS (27% del espacio)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.27f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    uiState.currentQuestion?.let { question ->
-                        LetterBankCompact(
-                            hintLetters = uiState.generatedHintLetters,
-                            usedIndices = uiState.usedLetterIndices,
-                            difficulty = "principiante",
-                            onLetterClick = { letter, index ->
-                                viewModel.onLetterClick(letter, index)
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Overlay de transición de fase
-            AnimatedVisibility(
-                visible = uiState.isPhaseTransition,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut()
-            ) {
-                PhaseTransitionOverlay(
-                    phase = uiState.currentPhase,
-                    onDismiss = { viewModel.dismissPhaseTransition() }
-                )
-            }
-
-            // Animación de victoria
-            if (uiState.showVictoryAnimation) {
-                VictorySequence(
-                    guardianName = uiState.guardianTheme.name,
-                    battleStats = uiState.battleStats
-                )
-            }
-        }
-    }
-}
-
 // =====================================================
-// 2. COMPONENTES COMPACTOS - AÑADIR AL FINAL DE BossScreen.kt
+// COMPONENTES COMPACTOS - DEFINIDOS PRIMERO
 // =====================================================
 
 @Composable
@@ -273,18 +101,18 @@ private fun EpicBossHeaderCompact(
         colors = CardDefaults.cardColors(
             containerColor = Color.Black.copy(alpha = 0.7f)
         ),
-        shape = RoundedCornerShape(8.dp) // ← MÁS PEQUEÑO
+        shape = RoundedCornerShape(8.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(8.dp) // ← REDUCIDO
+            modifier = Modifier.padding(4.dp)
         ) {
             Text(
                 text = guardianName,
-                style = MaterialTheme.typography.titleMedium, // ← MÁS PEQUEÑO
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                fontSize = 16.sp, // ← REDUCIDO
+                fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -295,7 +123,7 @@ private fun EpicBossHeaderCompact(
                 progress = { animatedHealth },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(10.dp), // ← MÁS PEQUEÑO
+                    .height(8.dp),
                 strokeCap = StrokeCap.Round,
                 color = healthColor,
                 trackColor = healthColor.copy(alpha = 0.3f)
@@ -312,7 +140,7 @@ private fun EpicBossHeaderCompact(
                             Icons.Default.FavoriteBorder,
                         contentDescription = "Vida",
                         tint = Color.Magenta,
-                        modifier = Modifier.size(18.dp) // ← MÁS PEQUEÑO
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }
@@ -345,7 +173,7 @@ private fun TimerDisplayCompact(
             text = "⏰ ${timeRemaining}s",
             color = timerColor,
             fontWeight = FontWeight.Bold,
-            fontSize = 12.sp, // ← MÁS PEQUEÑO
+            fontSize = 12.sp,
             modifier = Modifier.padding(6.dp),
             textAlign = TextAlign.Center
         )
@@ -379,7 +207,7 @@ private fun GuardianDialogueCompact(
             color = textColor,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
-            fontSize = 10.sp, // ← MÁS PEQUEÑO
+            fontSize = 10.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -393,7 +221,7 @@ private fun QuestionImageCompact(imageUrl: String) {
         contentDescription = "Imagen de la pregunta",
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp) // ← MUY PEQUEÑO PERO VISIBLE
+            .height(120.dp)
             .clip(RoundedCornerShape(8.dp)),
         contentScale = ContentScale.Crop
     )
@@ -405,17 +233,17 @@ private fun AnswerSlotsCompact(
     userAnswer: String,
     onClear: () -> Unit
 ) {
-    // Usar LazyRow para respuestas muy largas
+    val slotSize = 40.dp
+
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 8.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         items(correctAnswer.length) { index ->
             val char = if (index < userAnswer.length) userAnswer[index] else ' '
             Card(
-                modifier = Modifier
-                    .size(28.dp), // ← MÁS PEQUEÑO
+                modifier = Modifier.size(slotSize),
                 colors = CardDefaults.cardColors(
                     containerColor = if (char == ' ') Color.Gray else Color.Blue
                 )
@@ -427,7 +255,7 @@ private fun AnswerSlotsCompact(
                     Text(
                         text = char.toString(),
                         color = Color.White,
-                        fontSize = 14.sp, // ← MÁS PEQUEÑO
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -443,13 +271,15 @@ private fun LetterBankCompact(
     difficulty: String,
     onLetterClick: (Char, Int) -> Unit
 ) {
-    // Grid compacto que siempre quepa
+    val buttonSize = 56.dp
+    val columns = 6
+
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 35.dp), // ← BOTONES MÁS PEQUEÑOS
+        columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(hintLetters.length) { index ->
             val letter = hintLetters[index]
@@ -458,8 +288,8 @@ private fun LetterBankCompact(
             Button(
                 onClick = { if (!isUsed) onLetterClick(letter, index) },
                 modifier = Modifier
-                    .aspectRatio(1f)
-                    .fillMaxWidth(),
+                    .size(buttonSize)
+                    .aspectRatio(1f),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isUsed) Color.Gray else Color.Blue,
                     disabledContainerColor = Color.Gray
@@ -469,7 +299,7 @@ private fun LetterBankCompact(
             ) {
                 Text(
                     text = letter.toString(),
-                    fontSize = 12.sp, // ← MÁS PEQUEÑO
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
@@ -534,6 +364,187 @@ private fun DynamicBackground(
             .background(backgroundBrush)
     )
 }
+
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+@Composable
+fun BossScreen(
+    navController: NavController,
+    viewModel: BossViewModel = hiltViewModel()
+) {
+    KeepScreenOn()
+    val uiState by viewModel.uiState.collectAsState()
+    val gameResult by viewModel.gameResult.collectAsState()
+
+    // Navegación al final del juego
+    LaunchedEffect(gameResult) {
+        gameResult?.let { result ->
+            // Enviar score request
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (uid != null) {
+                val db = FirebaseFirestore.getInstance()
+                val scoreRequest = hashMapOf(
+                    "userId" to uid,
+                    "score" to result.score,
+                    "starsEarned" to result.starsEarned,
+                    "levelId" to viewModel.levelId,
+                    "countryId" to viewModel.countryId,
+                    "timestamp" to System.currentTimeMillis()
+                )
+                db.collection("score_requests").add(scoreRequest)
+            }
+
+            val isVictory = result.starsEarned == 3
+            val route = Routes.RESULT_SCREEN
+                .replace("{score}", result.score.toString())
+                .replace("{totalQuestions}", result.totalQuestions.toString())
+                .replace("{correctAnswers}", result.correctAnswers.toString())
+                .replace("{starsEarned}", result.starsEarned.toString())
+                .replace("{levelId}", viewModel.levelId)
+                .replace("{countryId}", viewModel.countryId)
+                .replace("{difficulty}", "dificil")
+                .replace("{isFromBossFight}", "true")
+                .replace("{victory}", isVictory.toString())
+
+            navController.navigate(route) {
+                popUpTo(Routes.MAP_SCREEN)
+            }
+        }
+    }
+
+    if (uiState.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color(0xFFD4AF37))
+        }
+    } else {
+        Box(Modifier.fillMaxSize()) {
+            // Fondo dinámico por fases
+            DynamicBackground(
+                phase = uiState.currentPhase,
+                shakeEffect = uiState.showShakeEffect
+            )
+
+            // Contenido principal
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 1. HEADER COMPACTO (20% del espacio)
+                Box(modifier = Modifier.fillMaxWidth().weight(0.2f)) {
+                    EpicBossHeaderCompact(
+                        guardianName = uiState.guardianTheme.name,
+                        health = uiState.bossHealth,
+                        mistakes = uiState.playerMistakes,
+                        maxMistakes = uiState.maxMistakes,
+                        phase = uiState.currentPhase
+                    )
+                }
+
+                // 2. TIMER COMPACTO (3% del espacio)
+                Box(modifier = Modifier.fillMaxWidth().weight(0.05f)) {
+                    TimerDisplayCompact(
+                        timeRemaining = uiState.timeRemaining,
+                        phase = uiState.currentPhase,
+                        isRunning = uiState.isTimerRunning
+                    )
+                }
+
+                // 3. DIÁLOGO COMPACTO (5% del espacio)
+                Box(modifier = Modifier.fillMaxWidth().weight(0.08f)) {
+                    GuardianDialogueCompact(
+                        dialogue = uiState.currentDialogue,
+                        phase = uiState.currentPhase
+                    )
+                }
+
+                // 4. CONTENIDO DE PREGUNTA (40% del espacio)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.4f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    uiState.currentQuestion?.let { question ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Imagen muy compacta
+                            QuestionImageCompact(imageUrl = question.imageUrl)
+
+                            // Texto muy compacto
+                            Text(
+                                text = question.questionText_es,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+
+                            // AnswerSlots adaptables
+                            AnswerSlotsCompact(
+                                correctAnswer = question.correctAnswer,
+                                userAnswer = uiState.userAnswer,
+                                onClear = { viewModel.clearUserAnswer() }
+                            )
+                        }
+                    }
+                }
+
+                // 5. BOTONES DE LETRAS (27% del espacio)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.27f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    uiState.currentQuestion?.let { question ->
+                        LetterBankCompact(
+                            hintLetters = uiState.generatedHintLetters,
+                            usedIndices = uiState.usedLetterIndices,
+                            difficulty = "principiante",
+                            onLetterClick = { letter, index ->
+                                viewModel.onLetterClick(letter, index)
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Overlay de transición de fase
+            AnimatedVisibility(
+                visible = uiState.isPhaseTransition,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut()
+            ) {
+                PhaseTransitionOverlay(
+                    phase = uiState.currentPhase,
+                    onDismiss = { viewModel.dismissPhaseTransition() }
+                )
+            }
+
+            // Animación de victoria
+            if (uiState.showVictoryAnimation) {
+                VictorySequence(
+                    guardianName = uiState.guardianTheme.name,
+                    battleStats = uiState.battleStats
+                )
+            }
+        }
+    }
+}
+
+// =====================================================
+// COMPONENTES ADICIONALES
+// =====================================================
 
 @Composable
 private fun EpicBossHeader(
@@ -825,7 +836,7 @@ private fun TimerDisplay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Timer, // Si no tienes este icon, usa cualquier otro
+                imageVector = Icons.Default.Timer,
                 contentDescription = "Timer",
                 tint = timerColor,
                 modifier = Modifier.size(20.dp)
