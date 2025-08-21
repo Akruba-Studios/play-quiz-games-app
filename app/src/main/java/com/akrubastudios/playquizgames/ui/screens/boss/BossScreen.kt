@@ -196,7 +196,8 @@ private fun QuestionTextFixed(
             textAlign = TextAlign.Center,
             color = Color.White,
             fontWeight = FontWeight.Medium,
-            lineHeight = 20.sp
+            lineHeight = 30.sp,
+            fontSize = 24.sp
         )
     }
 }
@@ -602,120 +603,6 @@ fun BossScreen(
 // =====================================================
 
 @Composable
-private fun EpicBossHeader(
-    guardianName: String,
-    health: Float,
-    mistakes: Int,
-    maxMistakes: Int,
-    phase: Int
-) {
-    val animatedHealth by animateFloatAsState(
-        targetValue = health,
-        animationSpec = tween(durationMillis = 800),
-        label = "BossHealth"
-    )
-
-    val healthColor = when {
-        animatedHealth > 0.7f -> Color.Green
-        animatedHealth > 0.3f -> Color.Yellow
-        else -> Color.Red
-    }
-
-    val pulseScale by rememberInfiniteTransition(label = "healthPulse").animateFloat(
-        initialValue = 1f,
-        targetValue = if (phase == 3) 1.05f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(pulseScale),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.7f)
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = guardianName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                fontSize = 22.sp
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            LinearProgressIndicator(
-                progress = { animatedHealth },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp),
-                strokeCap = StrokeCap.Round,
-                color = healthColor,
-                trackColor = healthColor.copy(alpha = 0.3f)
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Row {
-                (1..maxMistakes).forEach { i ->
-                    Icon(
-                        imageVector = if (i <= maxMistakes - mistakes)
-                            Icons.Default.Favorite
-                        else
-                            Icons.Default.FavoriteBorder,
-                        contentDescription = "Vida",
-                        tint = Color.Magenta,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GuardianDialogue(
-    dialogue: String,
-    phase: Int
-) {
-    if (dialogue.isNotEmpty()) {
-        val textColor = when (phase) {
-            1 -> Color.White
-            2 -> Color(0xFFFEF3C7)
-            3 -> Color(0xFFFCA5A5)
-            else -> Color.White
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.Black.copy(alpha = 0.8f)
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "💬 $dialogue",
-                modifier = Modifier.padding(12.dp),
-                color = textColor,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
 private fun PhaseTransitionOverlay(
     phase: Int,
     onDismiss: () -> Unit
@@ -848,61 +735,6 @@ private fun VictorySequence(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun TimerDisplay(
-    timeRemaining: Int,
-    phase: Int,
-    isRunning: Boolean
-) {
-    if (!isRunning) return
-
-    val timerColor = when {
-        timeRemaining > 15 -> Color.Green
-        timeRemaining > 5 -> Color.Yellow
-        else -> Color.Red
-    }
-
-    val pulseScale by rememberInfiniteTransition(label = "timerPulse").animateFloat(
-        initialValue = 1f,
-        targetValue = if (timeRemaining <= 5) 1.2f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(if (timeRemaining <= 5) pulseScale else 1f),
-        colors = CardDefaults.cardColors(
-            containerColor = timerColor.copy(alpha = 0.2f)
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Timer,
-                contentDescription = "Timer",
-                tint = timerColor,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "⏰ ${timeRemaining}s",
-                color = timerColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
         }
     }
 }
