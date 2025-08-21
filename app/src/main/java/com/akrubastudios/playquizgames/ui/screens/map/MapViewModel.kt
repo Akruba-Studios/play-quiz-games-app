@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 data class MapState(
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
+    val dominatedCountryIds: List<String> = emptyList(),
     val availableCountryIds: List<String> = emptyList(),
     val isLoading: Boolean = true,
     val playerLevelInfo: PlayerLevelManager.LevelInfo? = null,
@@ -94,11 +95,18 @@ class MapViewModel @Inject constructor(
                     }
                     // ... Podemos añadir más reglas "else if" para futuras expediciones.
 
+                    val dominatedIds = userData.dominatedCountries
+
+                    // Creamos una lista única de países que desbloquean vecinos (Conquistados + Dominados)
+                    val influentialCountryIds = (conqueredIds + dominatedIds).toSet()
+
                     val availableIds = mutableSetOf<String>()
-                    availableIdsFromDB.forEach { availableIds.add(it) }
-                    conqueredIds.forEach { conqueredId ->
-                        val conqueredCountry = countryList.find { it.countryId == conqueredId }
-                        conqueredCountry?.neighbors?.forEach { neighborId ->
+                    availableIds.addAll(availableIdsFromDB)
+
+                    // Iteramos sobre la lista combinada para desbloquear vecinos
+                    influentialCountryIds.forEach { influentialId ->
+                        val influentialCountry = countryList.find { it.countryId == influentialId }
+                        influentialCountry?.neighbors?.forEach { neighborId ->
                             availableIds.add(neighborId)
                         }
                     }
@@ -106,6 +114,7 @@ class MapViewModel @Inject constructor(
                     _uiState.value = MapState(
                         countries = countryList,
                         conqueredCountryIds = conqueredIds,
+                        dominatedCountryIds = dominatedIds,
                         availableCountryIds = availableIds.toList(),
                         isLoading = false, // <-- Solo ponemos isLoading a false cuando tenemos datos
                         playerLevelInfo = levelInfo,

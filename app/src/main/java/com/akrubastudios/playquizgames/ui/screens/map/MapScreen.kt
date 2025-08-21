@@ -118,6 +118,7 @@ fun MapScreen(
                 InteractiveWorldMap(
                     countries = uiState.countries,
                     conqueredCountryIds = uiState.conqueredCountryIds,
+                    dominatedCountryIds = uiState.dominatedCountryIds,
                     availableCountryIds = uiState.availableCountryIds,
                     onCountryClick = { countryId ->
                         navController.navigate(
@@ -251,6 +252,7 @@ fun MapScreen(
 fun InteractiveWorldMap(
     countries: List<Country>,
     conqueredCountryIds: List<String>,
+    dominatedCountryIds: List<String>,
     availableCountryIds: List<String>,
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -280,6 +282,7 @@ fun InteractiveWorldMap(
     val density = LocalDensity.current
 
     // Definir colores
+    val dominatedColor = Color(0xFFD4373C).toArgb() // Rojo para Dominado
     val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
     val availableColor = Color(0xFF2196F3).toArgb() // Azul
     val defaultColor = Color(0xFF4A5568).toArgb() // Gris azulado congelado
@@ -357,27 +360,19 @@ fun InteractiveWorldMap(
     }
 
     // Recalcular colores cuando cambien las listas
-    LaunchedEffect(conqueredCountryIds, availableCountryIds, countries) {
+    LaunchedEffect(dominatedCountryIds, conqueredCountryIds, availableCountryIds, countries) {
         if (countries.isEmpty()) return@LaunchedEffect
 
         val newColorMap = mutableMapOf<String, Int>()
 
-        // Colorear países conquistados
-        conqueredCountryIds.forEach { countryId ->
-            newColorMap[countryId] = conqueredColor
-        }
-
-        // Colorear países disponibles (que no estén conquistados)
-        availableCountryIds.forEach { countryId ->
-            if (!conqueredCountryIds.contains(countryId)) {
-                newColorMap[countryId] = availableColor
-            }
-        }
-
-        // Todos los demás países en gris por defecto
+        // Usamos una lógica de prioridades para asignar el color correcto
         countries.forEach { country ->
-            if (!newColorMap.containsKey(country.countryId)) {
-                newColorMap[country.countryId] = defaultColor
+            val countryId = country.countryId
+            newColorMap[countryId] = when {
+                dominatedCountryIds.contains(countryId) -> dominatedColor
+                conqueredCountryIds.contains(countryId) -> conqueredColor
+                availableCountryIds.contains(countryId) -> availableColor
+                else -> defaultColor
             }
         }
 
