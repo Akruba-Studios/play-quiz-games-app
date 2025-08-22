@@ -274,7 +274,7 @@ class BossViewModel @Inject constructor(
     }
 
     private fun generateHintLettersByPhase(correctAnswer: String, phase: Int): String {
-        val allCharsInAnswer = correctAnswer.uppercase().toList()
+        val allCharsInAnswer = correctAnswer.uppercase().filter { it.isLetter() }.toList()
         val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         // Escalamiento de dificultad por fase
@@ -305,7 +305,7 @@ class BossViewModel @Inject constructor(
                 .take(decoyLettersCount)
         }
 
-        return (allCharsInAnswer + availableDecoys).shuffled().joinToString("")
+        return (answerLettersOnly + availableDecoys).shuffled().joinToString("")
     }
 
     private fun generateConfusingDecoys(answerLetters: List<Char>): List<Char> {
@@ -333,7 +333,10 @@ class BossViewModel @Inject constructor(
 
         viewModelScope.launch {
             val state = _uiState.value
-            val isCorrect = state.currentQuestion?.validAnswers?.contains(state.userAnswer.lowercase()) == true
+            val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
+            val isCorrect = state.currentQuestion?.validAnswers?.any { validAnswer ->
+                validAnswer.replace(" ", "").lowercase() == normalizedUserAnswer
+            } == true
 
             if (isCorrect) {
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0f)
@@ -415,15 +418,17 @@ class BossViewModel @Inject constructor(
     // --- Funciones de UI ---
     fun onLetterClick(letter: Char, index: Int) {
         if (uiState.value.usedLetterIndices.contains(index)) return
-        val answerLength = uiState.value.currentQuestion?.correctAnswer?.length ?: 0
-        if (uiState.value.userAnswer.length < answerLength) {
+
+        val requiredLength = uiState.value.currentQuestion?.correctAnswer?.count { it.isLetter() } ?: 0
+
+        if (uiState.value.userAnswer.length < requiredLength) {
             _uiState.update {
                 it.copy(
                     userAnswer = it.userAnswer + letter,
                     usedLetterIndices = it.usedLetterIndices + index
                 )
             }
-            if (uiState.value.userAnswer.length == answerLength) {
+            if (uiState.value.userAnswer.length == requiredLength) {
                 checkAnswer()
             }
         }

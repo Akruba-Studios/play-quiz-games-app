@@ -194,7 +194,7 @@ fun AnswerSlots(
         modifier = modifier
             .padding(vertical = 24.dp)
             .clickable { onClear() },
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
+        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // --- INICIO DE LA LÓGICA DE AGRUPAMIENTO ---
@@ -203,13 +203,15 @@ fun AnswerSlots(
         val words = correctAnswer.split(' ')
 
         // 2. Iteramos sobre cada palabra.
-        words.forEach { word ->
-            val slotSize = if (word.length > 8) 28.dp else 40.dp
+        // Determinar el tamaño global para todas las palabras
+        val hasLongWord = words.any { it.length > 8 }
+        val globalSlotSize = if (hasLongWord) 30.dp else 40.dp // 30.dp y 40.dp, son los tamaños de las casillas respuestas
 
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        words.forEach { word ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
-                    AnswerSlot(char = charToShow, size = slotSize)
+                    AnswerSlot(char = charToShow, size = globalSlotSize)
                     letterIndex++
                 }
             }

@@ -185,46 +185,39 @@ private fun QuestionTextFixed(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AnswerSlotsFixed(
     correctAnswer: String,
     userAnswer: String,
     onClear: () -> Unit
 ) {
-    // Calculamos cuántas letras por fila basado en la longitud
-    val maxLettersPerRow = when {
-        correctAnswer.length <= 6 -> correctAnswer.length
-        correctAnswer.length <= 10 -> 5
-        correctAnswer.length <= 15 -> 6
-        else -> 7
-    }
+    val userAnswerLetters = userAnswer
+    var letterIndex = 0
 
-    val rows = (correctAnswer.length + maxLettersPerRow - 1) / maxLettersPerRow
-
-    Column(
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .clickable { onClear() },
+        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // 18.dp Espacio entre palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        repeat(rows) { rowIndex ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val startIndex = rowIndex * maxLettersPerRow
-                val endIndex = minOf(startIndex + maxLettersPerRow, correctAnswer.length)
+        val words = correctAnswer.split(' ')
 
-                (startIndex until endIndex).forEach { index ->
-                    val char = if (index < userAnswer.length) userAnswer[index] else ' '
+        // Determinar el tamaño global para todas las palabras
+        val hasLongWord = words.any { it.length > 8 }
+        val globalSlotSize = if (hasLongWord) 30.dp else 40.dp // 30.dp y 40.dp son los tamaños de casillas respuestas
+
+        words.forEach { word ->
+
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
+                word.forEach { _ ->
+                    val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
                     Card(
-                        modifier = Modifier
-                            .size(45.dp)
-                            .clickable { onClear() },
+                        modifier = Modifier.size(globalSlotSize),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (char == ' ') Color.Gray.copy(alpha = 0.8f) else Color.Blue
+                            containerColor = if (charToShow == ' ') Color.Gray.copy(alpha = 0.8f) else Color.Blue
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -233,13 +226,14 @@ private fun AnswerSlotsFixed(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = char.toString(),
+                                text = charToShow.toString().uppercase(),
                                 color = Color.White,
-                                fontSize = 18.sp,
+                                fontSize = if (globalSlotSize < 35.dp) 14.sp else 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
+                    letterIndex++
                 }
             }
         }
