@@ -119,7 +119,8 @@ fun MapScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // Usa el padding proporcionado por el Scaffold
+                // Ignoramos el padding superior para permitir que el Surface se pegue al borde.
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             // CAPA 1: El mapa de fondo
             if (uiState.isLoading) {
