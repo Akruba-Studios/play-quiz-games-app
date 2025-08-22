@@ -36,6 +36,14 @@ class GameDataRepository @Inject constructor(
     // 3. Referencia a la escucha de Firestore para poder cancelarla.
     private var userListener: ListenerRegistration? = null
 
+    // --- NUEVA ARQUITECTURA PARA PROGRESO DE PAÍS ---
+    private val _userCountryProgressStateFlow = MutableStateFlow<UserCountryProgress?>(null)
+    val userCountryProgressStateFlow: StateFlow<UserCountryProgress?> = _userCountryProgressStateFlow
+    private var countryProgressListener: ListenerRegistration? = null
+    private var currentCountryId: String? = null
+
+    // *** FIN DE LO QUE SE AGREGA AQUÍ ***
+
     /**
      * Inicia la escucha en tiempo real del documento del usuario.
      * Debe llamarse cuando el usuario inicia sesión.
@@ -75,10 +83,66 @@ class GameDataRepository @Inject constructor(
     fun stopUserDataListener() {
         userListener?.remove()
         userListener = null
-        _userStateFlow.value = null // Limpiamos el estado al detener la escucha.
+        _userStateFlow.value = null
+
+        // NUEVO: También detener el listener del progreso del país
+        stopCountryProgressListener()
+
         Log.d("GameDataRepository", "⏹️ Escucha de datos de usuario detenida.")
     }
     // --- FIN DE LA NUEVA ARQUITECTURA ---
+    /**
+     * Inicia la escucha en tiempo real del progreso del usuario para un país específico.
+     */
+    fun startCountryProgressListener(countryId: String) {
+        if (currentCountryId == countryId && countryProgressListener != null) {
+            return
+        }
+
+        stopCountryProgressListener()
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            _userCountryProgressStateFlow.value = null
+            return
+        }
+
+        currentCountryId = countryId
+        val progressDocId = "${uid}_${countryId}"
+        val progressRef = db.collection("user_country_progress").document(progressDocId)
+
+        countryProgressListener = progressRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e("GameDataRepository", "Error en la escucha de progreso del país.", error)
+                _userCountryProgressStateFlow.value = null
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                _userCountryProgressStateFlow.value = snapshot.toObject(UserCountryProgress::class.java)
+                Log.d("GameDataRepository", "✅ Progreso de país actualizado: ${snapshot.toObject(UserCountryProgress::class.java)?.currentPc} PC")
+            } else {
+                _userCountryProgressStateFlow.value = UserCountryProgress(
+                    userId = uid,
+                    countryId = countryId,
+                    currentPc = 0
+                )
+                Log.d("GameDataRepository", "📄 Documento de progreso no existe, creando estado inicial.")
+            }
+        }
+        Log.d("GameDataRepository", "✅ Escucha de progreso de país iniciada para $countryId.")
+    }
+
+    /**
+     * Detiene la escucha en tiempo real del progreso del país.
+     */
+    fun stopCountryProgressListener() {
+        countryProgressListener?.remove()
+        countryProgressListener = null
+        currentCountryId = null
+        _userCountryProgressStateFlow.value = null
+        Log.d("GameDataRepository", "⏹️ Escucha de progreso de país detenida.")
+    }
 
     // Esta función obtiene TODOS los documentos de la colección 'countries'
     suspend fun getCountryList(): List<Country> {

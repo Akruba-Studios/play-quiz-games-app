@@ -13,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -55,10 +56,12 @@ class CountryViewModel @Inject constructor(
     // --- INICIO DE LA MODIFICACIÓN ---
 
     init {
+        gameDataRepository.startCountryProgressListener(countryId)
         // Lanza la corrutina principal que escuchará los cambios y actualizará la UI.
         processCountryData()
     }
 
+    // REEMPLAZAR COMPLETAMENTE LA FUNCIÓN processCountryData
     private fun processCountryData() {
         viewModelScope.launch {
             // Ponemos el estado de carga al iniciar.
@@ -78,13 +81,16 @@ class CountryViewModel @Inject constructor(
                 return@launch
             }
 
-            // 2. AHORA, nos suscribimos al flujo de datos dinámicos del usuario.
-            gameDataRepository.userStateFlow.collect { userData ->
+            // 2. NUEVO: Combinamos ambos flujos de datos usando combine()
+            combine(
+                gameDataRepository.userStateFlow,
+                gameDataRepository.userCountryProgressStateFlow
+            ) { userData, countryProgress ->
+                Pair(userData, countryProgress)
+            }.collect { (userData, countryProgress) ->
                 if (userData != null) {
                     // Solo cuando tenemos tanto los datos estáticos como los del usuario,
                     // procedemos a calcular el estado final.
-
-                    val initialProgress = gameDataRepository.getUserProgressForCountry(countryId)
 
                     val playableCountryIds = mutableSetOf<String>()
                     playableCountryIds.addAll(userData.availableCountries)
@@ -112,7 +118,9 @@ class CountryViewModel @Inject constructor(
                     }
 
                     val canApplyBoost = (userData.unassignedPcBoosts > 0) && (status == CountryStatus.AVAILABLE)
-                    val currentProgress = gameDataRepository.getUserProgressForCountry(countryId)
+
+                    // NUEVO: Usar el progreso del país del listener en tiempo real
+                    val currentPc = countryProgress?.currentPc ?: 0
 
                     // 3. Actualizamos el estado final y APAGAMOS la carga.
                     _uiState.value = _uiState.value.copy(
@@ -120,17 +128,20 @@ class CountryViewModel @Inject constructor(
                         countryStatus = status,
                         availableCategories = filteredCategories,
                         studyTopics = bossQuiz?.studyTopics ?: emptyList(),
-                        currentPc = currentProgress?.currentPc ?: initialProgress?.currentPc ?: 0,
+                        currentPc = currentPc,
                         pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
                         isScreenLoading = false,
                         canApplyBoost = canApplyBoost
                     )
+
+                    Log.d("CountryViewModel", "🔄 Estado actualizado - PC: $currentPc, Status: $status")
                 }
                 // Si 'userData' es nulo, 'isScreenLoading' permanece en true,
                 // lo que es correcto hasta que tengamos un usuario válido.
             }
         }
     }
+
 
     /**
      * La función 'applyPcBoost' ahora es mucho más simple.
