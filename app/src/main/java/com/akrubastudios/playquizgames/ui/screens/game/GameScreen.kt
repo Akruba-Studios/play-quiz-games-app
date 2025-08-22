@@ -40,6 +40,7 @@ import com.akrubastudios.playquizgames.ui.components.KeepScreenOn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.Dp
 
 @Composable
 fun GameScreen(
@@ -203,32 +204,30 @@ fun AnswerSlots(
 
         // 2. Iteramos sobre cada palabra.
         words.forEach { word ->
-            // 3. CADA PALABRA ES UNA 'ROW' NORMAL.
-            // Una Row nunca se romperá en varias líneas. Es un bloque atómico.
+            val slotSize = if (word.length > 8) 28.dp else 40.dp
+
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // 4. Iteramos sobre las letras de la palabra para crear las casillas.
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
-                    AnswerSlot(char = charToShow)
+                    AnswerSlot(char = charToShow, size = slotSize)
                     letterIndex++
                 }
             }
         }
-        // --- FIN DE LA LÓGICA DE AGRUPAMIENTO ---
     }
 }
 
 @Composable
-fun AnswerSlot(char: Char) {
+fun AnswerSlot(char: Char, size: Dp = 40.dp) {
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(size)
             .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = char.toString().uppercase(),
-            fontSize = 20.sp
+            fontSize = if (size < 35.dp) 16.sp else 20.sp
         )
     }
 }
