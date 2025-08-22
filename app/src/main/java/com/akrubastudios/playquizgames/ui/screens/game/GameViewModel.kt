@@ -80,21 +80,22 @@ class GameViewModel @Inject constructor(
     }
 
     private fun generateHintLetters(correctAnswer: String): String {
-        // CORRECCIÓN: Mantenemos los espacios en la lista de caracteres inicial.
-        // Ya no usamos .replace(" ", "") aquí.
+        // Obtenemos todos los caracteres de la respuesta.
         val allCharsInAnswer = correctAnswer.uppercase().toList()
 
+        // Para el banco de letras, SIEMPRE trabajaremos solo con las letras, sin espacios.
+        val lettersOnlyFromAnswer = allCharsInAnswer.filter { it.isLetter() }
+
         if (difficulty == "principiante") {
-            // Modo Anagrama con "Barajado Garantizado"
-            val originalString = allCharsInAnswer.joinToString("")
+            // Modo Anagrama: Barajado garantizado, usando solo las letras.
+            val originalString = lettersOnlyFromAnswer.joinToString("")
             var shuffledString: String
 
             do {
-                shuffledString = allCharsInAnswer.shuffled().joinToString("")
+                shuffledString = lettersOnlyFromAnswer.shuffled().joinToString("")
             } while (shuffledString == originalString && originalString.length > 1)
             // La condición "originalString.length > 1" evita un bucle infinito
             // para respuestas de una sola letra, donde barajar no tiene efecto.
-
             return shuffledString
 
         } else { // Modo Difícil
@@ -102,51 +103,48 @@ class GameViewModel @Inject constructor(
             val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             val totalLettersInBank = 15
 
-            // CORRECCIÓN CLAVE: Para calcular cuántos señuelos añadir, contamos
-            // únicamente los caracteres que son letras, ignorando los espacios.
-            val letterCountInAnswer = allCharsInAnswer.count { it.isLetter() }
+            // El conteo se hace sobre la lista de solo letras.
+            val letterCountInAnswer = lettersOnlyFromAnswer.size
             val decoyLettersCount = (totalLettersInBank - letterCountInAnswer).coerceAtLeast(4)
 
             // Obtenemos solo las letras de la respuesta para el filtro del alfabeto.
-            val answerLettersOnly = allCharsInAnswer.filter { it.isLetter() }
             val randomLetters = alphabet.toList()
-                .filter { !answerLettersOnly.contains(it) }
+                .filter { !lettersOnlyFromAnswer.contains(it) } // Filtra usando solo letras
                 .shuffled()
                 .take(decoyLettersCount)
 
-            // Juntamos TODOS los caracteres de la respuesta (letras + espacios)
-            // con las letras señuelo y desordenamos el resultado final.
-            return (allCharsInAnswer + randomLetters).shuffled().joinToString("")
+            // La cadena final se construye con las letras de la respuesta y los señuelos.
+            return (lettersOnlyFromAnswer + randomLetters).shuffled().joinToString("")
         }
     }
 
     fun onLetterClick(letter: Char, index: Int) {
-        // --- INICIO DE LA CORRECCIÓN ---
-        // La validación de "índice usado" AHORA SOLO APLICA en modo principiante.
         if (difficulty == "principiante" && uiState.value.usedLetterIndices.contains(index)) {
             return
         }
-        // --- FIN DE LA CORRECCIÓN ---
 
-        val currentAnswerLength = uiState.value.currentQuestion?.correctAnswer?.length ?: 0
-        if (uiState.value.userAnswer.length < currentAnswerLength) {
+        // --- LÓGICA CORREGIDA ---
+        // 1. Calculamos la longitud REQUERIDA de la respuesta (solo letras).
+        val requiredLength = uiState.value.currentQuestion?.correctAnswer?.count { it.isLetter() } ?: 0
+
+        // 2. Comprobamos contra la longitud actual de la respuesta del usuario (que no tiene espacios).
+        if (uiState.value.userAnswer.length < requiredLength) {
+            val newAnswer = uiState.value.userAnswer + letter
+            val newUsedIndices = if (difficulty == "principiante") {
+                uiState.value.usedLetterIndices + index
+            } else {
+                uiState.value.usedLetterIndices
+            }
+
             _uiState.update { currentState ->
-                // Creamos una variable para los índices, que solo se actualizará en principiante.
-                val newUsedIndices = if (difficulty == "principiante") {
-                    currentState.usedLetterIndices + index
-                } else {
-                    currentState.usedLetterIndices // En difícil, no añadimos nada.
-                }
-
                 currentState.copy(
-                    userAnswer = currentState.userAnswer + letter,
+                    userAnswer = newAnswer,
                     usedLetterIndices = newUsedIndices
                 )
             }
 
-            Log.d("GameViewModel_Debug", "Letra '${letter}' añadida. Respuesta actual: ${uiState.value.userAnswer}")
-
-            if (uiState.value.userAnswer.length == currentAnswerLength) {
+            // 3. La condición de parada ahora compara longitudes de solo letras.
+            if (newAnswer.length == requiredLength) {
                 checkAnswer()
             }
         }
@@ -181,7 +179,13 @@ class GameViewModel @Inject constructor(
             // ------------------------------------
 
 
-            val isCorrect = state.currentQuestion?.validAnswers?.contains(state.userAnswer.lowercase()) == true
+            // Normalizamos la respuesta del usuario quitándole los espacios.
+            val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
+
+            // Verificamos si alguna de las respuestas válidas, también normalizada, coincide.
+            val isCorrect = state.currentQuestion?.validAnswers?.any { validAnswer ->
+                validAnswer.replace(" ", "").lowercase() == normalizedUserAnswer
+            } == true
 
             // --- LOG DEL RESULTADO DE LA COMPARACIÓN ---
             Log.d("GameViewModel_Debug", "Resultado de la verificación (isCorrect): $isCorrect")

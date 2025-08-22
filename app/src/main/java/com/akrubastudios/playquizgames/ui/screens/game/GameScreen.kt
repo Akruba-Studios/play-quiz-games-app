@@ -38,6 +38,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.ui.components.KeepScreenOn
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 
 @Composable
 fun GameScreen(
@@ -182,7 +184,10 @@ fun AnswerSlots(
     onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // --- CAMBIA 'Row' POR 'FlowRow' ---
+    // Para rellenar las casillas, usamos la respuesta del usuario SIN espacios.
+    val userAnswerLetters = userAnswer.replace(" ", "")
+    var letterIndex = 0
+
     FlowRow(
         modifier = modifier
             .padding(vertical = 24.dp)
@@ -190,10 +195,18 @@ fun AnswerSlots(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), // Centra las casillas
         verticalArrangement = Arrangement.spacedBy(8.dp) // Añade espacio vertical si hay más de una línea
     ) {
-        // El bucle forEachIndexed se queda exactamente igual
-        correctAnswer.forEachIndexed { index, _ ->
-            val charToShow = userAnswer.getOrNull(index) ?: ' '
-            AnswerSlot(char = charToShow)
+        // Iteramos sobre la respuesta correcta original, que SÍ tiene espacios.
+        correctAnswer.forEach { charInCorrectAnswer ->
+            // --- INICIO DE LA LÓGICA CONDICIONAL ---
+            if (charInCorrectAnswer.isWhitespace()) {
+                // Si el carácter es un espacio, dibujamos un espaciador.
+                Spacer(modifier = Modifier.width(16.dp))
+            } else {
+                // Si es una letra, dibujamos una casilla.
+                val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
+                AnswerSlot(char = charToShow)
+                letterIndex++
+            }
         }
     }
 }
