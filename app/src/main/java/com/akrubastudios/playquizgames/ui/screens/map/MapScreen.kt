@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.SwapHoriz
 
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.font.FontWeight
 
 @Composable
@@ -73,13 +74,18 @@ fun MapScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showExpeditionDialog by remember { mutableStateOf(false) }
+    // --- INICIO DE LA CORRECCIÓN ---
+    // 1. Nueva bandera de estado para "recordar" si el diálogo ya se mostró.
+    // 'rememberSaveable' sobrevive a cambios de configuración como la rotación de pantalla.
+    var hasShownInitialDialog by rememberSaveable { mutableStateOf(false) }
 
-    // Este efecto se dispara cada vez que uiState.expeditionAvailable cambia.
-    LaunchedEffect(uiState.expeditionAvailable) {
-        // Si una expedición está disponible y no la hemos pospuesto en esta sesión,
-        // mostramos el diálogo.
-        if (uiState.expeditionAvailable) {
+    // 2. El LaunchedEffect ahora tiene una lógica más inteligente.
+    LaunchedEffect(uiState.expeditionAvailable, hasShownInitialDialog) {
+        // Mostramos el diálogo solo si la expedición está disponible Y si NO lo hemos mostrado antes.
+        if (uiState.expeditionAvailable && !hasShownInitialDialog) {
             showExpeditionDialog = true
+            // 3. Una vez que lo mostramos, levantamos la bandera para no volver a mostrarlo.
+            hasShownInitialDialog = true
         }
     }
 
@@ -445,7 +451,7 @@ fun InteractiveWorldMap(
                                 val crackPaint = android.graphics.Paint().apply {
                                     isAntiAlias = true
                                     style = android.graphics.Paint.Style.STROKE
-                                    strokeWidth = 4f
+                                    strokeWidth = 2f // Grosor de las lineas o bordes de los paises grises
                                     setColor(android.graphics.Color.argb(128, 255, 255, 255)) // Blanco 25% transparente
                                     pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 6f), 0f)
                                 }
