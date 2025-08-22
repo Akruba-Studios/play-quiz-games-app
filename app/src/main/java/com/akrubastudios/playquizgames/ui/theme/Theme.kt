@@ -36,7 +36,7 @@ private val LightColorScheme = lightColorScheme(
 fun PlayQuizGamesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // false: Forzamos a usar nuestro paleta de colores sobre el sistema
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
