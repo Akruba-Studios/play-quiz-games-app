@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material3.*
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.Flight
 
 import androidx.compose.material.icons.filled.SwapHoriz
 
@@ -70,6 +72,16 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showExpeditionDialog by remember { mutableStateOf(false) }
+
+    // Este efecto se dispara cada vez que uiState.expeditionAvailable cambia.
+    LaunchedEffect(uiState.expeditionAvailable) {
+        // Si una expedición está disponible y no la hemos pospuesto en esta sesión,
+        // mostramos el diálogo.
+        if (uiState.expeditionAvailable) {
+            showExpeditionDialog = true
+        }
+    }
 
     // Scaffold nos da la estructura de la pantalla principal
     Scaffold(
@@ -162,30 +174,42 @@ fun MapScreen(
                     )
                 }
             }
+            // El icono del avión (botón flotante) se muestra si una expedición está disponible.
+            if (uiState.expeditionAvailable) {
+                FloatingActionButton(
+                    onClick = { showExpeditionDialog = true }, // Al hacer clic, abre el diálogo
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
+                        .padding(16.dp),
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Flight,
+                        contentDescription = "Iniciar Expedición"
+                    )
+                }
+            }
         }
     }
 
-    // Lógica condicional para mostrar el diálogo de expedición.
-    if (uiState.expeditionAvailable) {
+    // El diálogo ahora es controlado por el estado local 'showExpeditionDialog'.
+    if (showExpeditionDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.dismissExpeditionDialog() },
+            onDismissRequest = { showExpeditionDialog = false }, // Tocar fuera cierra el diálogo
             title = { Text(text = "¡Nuevos Horizontes!") },
-
-            // --- INICIO DE LA MODIFICACIÓN CLAVE ---
-            // 1. Movemos la lista de botones al parámetro 'text', que es el área de contenido.
             text = {
-                // 2. Hacemos la columna deslizable (scrollable).
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(text = "Tu fama como explorador crece. Elige tu próximo destino:")
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Iteramos sobre la lista de expediciones disponibles que nos pasa el ViewModel.
                     uiState.availableExpeditions.forEach { (continentId, continentName) ->
                         Button(
-                            onClick = { viewModel.onExpeditionContinentSelected(continentId) },
+                            onClick = {
+                                viewModel.onExpeditionContinentSelected(continentId)
+                                showExpeditionDialog = false // Cierra el diálogo al elegir
+                            },
                             modifier = Modifier.fillMaxWidth().height(50.dp)
                         ) {
                             Text(continentName)
@@ -194,17 +218,14 @@ fun MapScreen(
                     }
                 }
             },
-
             confirmButton = {
-                TextButton(onClick = { viewModel.dismissExpeditionDialog() }) {
+                TextButton(onClick = { showExpeditionDialog = false }) { // "Más Tarde" cierra el diálogo
                     Text("Más Tarde")
                 }
             },
-            // El dismissButton ya no es necesario aquí.
             dismissButton = null
         )
     }
-
     // Diálogo para el desafío de Jefe post-conquista
     uiState.pendingBossChallenge?.let { countryId ->
         // Obtenemos el nombre del país para mostrarlo en el diálogo.
