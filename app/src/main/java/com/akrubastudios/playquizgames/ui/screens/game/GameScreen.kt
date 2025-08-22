@@ -184,30 +184,37 @@ fun AnswerSlots(
     onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Para rellenar las casillas, usamos la respuesta del usuario SIN espacios.
-    val userAnswerLetters = userAnswer.replace(" ", "")
+    // La respuesta del usuario no tiene espacios, es solo una cadena de letras.
+    val userAnswerLetters = userAnswer
     var letterIndex = 0
 
+    // El FlowRow es el contenedor principal que permite que las palabras salten de línea.
     FlowRow(
         modifier = modifier
             .padding(vertical = 24.dp)
             .clickable { onClear() },
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), // Centra las casillas
-        verticalArrangement = Arrangement.spacedBy(8.dp) // Añade espacio vertical si hay más de una línea
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Iteramos sobre la respuesta correcta original, que SÍ tiene espacios.
-        correctAnswer.forEach { charInCorrectAnswer ->
-            // --- INICIO DE LA LÓGICA CONDICIONAL ---
-            if (charInCorrectAnswer.isWhitespace()) {
-                // Si el carácter es un espacio, dibujamos un espaciador.
-                Spacer(modifier = Modifier.width(16.dp))
-            } else {
-                // Si es una letra, dibujamos una casilla.
-                val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
-                AnswerSlot(char = charToShow)
-                letterIndex++
+        // --- INICIO DE LA LÓGICA DE AGRUPAMIENTO ---
+
+        // 1. Dividimos la respuesta correcta en palabras.
+        val words = correctAnswer.split(' ')
+
+        // 2. Iteramos sobre cada palabra.
+        words.forEach { word ->
+            // 3. CADA PALABRA ES UNA 'ROW' NORMAL.
+            // Una Row nunca se romperá en varias líneas. Es un bloque atómico.
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // 4. Iteramos sobre las letras de la palabra para crear las casillas.
+                word.forEach { _ ->
+                    val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
+                    AnswerSlot(char = charToShow)
+                    letterIndex++
+                }
             }
         }
+        // --- FIN DE LA LÓGICA DE AGRUPAMIENTO ---
     }
 }
 
