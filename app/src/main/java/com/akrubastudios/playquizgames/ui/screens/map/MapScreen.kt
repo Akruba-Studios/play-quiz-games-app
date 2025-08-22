@@ -141,37 +141,37 @@ fun MapScreen(
                 )
             }
 
-            // CAPA 2: El título ENCIMA del mapa
+            // CAPA 2: El título y PlayerlevelIndicator dentro un surface
+            // Usamos un Surface como el contenedor principal del panel.
             Surface(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .align(Alignment.TopCenter) // Lo posiciona en la parte superior
+                    .fillMaxWidth(),
+                // Usamos el mismo color que el BottomAppBar para consistencia.
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp
+                tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
             ) {
-                Text(
-                    text = "Mapa del Conocimiento",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // CAPA 4: El indicador de nivel del jugador
-            // Solo mostramos el indicador si ya hemos cargado la información del nivel desde el ViewModel.
-            uiState.playerLevelInfo?.let { levelInfo ->
-                // Usamos una Columna para poder alinearla fácilmente en la parte superior
-                // y añadirle un padding para que se sitúe debajo del título.
+                // Usamos una Columna para apilar el título y el indicador verticalmente.
                 Column(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 80.dp) // Ajusta este valor si es necesario
+                    modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    PlayerLevelIndicator(
-                        levelInfo = levelInfo,
-                        boostCount = uiState.unassignedPcBoosts // <-- PASAR EL NUEVO DATO
+                    // 1. El Título
+                    Text(
+                        text = "Mapa del Conocimiento",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
                     )
+
+                    // 2. El Indicador de Nivel
+                    // Solo lo mostramos si la información está disponible.
+                    uiState.playerLevelInfo?.let { levelInfo ->
+                        PlayerLevelIndicator(
+                            levelInfo = levelInfo,
+                            boostCount = uiState.unassignedPcBoosts
+                        )
+                    }
                 }
             }
             // El icono del avión (botón flotante) se muestra si una expedición está disponible.
