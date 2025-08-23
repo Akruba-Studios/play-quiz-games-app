@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
+import android.content.res.Configuration
+import java.util.Locale
 
 data class MapState(
     val countries: List<Country> = emptyList(),
@@ -37,13 +40,22 @@ class MapViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
-    private val application: Application
+    private val application: Application,
+    private val languageManager: LanguageManager
 ) : ViewModel() {
 
     val currentUser = authRepository.currentUser
 
     private val _uiState = MutableStateFlow(MapState())
     val uiState: StateFlow<MapState> = _uiState.asStateFlow()
+
+    private fun getLocalizedResources(): android.content.res.Resources {
+        val appLanguage = languageManager.languageStateFlow.value
+        val locale = Locale(appLanguage)
+        val config = Configuration(application.resources.configuration)
+        config.setLocale(locale)
+        return application.createConfigurationContext(config).resources
+    }
 
     // --- INICIO DE LA MODIFICACIÓN ---
 
@@ -80,16 +92,16 @@ class MapViewModel @Inject constructor(
                         .toSet()
 
                     val allPossibleExpeditions = mapOf(
-                        "europe" to application.getString(R.string.continent_europe),
-                        "north_america" to application.getString(R.string.continent_north_america),
-                        "south_america" to application.getString(R.string.continent_south_america)
+                        "europe" to getLocalizedResources().getString(R.string.continent_europe),
+                        "north_america" to getLocalizedResources().getString(R.string.continent_north_america),
+                        "south_america" to getLocalizedResources().getString(R.string.continent_south_america)
                     )
 
                     val filteredExpeditions = allPossibleExpeditions
                         .filter { !unlockedContinents.contains(it.key) }
                         .map { (continentId, continentName) ->
                             // Construimos el texto "Explorar..."
-                            val buttonText = application.getString(R.string.expedition_dialog_button_explore, continentName)
+                            val buttonText = getLocalizedResources().getString(R.string.expedition_dialog_button_explore, continentName)
                             Pair(continentId, buttonText)
                         }
 

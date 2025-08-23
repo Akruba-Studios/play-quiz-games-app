@@ -118,7 +118,7 @@
     <string name="credits_toast_text">Special thanks to mapsvg.com for the world map.</string>
     <string name="feature_not_available">Feature not available.</string>
     <string name="cd_back">Back</string>
-    <string name="settings_language_section">language</string>
+    <string name="settings_language_section">Language</string>
     <string name="settings_language">App Language</string>
     <string name="settings_language_dialog_title">Select Language</string>
     <string name="language_spanish">Spanish</string>
