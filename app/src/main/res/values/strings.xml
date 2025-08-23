@@ -118,6 +118,11 @@
     <string name="credits_toast_text">Agradecimiento especial a mapsvg.com por el mapa del mundo.</string>
     <string name="feature_not_available">Función no disponible.</string>
     <string name="cd_back">Volver</string>
+    <string name="settings_language_section">Idioma</string>
+    <string name="settings_language">Idioma de la aplicación</string>
+    <string name="settings_language_dialog_title">Seleccionar Idioma</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">Inglés</string>
 
     <!-- RankingScreen -->
     <string name="ranking_title">Ranking Global</string>

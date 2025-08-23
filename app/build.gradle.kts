@@ -85,4 +85,5 @@ dependencies {
     implementation(libs.play.services.ads)
     implementation(platform(libs.firebase.bom))
     implementation("com.caverock:androidsvg-aar:1.4")
+    implementation("androidx.datastore:datastore-preferences:1.1.3") // O la última versión estable
 }

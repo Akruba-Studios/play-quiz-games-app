@@ -1,9 +1,11 @@
 package com.akrubastudios.playquizgames.di
 
 import android.content.Context
+import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
+import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,6 +46,14 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideSettingsRepository(
+        @ApplicationContext context: Context
+    ): SettingsRepository {
+        // Hilt proveerá el contexto de la aplicación para que SettingsRepository pueda usar DataStore.
+        return SettingsRepository(context)
+    }
+    @Provides
+    @Singleton
     fun provideQuizRepository(
         db: FirebaseFirestore
     ): QuizRepository {
@@ -66,5 +76,14 @@ object AppModule {
         gameDataRepository: GameDataRepository
     ): AuthRepository {
         return AuthRepository(auth, db, gameDataRepository)
+    }
+    @Provides
+    @Singleton
+    fun provideLanguageManager(
+        settingsRepository: SettingsRepository
+    ): LanguageManager {
+        // Hilt ahora sabe que para crear un LanguageManager, primero debe crear
+        // (o reutilizar) un SettingsRepository y pasárselo.
+        return LanguageManager(settingsRepository)
     }
 }
