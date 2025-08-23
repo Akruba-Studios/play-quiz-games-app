@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
@@ -43,6 +44,7 @@ class SettingsViewModel @Inject constructor(
      * Simplemente delega la acción a nuestro gestor centralizado.
      */
     fun onLanguageSelected(languageCode: String) {
+        Log.d("LanguageDebug", "[PASO 1] SettingsViewModel: onLanguageSelected llamado con '$languageCode'")
         languageManager.setLanguage(languageCode)
     }
 

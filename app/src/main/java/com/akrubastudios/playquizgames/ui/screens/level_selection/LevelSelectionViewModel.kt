@@ -21,6 +21,7 @@ data class LevelSelectionState(
 @HiltViewModel
 class LevelSelectionViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
+    private val languageManager: LanguageManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,34 +60,38 @@ class LevelSelectionViewModel @Inject constructor(
             }.sortedBy { levelId -> // Ordenamos numéricamente
                 levelId.levelId.filter { it.isDigit() }.toIntOrNull() ?: 0
             }
-            // ----------------------------------------
-            val lang = LanguageManager.getLanguageSuffix()
+
             // (El resto de la lógica de desbloqueo y mapeo se queda igual)
             val completionsMap = userCompletions.associateBy { it.levelId }
-            val levelStatuses = levelsForThisScreen.mapIndexed { index, level ->
-                val starsEarned = completionsMap[level.levelId]?.starsEarned ?: 0
+            languageManager.languageStateFlow.collect { langCode ->
 
-                val isLocked = if (index == 0) {
-                    false
-                } else {
-                    val previousLevelId = levelsForThisScreen[index - 1].levelId
-                    val previousLevelStars = completionsMap[previousLevelId]?.starsEarned ?: 0
-                    previousLevelStars < 2
+                val levelStatuses = levelsForThisScreen.mapIndexed { index, level ->
+                    val starsEarned = completionsMap[level.levelId]?.starsEarned ?: 0
+
+                    val isLocked = if (index == 0) {
+                        false
+                    } else {
+                        val previousLevelId = levelsForThisScreen[index - 1].levelId
+                        val previousLevelStars = completionsMap[previousLevelId]?.starsEarned ?: 0
+                        previousLevelStars < 2
+                    }
+
+                    LevelStatus(
+                        levelId = level.levelId,
+                        levelName = level.levelName[langCode] ?: level.levelName["es"]
+                        ?: level.levelId,
+                        starsEarned = starsEarned,
+                        isLocked = isLocked
+                    )
                 }
 
-                LevelStatus(
-                    levelId = level.levelId,
-                    levelName = level.levelName[lang] ?: level.levelName["es"] ?: level.levelId,
-                    starsEarned = starsEarned,
-                    isLocked = isLocked
+                _uiState.value = LevelSelectionState(
+                    levels = levelStatuses,
+                    categoryName = category?.name?.get(langCode) ?: category?.name?.get("es")
+                    ?: categoryId,
+                    isLoading = false
                 )
             }
-
-            _uiState.value = LevelSelectionState(
-                levels = levelStatuses,
-                categoryName = category?.name?.get(lang) ?: category?.name?.get("es") ?: categoryId,
-                isLoading = false
-            )
         }
     }
 }

@@ -28,6 +28,7 @@ class GameViewModel @Inject constructor(
     private val repository: QuizRepository,
     private val db: FirebaseFirestore,       // <-- AÑADE ESTO
     private val auth: FirebaseAuth,
+    private val languageManager: LanguageManager,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -59,7 +60,7 @@ class GameViewModel @Inject constructor(
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
                 val firstQuestion = loadedLevel.questions[currentQuestionIndex]
-                val lang = LanguageManager.getLanguageSuffix()
+                val lang = languageManager.languageStateFlow.value
 
                 // 1. Determinamos la respuesta correcta UNA SOLA VEZ.
                 val correctAnswerForUi = if (lang == "es") firstQuestion.correctAnswer_es else firstQuestion.correctAnswer_en
@@ -188,7 +189,7 @@ class GameViewModel @Inject constructor(
 
 
             val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
-            val lang = LanguageManager.getLanguageSuffix()
+            val lang = languageManager.languageStateFlow.value
 
             // Obtenemos la LISTA de respuestas válidas para el idioma actual.
             val validAnswersForLang = state.currentQuestion?.validAnswers?.get(lang) ?: emptyList()
@@ -241,7 +242,7 @@ class GameViewModel @Inject constructor(
         currentQuestionIndex++
         if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
             val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
-            val lang = LanguageManager.getLanguageSuffix()
+            val lang = languageManager.languageStateFlow.value
 
             val correctAnswerForUi = if (lang == "es") nextQuestion.correctAnswer_es else nextQuestion.correctAnswer_en
             val hints = generateHintLetters(correctAnswerForUi)

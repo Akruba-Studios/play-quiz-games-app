@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.data.repository
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -56,6 +57,7 @@ class SettingsRepository @Inject constructor(
      * @param languageCode El código de idioma a guardar (ej. "es", "en").
      */
     suspend fun saveLanguagePreference(languageCode: String) {
+        Log.d("LanguageDebug", "[PASO 3] SettingsRepository: Guardando '$languageCode' en DataStore.")
         context.dataStore.edit { preferences ->
             preferences[LANGUAGE_KEY] = languageCode
         }

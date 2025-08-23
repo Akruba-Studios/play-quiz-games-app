@@ -130,7 +130,7 @@ fun FreeModeScreen(
 
 @Composable
 fun MasteredLevelItem(
-    level: UserLevelCompletion,
+    level: MasteredLevelUiState,
     selectedDifficulty: String,
     onPlayClick: () -> Unit
 ) {
@@ -139,9 +139,8 @@ fun MasteredLevelItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            val lang = LanguageManager.getLanguageSuffix()
             Text(
-                text = level.levelName[lang] ?: level.levelName["es"] ?: level.levelId,
+                text = level.levelName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

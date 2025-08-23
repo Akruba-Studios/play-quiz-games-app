@@ -56,9 +56,7 @@ fun CountrySelectionScreen(
                             viewModel.onCountrySelected(country.countryId) },
                         modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
                     ) {
-                        // Obtenemos el idioma y mostramos el nombre del país correcto.
-                        val lang = LanguageManager.getLanguageSuffix()
-                        Text(text = country.name[lang] ?: country.name["es"] ?: country.countryId)
+                        Text(text = country.name)
                     }
                 }
             }

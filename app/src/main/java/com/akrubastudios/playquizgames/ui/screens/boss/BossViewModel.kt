@@ -39,6 +39,7 @@ data class BattleStats(
 data class BossState(
     val isLoading: Boolean = true,
     val levelName: String = "",
+    val questionText: String = "",
     val currentQuestion: Question? = null,
     val currentCorrectAnswer: String = "",
     val totalQuestions: Int = 1,
@@ -67,6 +68,7 @@ data class BossState(
 class BossViewModel @Inject constructor(
     private val quizRepository: QuizRepository,
     private val application: Application,
+    private val languageManager: LanguageManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -94,7 +96,7 @@ class BossViewModel @Inject constructor(
             levelPackage = quizRepository.getLevel(levelId)
             if (levelPackage != null) {
                 val theme = generateGuardianTheme(countryId)
-                val lang = LanguageManager.getLanguageSuffix()
+                val lang = languageManager.languageStateFlow.value
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -168,12 +170,15 @@ class BossViewModel @Inject constructor(
 
             updateDialogue()
 
-            val lang = LanguageManager.getLanguageSuffix()
+            val lang = languageManager.languageStateFlow.value
             val correctAnswerForUi = if (lang == "es") question.correctAnswer_es else question.correctAnswer_en
+
+            val localizedQuestionText = if (lang == "es") question.questionText_es else question.questionText_en
 
             _uiState.update {
                 it.copy(
                     currentQuestion = question,
+                    questionText = localizedQuestionText,
                     currentCorrectAnswer = correctAnswerForUi,
                     userAnswer = "",
                     generatedHintLetters = generateHintLettersByPhase(correctAnswerForUi, newPhase),
@@ -343,7 +348,7 @@ class BossViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _uiState.value
             val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
-            val lang = LanguageManager.getLanguageSuffix()
+            val lang = languageManager.languageStateFlow.value
 
             // Obtenemos la LISTA de respuestas válidas para el idioma actual.
             val validAnswersForLang = state.currentQuestion?.validAnswers?.get(lang) ?: emptyList()

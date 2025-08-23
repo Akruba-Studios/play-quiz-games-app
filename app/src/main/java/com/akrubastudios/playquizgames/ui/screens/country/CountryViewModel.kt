@@ -30,8 +30,9 @@ enum class CountryStatus {
 // --- MODIFICADO: El State ahora usa el Enum y guarda los studyTopics ---
 data class CountryState(
     val country: Country? = null,
+    val countryName: String = "",
     val countryStatus: CountryStatus = CountryStatus.LOCKED,
-    val availableCategories: List<Category> = emptyList(),
+    val availableCategories: List<CategoryState> = emptyList(),
     val studyTopics: List<String> = emptyList(),
     val currentPc: Long = 0,
     val pcRequired: Long = 1, // Evita división por cero
@@ -39,11 +40,17 @@ data class CountryState(
     val isApplyingBoost: Boolean = false,
     val canApplyBoost: Boolean = false
 )
+// Representará una categoría con su nombre ya localizado.
+data class CategoryState(
+    val categoryId: String,
+    val name: String
+)
 
 @HiltViewModel
 class CountryViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val quizRepository: com.akrubastudios.playquizgames.data.repository.QuizRepository,
+    private val languageManager: LanguageManager,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val savedStateHandle: SavedStateHandle
@@ -85,10 +92,14 @@ class CountryViewModel @Inject constructor(
             // 2. NUEVO: Combinamos ambos flujos de datos usando combine()
             combine(
                 gameDataRepository.userStateFlow,
-                gameDataRepository.userCountryProgressStateFlow
-            ) { userData, countryProgress ->
-                Pair(userData, countryProgress)
-            }.collect { (userData, countryProgress) ->
+                gameDataRepository.userCountryProgressStateFlow,
+                languageManager.languageStateFlow
+            ) { userData, countryProgress, langCode ->
+                Log.d("LanguageDebug", "[PASO 5] CountryViewModel: 'combine' se ha disparado con el idioma -> '$langCode'")
+                // Creamos una tupla triple para manejar los tres valores.
+                Triple(userData, countryProgress, langCode)
+            }.collect { (userData, countryProgress, langCode) -> // <-- DESESTRUCTURAMOS LA TUPLA
+
                 if (userData != null) {
                     // Solo cuando tenemos tanto los datos estáticos como los del usuario,
                     // procedemos a calcular el estado final.
@@ -122,14 +133,24 @@ class CountryViewModel @Inject constructor(
 
                     // NUEVO: Usar el progreso del país del listener en tiempo real
                     val currentPc = countryProgress?.currentPc ?: 0
-                    val lang = LanguageManager.getLanguageSuffix()
+
+                    val countryNameForUi = country.name[langCode] ?: country.name["es"] ?: country.countryId
+
+                    // Mapeamos la lista de categorías a la nueva clase CategoryState con el nombre ya localizado.
+                    val categoriesForUi = filteredCategories.map { category ->
+                        CategoryState(
+                            categoryId = category.categoryId,
+                            name = category.name[langCode] ?: category.name["es"] ?: category.categoryId
+                        )
+                    }
 
                     // 3. Actualizamos el estado final y APAGAMOS la carga.
                     _uiState.value = _uiState.value.copy(
                         country = country,
+                        countryName = countryNameForUi,
                         countryStatus = status,
-                        availableCategories = filteredCategories,
-                        studyTopics = bossQuiz?.studyTopics?.get(lang) ?: emptyList(),
+                        availableCategories = categoriesForUi,
+                        studyTopics = bossQuiz?.studyTopics?.get(langCode) ?: emptyList(),
                         currentPc = currentPc,
                         pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
                         isScreenLoading = false,

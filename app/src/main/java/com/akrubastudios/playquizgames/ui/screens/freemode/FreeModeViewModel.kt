@@ -8,6 +8,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.akrubastudios.playquizgames.core.LanguageManager
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 /**
@@ -16,14 +19,23 @@ import javax.inject.Inject
  * @param isLoading Indica si se están cargando los datos.
  * @param masteredLevels La lista de niveles con 3 estrellas que ha completado el usuario.
  */
+// Representa un nivel masterizado con su nombre ya localizado para la UI.
+data class MasteredLevelUiState(
+    val levelId: String,
+    val levelName: String,
+    val highScore: Int,
+    val maxScore: Int
+)
+
 data class FreeModeState(
     val isLoading: Boolean = true,
-    val masteredLevels: List<UserLevelCompletion> = emptyList()
+    val masteredLevels: List<MasteredLevelUiState> = emptyList()
 )
 
 @HiltViewModel
 class FreeModeViewModel @Inject constructor(
-    private val gameDataRepository: GameDataRepository
+    private val gameDataRepository: GameDataRepository,
+    private val languageManager: LanguageManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FreeModeState())
@@ -49,17 +61,34 @@ class FreeModeViewModel @Inject constructor(
      * y actualiza el estado de la UI con el resultado.
      */
     private fun loadMasteredLevels() {
-        // Lanzamos una coroutine para ejecutar la llamada de red en segundo plano.
         viewModelScope.launch {
-            // Ponemos el estado en 'cargando' antes de la llamada.
-            _uiState.value = FreeModeState(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
 
-            // Obtenemos los datos desde el repositorio.
+            // Obtenemos los datos del repositorio una sola vez.
             val allMasteredLevels = gameDataRepository.getMasteredLevels()
-            // Filtramos la lista para excluir cualquier nivel cuyo ID contenga "_boss_".
             val levels = allMasteredLevels.filter { !it.levelId.contains("_boss_") }
-            // Actualizamos el estado con los datos cargados y desactivamos 'isLoading'.
-            _uiState.value = FreeModeState(isLoading = false, masteredLevels = levels)
+
+            // Nos suscribimos a los cambios de idioma.
+            languageManager.languageStateFlow.collect { langCode ->
+                // Mapeamos los datos del dominio a nuestro nuevo UiState.
+                val masteredLevelsForUi = levels.map { levelCompletion ->
+                    MasteredLevelUiState(
+                        levelId = levelCompletion.levelId,
+                        // Obtenemos el nombre localizado aquí.
+                        levelName = levelCompletion.levelName[langCode] ?: levelCompletion.levelName["es"] ?: levelCompletion.levelId,
+                        highScore = levelCompletion.highScore,
+                        maxScore = levelCompletion.maxScore
+                    )
+                }
+
+                // Actualizamos el estado de la UI con la lista ya procesada.
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        masteredLevels = masteredLevelsForUi
+                    )
+                }
+            }
         }
     }
 }

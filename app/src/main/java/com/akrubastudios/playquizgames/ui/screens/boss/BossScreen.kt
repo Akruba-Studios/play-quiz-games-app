@@ -522,13 +522,11 @@ fun BossScreen(
 
                 // 2. CONTENIDO DE LA PREGUNTA
                 uiState.currentQuestion?.let { question ->
-                    val lang = LanguageManager.getLanguageSuffix()
-                    val localizedQuestionText = if (lang == "es") question.questionText_es else question.questionText_en
                     // Imagen de la pregunta
                     // QuestionImageFixed(imageUrl = question.imageUrl)
 
                     // Texto de la pregunta
-                    QuestionTextFixed(questionText = localizedQuestionText)
+                    QuestionTextFixed(questionText = uiState.questionText)
 
                     // Casillas de respuesta - SIN SCROLL HORIZONTAL
                     AnswerSlotsFixed(

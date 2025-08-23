@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.core
 
+import android.util.Log
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class LanguageManager @Inject constructor(
         // En el momento en que se crea la instancia, comenzamos a escuchar las preferencias guardadas.
         scope.launch {
             settingsRepository.languagePreferenceFlow.collect { savedLanguage ->
+                Log.d("LanguageDebug", "[PASO 4] LanguageManager: Flow ha emitido un nuevo valor -> '$savedLanguage'")
                 // Cada vez que el DataStore emite un valor (ya sea el guardado o el del sistema),
                 // actualizamos nuestro StateFlow.
                 _languageStateFlow.value = savedLanguage
@@ -52,6 +54,7 @@ class LanguageManager @Inject constructor(
      * @param languageCode El nuevo código de idioma a establecer (ej. "es", "en").
      */
     fun setLanguage(languageCode: String) {
+        Log.d("LanguageDebug", "[PASO 2] LanguageManager: setLanguage llamado con '$languageCode'")
         scope.launch {
             settingsRepository.saveLanguagePreference(languageCode)
         }

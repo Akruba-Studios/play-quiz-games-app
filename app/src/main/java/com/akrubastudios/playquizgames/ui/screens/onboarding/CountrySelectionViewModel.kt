@@ -16,10 +16,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.akrubastudios.playquizgames.core.LanguageManager
+import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
+data class CountrySelectionUiItem(
+    val countryId: String,
+    val name: String
+)
 data class CountrySelectionState(
-    val countries: List<Country> = emptyList(),
+    val countries: List<CountrySelectionUiItem> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -28,6 +34,7 @@ class CountrySelectionViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
+    private val languageManager: LanguageManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -44,8 +51,28 @@ class CountrySelectionViewModel @Inject constructor(
 
     private fun loadCountries() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            // Obtenemos la lista de países una sola vez.
             val countryList = gameDataRepository.getCountriesForContinent(continentId)
-            _uiState.value = CountrySelectionState(countries = countryList, isLoading = false)
+
+            // Nos suscribimos a los cambios de idioma.
+            languageManager.languageStateFlow.collect { langCode ->
+                // Mapeamos la lista de dominio a nuestra lista de UI-State.
+                val countriesForUi = countryList.map { country ->
+                    CountrySelectionUiItem(
+                        countryId = country.countryId,
+                        name = country.name[langCode] ?: country.name["es"] ?: country.countryId
+                    )
+                }
+
+                _uiState.update {
+                    it.copy(
+                        countries = countriesForUi,
+                        isLoading = false
+                    )
+                }
+            }
         }
     }
 

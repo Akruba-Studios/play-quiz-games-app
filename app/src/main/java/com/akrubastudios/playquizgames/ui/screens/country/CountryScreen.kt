@@ -63,12 +63,8 @@ fun CountryScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                val lang = LanguageManager.getLanguageSuffix()
                 Text(
-                    text = uiState.country?.name?.get(lang)
-                        ?: uiState.country?.name?.get("es")
-                        ?: uiState.country?.countryId
-                        ?: "", // Fallback final por si todo es nulo
+                    text = uiState.countryName, // <-- Mucho más simple.
                     style = MaterialTheme.typography.displayMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -184,7 +180,7 @@ private fun CountryProgress(current: Long, total: Long, statusText: String) {
 }
 
 @Composable
-private fun CategoryList(categories: List<com.akrubastudios.playquizgames.domain.Category>, onCategoryClick: (String) -> Unit) {
+private fun CategoryList(categories: List<CategoryState>, onCategoryClick: (String) -> Unit) {
     Text(stringResource(R.string.country_available_categories), style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(16.dp))
     categories.forEach { category ->
@@ -192,8 +188,7 @@ private fun CategoryList(categories: List<com.akrubastudios.playquizgames.domain
             onClick = { onCategoryClick(category.categoryId) },
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
-            val lang = LanguageManager.getLanguageSuffix()
-            Text(category.name[lang] ?: category.name["es"] ?: category.categoryId)
+            Text(category.name) // <-- Simplemente usa el nombre pre-procesado.
         }
         Spacer(modifier = Modifier.height(8.dp))
     }
