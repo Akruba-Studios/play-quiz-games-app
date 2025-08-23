@@ -29,6 +29,7 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
 import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
+import com.google.firebase.auth.FirebaseAuth
 
 
 object Routes {
@@ -51,9 +52,21 @@ object Routes {
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Comprobamos el estado de autenticación actual CADA VEZ que el NavGraph se compone.
+    val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+        // Si hay un usuario logueado, el punto de partida es el mapa.
+        Routes.MAP_SCREEN
+    } else {
+        // Si no, el punto de partida es el login.
+        Routes.LOGIN_SCREEN
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN_SCREEN
+        startDestination = startDestination
     ) {
 
         composable(Routes.RANKING_SCREEN) {

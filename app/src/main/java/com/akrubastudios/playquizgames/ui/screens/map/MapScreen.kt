@@ -69,6 +69,7 @@ import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
+import java.util.Locale
 
 @Composable
 fun MapScreen(
@@ -92,116 +93,134 @@ fun MapScreen(
         }
     }
 
-    // Scaffold nos da la estructura de la pantalla principal
-    Scaffold(
-        bottomBar = {
-            BottomAppBar {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { navController.navigate(Routes.RANKING_SCREEN) },
-                    icon = { Icon(Icons.Filled.Leaderboard, contentDescription = stringResource(R.string.bottom_nav_ranking)) },
-                    label = { Text(stringResource(R.string.bottom_nav_ranking))}
-                )
+    val currentLanguageCode = Locale.getDefault().language
 
-                NavigationBarItem(
-                    // El botón solo está habilitado si el nivel del jugador es 5 o superior.
-                    // El operador "?." (safe call) se asegura de que no haya un error si
-                    // playerLevelInfo es nulo durante la carga.
-                    enabled = (uiState.playerLevelInfo?.level ?: 0) >= 5,
-                    selected = false,
-                    onClick = { navController.navigate(Routes.FREE_MODE_SCREEN) },
-                    icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode)) },
-                    label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
-                    icon = { Icon(Icons.Filled.AccountCircle, contentDescription = stringResource(R.string.bottom_nav_profile)) },
-                    label = { Text(stringResource(R.string.bottom_nav_profile)) }
-                )
-            }
-        }
-    ) { innerPadding -> // El contenido principal debe usar este padding
-
-        // CAMBIO: Usar Box en lugar de Column para layering correcto
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                // Ignoramos el padding superior para permitir que el Surface se pegue al borde.
-                .padding(bottom = innerPadding.calculateBottomPadding())
-        ) {
-            // CAPA 1: El mapa de fondo
-            if (uiState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                InteractiveWorldMap(
-                    countries = uiState.countries,
-                    conqueredCountryIds = uiState.conqueredCountryIds,
-                    dominatedCountryIds = uiState.dominatedCountryIds,
-                    availableCountryIds = uiState.availableCountryIds,
-                    onCountryClick = { countryId ->
-                        navController.navigate(
-                            Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
-                        )
-                    },
-                    modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
-                )
-            }
-
-            // CAPA 2: El título y PlayerlevelIndicator dentro un surface
-            // Usamos un Surface como el contenedor principal del panel.
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter) // Lo posiciona en la parte superior
-                    .fillMaxWidth(),
-                // Usamos el mismo color que el BottomAppBar para consistencia.
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
-            ) {
-                // Usamos una Columna para apilar el título y el indicador verticalmente.
-                Column(
-                    modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // 1. El Título
-                    Text(
-                        stringResource(R.string.map_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
+        // Scaffold nos da la estructura de la pantalla principal
+    key(currentLanguageCode) {
+        Scaffold(
+            bottomBar = {
+                BottomAppBar {
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { navController.navigate(Routes.RANKING_SCREEN) },
+                        icon = {
+                            Icon(
+                                Icons.Filled.Leaderboard,
+                                contentDescription = stringResource(R.string.bottom_nav_ranking)
+                            )
+                        },
+                        label = { Text(stringResource(R.string.bottom_nav_ranking)) }
                     )
 
-                    // 2. El Indicador de Nivel
-                    // Solo lo mostramos si la información está disponible.
-                    uiState.playerLevelInfo?.let { levelInfo ->
-                        PlayerLevelIndicator(
-                            levelInfo = levelInfo,
-                            boostCount = uiState.unassignedPcBoosts
+                    NavigationBarItem(
+                        // El botón solo está habilitado si el nivel del jugador es 5 o superior.
+                        // El operador "?." (safe call) se asegura de que no haya un error si
+                        // playerLevelInfo es nulo durante la carga.
+                        enabled = (uiState.playerLevelInfo?.level ?: 0) >= 5,
+                        selected = false,
+                        onClick = { navController.navigate(Routes.FREE_MODE_SCREEN) },
+                        icon = {
+                            Icon(
+                                Icons.Filled.SwapHoriz,
+                                contentDescription = stringResource(R.string.bottom_nav_free_mode)
+                            )
+                        },
+                        label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
+                    )
+
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
+                        icon = {
+                            Icon(
+                                Icons.Filled.AccountCircle,
+                                contentDescription = stringResource(R.string.bottom_nav_profile)
+                            )
+                        },
+                        label = { Text(stringResource(R.string.bottom_nav_profile)) }
+                    )
+                }
+            }
+        ) { innerPadding -> // El contenido principal debe usar este padding
+
+            // CAMBIO: Usar Box en lugar de Column para layering correcto
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // Ignoramos el padding superior para permitir que el Surface se pegue al borde.
+                    .padding(bottom = innerPadding.calculateBottomPadding())
+            ) {
+                // CAPA 1: El mapa de fondo
+                if (uiState.isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    InteractiveWorldMap(
+                        countries = uiState.countries,
+                        conqueredCountryIds = uiState.conqueredCountryIds,
+                        dominatedCountryIds = uiState.dominatedCountryIds,
+                        availableCountryIds = uiState.availableCountryIds,
+                        onCountryClick = { countryId ->
+                            navController.navigate(
+                                Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
+                    )
+                }
+
+                // CAPA 2: El título y PlayerlevelIndicator dentro un surface
+                // Usamos un Surface como el contenedor principal del panel.
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter) // Lo posiciona en la parte superior
+                        .fillMaxWidth(),
+                    // Usamos el mismo color que el BottomAppBar para consistencia.
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
+                ) {
+                    // Usamos una Columna para apilar el título y el indicador verticalmente.
+                    Column(
+                        modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // 1. El Título
+                        Text(
+                            stringResource(R.string.map_title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+
+                        // 2. El Indicador de Nivel
+                        // Solo lo mostramos si la información está disponible.
+                        uiState.playerLevelInfo?.let { levelInfo ->
+                            PlayerLevelIndicator(
+                                levelInfo = levelInfo,
+                                boostCount = uiState.unassignedPcBoosts
+                            )
+                        }
+                    }
+                }
+                // El icono del avión (botón flotante) se muestra si una expedición está disponible.
+                if (uiState.expeditionAvailable) {
+                    FloatingActionButton(
+                        onClick = { showExpeditionDialog = true }, // Al hacer clic, abre el diálogo
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
+                            .padding(16.dp),
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Flight,
+                            contentDescription = "Iniciar Expedición"
                         )
                     }
                 }
             }
-            // El icono del avión (botón flotante) se muestra si una expedición está disponible.
-            if (uiState.expeditionAvailable) {
-                FloatingActionButton(
-                    onClick = { showExpeditionDialog = true }, // Al hacer clic, abre el diálogo
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
-                        .padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Flight,
-                        contentDescription = "Iniciar Expedición"
-                    )
-                }
-            }
         }
     }
-
     // El diálogo ahora es controlado por el estado local 'showExpeditionDialog'.
     if (showExpeditionDialog) {
         AlertDialog(
