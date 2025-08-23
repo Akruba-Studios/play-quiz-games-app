@@ -29,11 +29,13 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
 import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
+import com.akrubastudios.playquizgames.ui.screens.splash.SplashScreen
 import com.google.firebase.auth.FirebaseAuth
 
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
+    const val SPLASH_SCREEN = "splash"
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
@@ -53,21 +55,13 @@ object Routes {
 fun NavGraph() {
     val navController = rememberNavController()
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Comprobamos el estado de autenticación actual CADA VEZ que el NavGraph se compone.
-    val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
-        // Si hay un usuario logueado, el punto de partida es el mapa.
-        Routes.MAP_SCREEN
-    } else {
-        // Si no, el punto de partida es el login.
-        Routes.LOGIN_SCREEN
-    }
-    // --- FIN DE LA MODIFICACIÓN ---
-
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = Routes.SPLASH_SCREEN
     ) {
+        composable(Routes.SPLASH_SCREEN) {
+            SplashScreen(navController = navController)
+        }
 
         composable(Routes.RANKING_SCREEN) {
             RankingScreen()
