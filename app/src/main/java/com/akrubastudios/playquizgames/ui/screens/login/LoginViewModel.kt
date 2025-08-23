@@ -1,9 +1,11 @@
 package com.akrubastudios.playquizgames.ui.screens.login
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.SignInResult
+import com.akrubastudios.playquizgames.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,8 @@ data class LoginState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val application: Application
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginState())
@@ -27,7 +30,7 @@ class LoginViewModel @Inject constructor(
 
     fun onSignInResult(idToken: String?) {
         if (idToken == null) {
-            _uiState.update { it.copy(error = "El inicio de sesión con Google falló.") }
+            _uiState.update { it.copy(error = application.getString(R.string.login_failed)) }
             return
         }
 

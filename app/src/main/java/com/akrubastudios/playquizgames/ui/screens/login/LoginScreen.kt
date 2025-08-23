@@ -17,6 +17,7 @@ import com.akrubastudios.playquizgames.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LoginScreen(
@@ -65,7 +66,7 @@ fun LoginScreen(
             CircularProgressIndicator()
         } else {
             Button(onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) }) {
-                Text(text = "Iniciar Sesión con Google")
+                Text(text = stringResource(R.string.login_button))
             }
         }
     }

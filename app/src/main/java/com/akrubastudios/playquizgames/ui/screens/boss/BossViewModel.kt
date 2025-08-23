@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.akrubastudios.playquizgames.core.LanguageManager
 import javax.inject.Inject
 
 // Datos de tematización del Guardián
@@ -37,6 +38,7 @@ data class BossState(
     val isLoading: Boolean = true,
     val levelName: String = "",
     val currentQuestion: Question? = null,
+    val currentCorrectAnswer: String = "",
     val totalQuestions: Int = 1,
     val bossHealth: Float = 1.0f,
     val playerMistakes: Int = 0,
@@ -163,11 +165,15 @@ class BossViewModel @Inject constructor(
                 triggerPhaseTransition(newPhase)
             }
 
+            val lang = LanguageManager.getLanguageSuffix()
+            val correctAnswerForUi = if (lang == "es") question.correctAnswer_es else question.correctAnswer_en
+
             _uiState.update {
                 it.copy(
                     currentQuestion = question,
+                    currentCorrectAnswer = correctAnswerForUi,
                     userAnswer = "",
-                    generatedHintLetters = generateHintLettersByPhase(question.correctAnswer, newPhase),
+                    generatedHintLetters = generateHintLettersByPhase(correctAnswerForUi, newPhase),
                     usedLetterIndices = emptySet(),
                     currentPhase = newPhase,
                     lettersReshuffleCounter = 0
@@ -256,12 +262,16 @@ class BossViewModel @Inject constructor(
             while (uiState.value.currentPhase >= 2 && !isAnswerProcessing) {
                 delay(if (uiState.value.currentPhase == 3) 6000L else 8000L)
                 if (!isAnswerProcessing && uiState.value.userAnswer.isEmpty()) {
-                    val question = uiState.value.currentQuestion
-                    if (question != null) {
+                    // --- INICIO DE LA CORRECCIÓN ---
+                    // Obtenemos la respuesta correcta ya localizada desde el estado.
+                    val correctAnswer = uiState.value.currentCorrectAnswer
+
+                    // Verificamos que no esté vacía antes de usarla.
+                    if (correctAnswer.isNotEmpty()) {
                         _uiState.update {
                             it.copy(
                                 generatedHintLetters = generateHintLettersByPhase(
-                                    question.correctAnswer,
+                                    correctAnswer, // Usamos la variable local
                                     it.currentPhase
                                 ),
                                 lettersReshuffleCounter = it.lettersReshuffleCounter + 1
@@ -273,8 +283,8 @@ class BossViewModel @Inject constructor(
         }
     }
 
-    private fun generateHintLettersByPhase(correctAnswer: String, phase: Int): String {
-        val allCharsInAnswer = correctAnswer.uppercase().filter { it.isLetter() }.toList()
+    private fun generateHintLettersByPhase(localizedCorrectAnswer: String, phase: Int): String {
+        val allCharsInAnswer = localizedCorrectAnswer.uppercase().filter { it.isLetter() }.toList()
         val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         // Escalamiento de dificultad por fase
@@ -334,9 +344,15 @@ class BossViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _uiState.value
             val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
-            val isCorrect = state.currentQuestion?.validAnswers?.any { validAnswer ->
+            val lang = LanguageManager.getLanguageSuffix()
+
+            // Obtenemos la LISTA de respuestas válidas para el idioma actual.
+            val validAnswersForLang = state.currentQuestion?.validAnswers?.get(lang) ?: emptyList()
+
+            // Verificamos si la respuesta del usuario está en la lista correcta.
+            val isCorrect = validAnswersForLang.any { validAnswer ->
                 validAnswer.replace(" ", "").lowercase() == normalizedUserAnswer
-            } == true
+            }
 
             if (isCorrect) {
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0f)
@@ -419,7 +435,7 @@ class BossViewModel @Inject constructor(
     fun onLetterClick(letter: Char, index: Int) {
         if (uiState.value.usedLetterIndices.contains(index)) return
 
-        val requiredLength = uiState.value.currentQuestion?.correctAnswer?.count { it.isLetter() } ?: 0
+        val requiredLength = uiState.value.currentCorrectAnswer.count { it.isLetter() }
 
         if (uiState.value.userAnswer.length < requiredLength) {
             _uiState.update {

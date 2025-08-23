@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,12 +34,12 @@ fun ContinentSelectionScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Elige tu Continente de Origen",
+            text = stringResource(R.string.continent_selection_title),
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Tu primera expedición comenzará aquí.",
+            text = stringResource(R.string.continent_selection_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 8.dp)
         )
@@ -48,7 +50,7 @@ fun ContinentSelectionScreen(
             onClick = { onContinentSelected("south_america") },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Sudamérica")
+            Text(stringResource(R.string.continent_south_america))
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -57,7 +59,7 @@ fun ContinentSelectionScreen(
             onClick = { onContinentSelected("europe") },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Europa")
+            Text(stringResource(R.string.continent_europe))
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -66,7 +68,7 @@ fun ContinentSelectionScreen(
             onClick = { onContinentSelected("north_america") },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Norteamérica")
+            Text(stringResource(R.string.continent_north_america))
         }
     }
 }

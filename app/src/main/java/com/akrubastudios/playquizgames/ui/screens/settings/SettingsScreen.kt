@@ -25,9 +25,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.akrubastudios.playquizgames.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,10 +43,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ajustes") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 }
             )
@@ -56,28 +58,35 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            // --- INICIO DE LA CORRECCIÓN ---
+            // 1. Obtenemos el texto del string UNA SOLA VEZ aquí, en el contexto Composable.
+            val featureNotAvailableText = stringResource(R.string.feature_not_available)
+            val creditsText = stringResource(R.string.credits_toast_text)
+            // --- FIN DE LA CORRECCIÓN ---
+
             // Sección de Sonido
-            SectionTitle("Sonido")
+            SectionTitle(stringResource(R.string.settings_sound_section))
             SettingRow(
-                title = "Música",
+                title = stringResource(R.string.settings_music),
                 checked = uiState.isMusicEnabled,
-                onCheckedChange = { Toast.makeText(context, "Función no disponible.", Toast.LENGTH_SHORT).show() }
+                // 2. Usamos la variable de texto que ya hemos obtenido.
+                onCheckedChange = { Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show() }
             )
             SettingRow(
-                title = "Efectos de Sonido",
+                title = stringResource(R.string.settings_sfx),
                 checked = uiState.areSfxEnabled,
-                onCheckedChange = { Toast.makeText(context, "Función no disponible.", Toast.LENGTH_SHORT).show() }
+                onCheckedChange = { Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show() }
             )
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
             // Sección Legal y Créditos
-            SectionTitle("Información")
-            ClickableRow(title = "Política de Privacidad") {
-                Toast.makeText(context, "Función no disponible.", Toast.LENGTH_SHORT).show()
+            SectionTitle(stringResource(R.string.settings_info_section))
+            ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
+                Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show()
             }
-            ClickableRow(title = "Créditos") {
-                Toast.makeText(context, "Agradecimiento especial a mapsvg.com por el mapa del mundo.", Toast.LENGTH_LONG).show()
+            ClickableRow(title = stringResource(R.string.settings_credits)) {
+                Toast.makeText(context, creditsText, Toast.LENGTH_LONG).show()
             }
         }
     }

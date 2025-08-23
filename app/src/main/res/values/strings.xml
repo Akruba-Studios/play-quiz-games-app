@@ -1,3 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Play Quiz Games</string>
+
+    <!-- LoginScreen -->
+    <string name="login_button">Iniciar Sesión con Google</string>
+    <string name="login_failed">El inicio de sesión con Google falló.</string>
+
+    <!-- Onboarding -->
+    <string name="continent_selection_title">Elige tu Continente de Origen</string>
+    <string name="continent_selection_subtitle">Tu primera expedición comenzará aquí.</string>
+    <string name="continent_south_america">Sudamérica</string>
+    <string name="continent_europe">Europa</string>
+    <string name="continent_north_america">Norteamérica</string>
+    <string name="country_selection_title">Elige tu País de Inicio</string>
+
+    <!-- MapScreen -->
+    <string name="map_title">Mapa del Conocimiento</string>
+    <string name="bottom_nav_ranking">Ranking</string>
+    <string name="bottom_nav_free_mode">Modo Libre</string>
+    <string name="bottom_nav_profile">Perfil</string>
+    <string name="expedition_dialog_title">¡Nuevos Horizontes!</string>
+    <string name="expedition_dialog_text">Tu fama como explorador crece. Elige tu próximo destino:</string>
+    <string name="expedition_dialog_button_later">Más Tarde</string>
+    <string name="expedition_dialog_button_explore">Explorar %1$s</string> <!-- %1$s será reemplazado por el nombre del continente -->
+    <string name="conquest_dialog_title">¡País Conquistado!</string>
+    <string name="conquest_dialog_text">Has demostrado tu dominio sobre %1$s. Un último desafío te espera: el Guardián de la nación te reta a una prueba final. ¿Aceptas el desafío ahora?</string> <!-- %1$s será el nombre del país -->
+    <string name="conquest_dialog_button_challenge">Desafiar Ahora</string>
+
+    <!-- CountryScreen -->
+    <string name="country_progress_conquest">Progreso de Conquista</string>
+    <string name="country_status_conquered">¡País Conquistado!</string>
+    <string name="country_status_dominated">¡PAÍS DOMINADO!</string>
+    <string name="country_status_locked_title">Este país está bloqueado.</string>
+    <string name="country_status_locked_subtitle">Conquista países vecinos para desbloquearlo.</string>
+    <string name="country_all_content_unlocked">Has desbloqueado todo el contenido de este país.</string>
+    <string name="country_button_challenge_boss">Desafiar al Guardián</string>
+    <string name="country_button_use_boost">Usar Boost de 5,000 PC</string>
+    <string name="country_study_topics_title">Reunir Intel (Pistas para el Jefe)</string>
+    <string name="country_available_categories">Categorías Disponibles</string>
+    <string name="country_back_to_map">Volver al Mapa</string>
+    <string name="country_error_loading">Error al cargar los datos del país.</string>
+    <string name="cd_information">Información</string>
+    <string name="cd_close">Cerrar</string>
+    <string name="cd_expand">Expandir</string>
+    <string name="cd_locked">Bloqueado</string>
+
+    <!-- LevelSelectionScreen -->
+    <string name="difficulty_beginner">Principiante</string>
+    <string name="difficulty_hard">Difícil</string>
+    <string name="difficulty_hard_bonus">Modo Difícil: ¡+50% XP!</string>
+    <string name="difficulty_beginner_tip">Modo Principiante: ¡Ideal para aprender!</string>
+
+    <!-- GameScreen & BossScreen -->
+    <string name="game_top_bar_question">Pregunta: %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
+    <string name="game_top_bar_score">Puntaje: %1$d</string> <!-- %1$d = puntaje -->
+    <string name="cd_question_image">Imagen de la pregunta</string>
+
+    <!-- ResultScreen -->
+    <string name="result_title_boss_victory">¡Guardián Derrotado!</string>
+    <string name="result_title_boss_defeat">Desafío Fallido</string>
+    <string name="result_title_game_over">¡Juego Terminado!</string>
+    <string name="result_final_score">Puntaje Final</string>
+    <string name="result_questions_summary">Acertaste %1$d de %2$d preguntas.</string>
+    <string name="result_button_play_again">Jugar de Nuevo</string>
+    <string name="result_button_retry_challenge">Reintentar Desafío</string>
+    <string name="result_button_celebrate">Celebrar Victoria</string>
+    <string name="result_button_retreat">Retirada</string>
+    <string name="result_button_back_to_menu">Volver al Menú</string>
+    <string name="cd_star_number">Estrella %1$d</string>
+
+    <!-- FreeModeScreen -->
+    <string name="free_mode_title">Modo Libre</string>
+    <string name="free_mode_subtitle">Repite tus niveles de 3 estrellas para mejorar tu puntaje y ganar más XP.</string>
+    <string name="free_mode_no_levels">Aún no has conseguido 3 estrellas en ningún nivel.</string>
+    <string name="free_mode_record">Récord: %1$s</string> <!-- %1$s = highScore -->
+    <string name="free_mode_max">Máximo: %1$s</string> <!-- %1$s = maxScore -->
+    <string name="free_mode_beginner_max_hint">(Máx. en Principiante: %1$s)</string>
+    <string name="free_mode_button_play">Jugar</string>
+
+    <!-- ProfileScreen -->
+    <string name="profile_error_loading">No se pudieron cargar los datos del perfil.</string>
+    <string name="profile_stats_title">Estadísticas</string>
+    <string name="profile_stats_total_xp">XP Total</string>
+    <string name="profile_stats_conquered">Países Conquistados</string>
+    <string name="profile_stats_dominated">Países Dominados</string>
+    <string name="profile_account_title">Cuenta</string>
+    <string name="profile_button_settings">Ajustes</string>
+    <string name="profile_button_sign_out">Cerrar Sesión</string>
+    <string name="profile_sign_out_dialog_title">Cerrar Sesión</string>
+    <string name="profile_sign_out_dialog_text">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="dialog_button_confirm">Confirmar</string>
+    <string name="dialog_button_cancel">Cancelar</string>
+    <string name="app_version">Versión 1.0.0</string>
+    <string name="default_player_name">Jugador</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_sound_section">Sonido</string>
+    <string name="settings_music">Música</string>
+    <string name="settings_sfx">Efectos de Sonido</string>
+    <string name="settings_info_section">Información</string>
+    <string name="settings_privacy_policy">Política de Privacidad</string>
+    <string name="settings_credits">Créditos</string>
+    <string name="credits_toast_text">Agradecimiento especial a mapsvg.com por el mapa del mundo.</string>
+    <string name="feature_not_available">Función no disponible.</string>
+    <string name="cd_back">Volver</string>
+
+    <!-- RankingScreen -->
+    <string name="ranking_title">Ranking Global</string>
+    <string name="cd_profile_picture_of">Foto de perfil de %1$s</string>
+
+    <!-- PlayerLevelIndicator -->
+    <string name="player_level">Nivel %1$d</string>
+
 </resources>

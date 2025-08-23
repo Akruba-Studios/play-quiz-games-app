@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.akrubastudios.playquizgames.core.LanguageManager
 
 data class LevelSelectionState(
     val levels: List<LevelStatus> = emptyList(),
@@ -59,7 +60,7 @@ class LevelSelectionViewModel @Inject constructor(
                 levelId.levelId.filter { it.isDigit() }.toIntOrNull() ?: 0
             }
             // ----------------------------------------
-
+            val lang = LanguageManager.getLanguageSuffix()
             // (El resto de la lógica de desbloqueo y mapeo se queda igual)
             val completionsMap = userCompletions.associateBy { it.levelId }
             val levelStatuses = levelsForThisScreen.mapIndexed { index, level ->
@@ -75,7 +76,7 @@ class LevelSelectionViewModel @Inject constructor(
 
                 LevelStatus(
                     levelId = level.levelId,
-                    levelName = level.levelName["es"] ?: "Nivel",
+                    levelName = level.levelName[lang] ?: level.levelName["es"] ?: level.levelId,
                     starsEarned = starsEarned,
                     isLocked = isLocked
                 )
@@ -83,7 +84,7 @@ class LevelSelectionViewModel @Inject constructor(
 
             _uiState.value = LevelSelectionState(
                 levels = levelStatuses,
-                categoryName = category?.name?.get("es") ?: "Niveles",
+                categoryName = category?.name?.get(lang) ?: category?.name?.get("es") ?: categoryId,
                 isLoading = false
             )
         }

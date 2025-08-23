@@ -41,6 +41,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 
 @Composable
 fun GameScreen(
@@ -111,7 +113,7 @@ fun GameScreen(
             )
 
             AnswerSlots(
-                correctAnswer = uiState.currentQuestion!!.correctAnswer,
+                correctAnswer = uiState.currentCorrectAnswer,
                 userAnswer = uiState.userAnswer,
                 onClear = { viewModel.clearUserAnswer() }
             )
@@ -144,14 +146,14 @@ fun TopBar(
         horizontalArrangement = Arrangement.SpaceBetween, // Espacia los elementos
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Pregunta: $questionNumber / $totalQuestions")
+        Text(text = stringResource(R.string.game_top_bar_question, questionNumber, totalQuestions))
         Text(
             text = remainingTime.toString(),
             style = MaterialTheme.typography.headlineMedium,
             color = if (remainingTime <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
         Column(horizontalAlignment = Alignment.End) {
-            Text(text = "Puntaje: $score")
+            Text(text = stringResource(R.string.game_top_bar_score, score))
             // Mostramos la dificultad actual con un estilo más pequeño.
             Text(
                 text = difficulty.replaceFirstChar { it.uppercase() },
@@ -168,7 +170,7 @@ fun QuestionImage(
 ) {
     AsyncImage(
         model = imageUrl,
-        contentDescription = "Imagen de la pregunta",
+        contentDescription = stringResource(R.string.cd_question_image),
         modifier = modifier
             .fillMaxWidth()
             .height(200.dp) // Damos una altura fija a la imagen

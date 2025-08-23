@@ -67,6 +67,9 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.font.FontWeight
 
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
+
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -96,8 +99,8 @@ fun MapScreen(
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Routes.RANKING_SCREEN) },
-                    icon = { Icon(Icons.Filled.Leaderboard, contentDescription = "Ranking") },
-                    label = { Text("Ranking") }
+                    icon = { Icon(Icons.Filled.Leaderboard, contentDescription = stringResource(R.string.bottom_nav_ranking)) },
+                    label = { Text(stringResource(R.string.bottom_nav_ranking))}
                 )
 
                 NavigationBarItem(
@@ -107,15 +110,15 @@ fun MapScreen(
                     enabled = (uiState.playerLevelInfo?.level ?: 0) >= 5,
                     selected = false,
                     onClick = { navController.navigate(Routes.FREE_MODE_SCREEN) },
-                    icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = "Modo Libre") },
-                    label = { Text("Modo Libre") }
+                    icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode)) },
+                    label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
                 )
 
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
-                    icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Perfil") },
-                    label = { Text("Perfil") }
+                    icon = { Icon(Icons.Filled.AccountCircle, contentDescription = stringResource(R.string.bottom_nav_profile)) },
+                    label = { Text(stringResource(R.string.bottom_nav_profile)) }
                 )
             }
         }
@@ -165,7 +168,7 @@ fun MapScreen(
                 ) {
                     // 1. El Título
                     Text(
-                        text = "Mapa del Conocimiento",
+                        stringResource(R.string.map_title),
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(16.dp),
                         textAlign = TextAlign.Center
@@ -203,13 +206,13 @@ fun MapScreen(
     if (showExpeditionDialog) {
         AlertDialog(
             onDismissRequest = { showExpeditionDialog = false }, // Tocar fuera cierra el diálogo
-            title = { Text(text = "¡Nuevos Horizontes!") },
+            title = { Text(text = stringResource(R.string.expedition_dialog_title)) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "Tu fama como explorador crece. Elige tu próximo destino:")
+                    Text(text = stringResource(R.string.expedition_dialog_text))
                     Spacer(modifier = Modifier.height(16.dp))
                     uiState.availableExpeditions.forEach { (continentId, continentName) ->
                         Button(
@@ -227,7 +230,7 @@ fun MapScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showExpeditionDialog = false }) { // "Más Tarde" cierra el diálogo
-                    Text("Más Tarde")
+                    Text(stringResource(R.string.expedition_dialog_button_later))
                 }
             },
             dismissButton = null
@@ -243,8 +246,8 @@ fun MapScreen(
                 // Si el usuario toca fuera, consideramos que es "Más Tarde".
                 viewModel.clearPendingBossChallenge()
             },
-            title = { Text(text = "¡País Conquistado!") },
-            text = { Text(text = "Has demostrado tu dominio sobre $countryName. Un último desafío te espera: el Guardián de la nación te reta a una prueba final. ¿Aceptas el desafío ahora?") },
+            title = { Text(text = stringResource(R.string.conquest_dialog_title)) },
+            text = { Text(text = stringResource(R.string.conquest_dialog_text, countryName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -259,7 +262,7 @@ fun MapScreen(
                         }
                     }
                 ) {
-                    Text("Desafiar Ahora")
+                    Text(stringResource(R.string.conquest_dialog_button_challenge))
                 }
             },
             dismissButton = {
@@ -268,7 +271,7 @@ fun MapScreen(
                         viewModel.clearPendingBossChallenge()
                     }
                 ) {
-                    Text("Más Tarde")
+                    Text(stringResource(R.string.expedition_dialog_button_later))
                 }
             }
         )

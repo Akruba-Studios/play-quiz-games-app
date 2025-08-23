@@ -31,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.ui.screens.country.CountryStatus
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
 
 @Composable
 fun CountryScreen(
@@ -50,7 +53,7 @@ fun CountryScreen(
     } else if (uiState.country == null) {
         // Estado de error si el país no se pudo cargar
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Error al cargar los datos del país.")
+            Text(stringResource(R.string.country_error_loading))
         }
     } else {
         // Usamos una LazyColumn para contenido que podría ser largo
@@ -60,8 +63,12 @@ fun CountryScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
+                val lang = LanguageManager.getLanguageSuffix()
                 Text(
-                    text = uiState.country?.name?.get("es") ?: "País",
+                    text = uiState.country?.name?.get(lang)
+                        ?: uiState.country?.name?.get("es")
+                        ?: uiState.country?.countryId
+                        ?: "", // Fallback final por si todo es nulo
                     style = MaterialTheme.typography.displayMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -74,7 +81,7 @@ fun CountryScreen(
                         CountryProgress(
                             current = uiState.currentPc,
                             total = uiState.pcRequired,
-                            statusText = "Progreso de Conquista"
+                            statusText = stringResource(R.string.country_progress_conquest)
                         )
                         // Mostramos el botón solo si la condición se cumple.
                         if (uiState.canApplyBoost) {
@@ -96,7 +103,7 @@ fun CountryScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Filled.Star, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Usar Boost de 5,000 PC")
+                                        Text(stringResource(R.string.country_button_use_boost))
                                     }
                                 }
                             }
@@ -113,7 +120,7 @@ fun CountryScreen(
                         CountryProgress(
                             current = uiState.pcRequired,
                             total = uiState.pcRequired,
-                            statusText = "¡País Conquistado!"
+                            statusText = stringResource(R.string.country_status_conquered)
                         )
                         Spacer(modifier = Modifier.height(32.dp))
                         ChallengeBossButton(
@@ -129,10 +136,10 @@ fun CountryScreen(
                         CountryProgress(
                             current = uiState.pcRequired,
                             total = uiState.pcRequired,
-                            statusText = "¡PAÍS DOMINADO!"
+                            statusText = stringResource(R.string.country_status_dominated)
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        Text("Has desbloqueado todo el contenido de este país.", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.country_all_content_unlocked), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(16.dp))
                         CategoryList(
                             categories = uiState.availableCategories,
@@ -142,10 +149,10 @@ fun CountryScreen(
                 }
                 CountryStatus.LOCKED -> {
                     item {
-                        Icon(Icons.Default.Lock, contentDescription = "Bloqueado", modifier = Modifier.size(48.dp))
+                        Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.cd_locked), modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Este país está bloqueado.", style = MaterialTheme.typography.headlineSmall)
-                        Text("Conquista países vecinos para desbloquearlo.")
+                        Text(stringResource(R.string.country_status_locked_title), style = MaterialTheme.typography.headlineSmall)
+                        Text(stringResource(R.string.country_status_locked_subtitle))
                     }
                 }
             }
@@ -153,7 +160,7 @@ fun CountryScreen(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(onClick = onBackClick) {
-                    Text("Volver al Mapa")
+                    Text(stringResource(R.string.country_back_to_map))
                 }
             }
         }
@@ -178,14 +185,15 @@ private fun CountryProgress(current: Long, total: Long, statusText: String) {
 
 @Composable
 private fun CategoryList(categories: List<com.akrubastudios.playquizgames.domain.Category>, onCategoryClick: (String) -> Unit) {
-    Text("Categorías Disponibles", style = MaterialTheme.typography.headlineSmall)
+    Text(stringResource(R.string.country_available_categories), style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(16.dp))
     categories.forEach { category ->
         Button(
             onClick = { onCategoryClick(category.categoryId) },
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
-            Text(category.name["es"] ?: "Categoría")
+            val lang = LanguageManager.getLanguageSuffix()
+            Text(category.name[lang] ?: category.name["es"] ?: category.categoryId)
         }
         Spacer(modifier = Modifier.height(8.dp))
     }
@@ -198,7 +206,7 @@ private fun ChallengeBossButton(bossLevelId: String, onChallengeClick: (String) 
         modifier = Modifier.fillMaxWidth(0.9f).height(50.dp),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
     ) {
-        Text("Desafiar al Guardián", fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.country_button_challenge_boss), fontWeight = FontWeight.Bold)
     }
 }
 
@@ -213,13 +221,13 @@ private fun StudyTopics(topics: List<String>) {
                 modifier = Modifier.clickable { isExpanded = !isExpanded },
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Info, contentDescription = "Información")
+                Icon(Icons.Default.Info, contentDescription = stringResource(R.string.cd_information))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Reunir Intel (Pistas para el Jefe)", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.country_study_topics_title), style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                    contentDescription = if (isExpanded) stringResource(R.string.cd_close) else stringResource(R.string.cd_expand)
                 )
             }
             AnimatedVisibility(visible = isExpanded) {

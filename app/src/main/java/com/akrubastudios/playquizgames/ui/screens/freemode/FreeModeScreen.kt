@@ -34,6 +34,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.domain.UserLevelCompletion
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
 
 @Composable
 fun FreeModeScreen(
@@ -46,35 +49,42 @@ fun FreeModeScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "Modo Libre",
+            stringResource(R.string.free_mode_title),
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(16.dp)
         )
         Text(
-            text = "Repite tus niveles de 3 estrellas para mejorar tu puntaje y ganar más XP.",
+            stringResource(R.string.free_mode_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val difficulties = listOf("principiante", "dificil")
-        val selectedIndex = difficulties.indexOf(selectedDifficulty)
+        // 1. Usamos una lista de IDs para la lógica.
+        val difficultyIds = listOf("principiante", "dificil")
+        // 2. El índice se calcula correctamente.
+        val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
 
         TabRow(
             selectedTabIndex = selectedIndex,
             modifier = Modifier.fillMaxWidth()
         ) {
-            difficulties.forEachIndexed { index, title ->
+            // 3. Iteramos sobre los IDs.
+            difficultyIds.forEachIndexed { index, id ->
                 Tab(
                     selected = selectedIndex == index,
-                    onClick = { viewModel.onDifficultyChange(difficulties[index]) },
-                    text = { Text(text = title.replaceFirstChar { it.uppercase() }) }
+                    onClick = { viewModel.onDifficultyChange(id) },
+                    // 4. Obtenemos el texto traducido DENTRO del Tab.
+                    text = {
+                        val textRes = if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                        Text(text = stringResource(textRes))
+                    }
                 )
             }
         }
         Text(
-            text = if (selectedDifficulty == "dificil") "Modo Difícil: ¡+50% XP!" else "Modo Principiante: ¡Ideal para aprender!",
+            text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(R.string.difficulty_beginner_tip),
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
@@ -92,7 +102,7 @@ fun FreeModeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Aún no has conseguido 3 estrellas en ningún nivel.",
+                    stringResource(R.string.free_mode_no_levels),
                     modifier = Modifier.padding(32.dp)
                 )
             }
@@ -129,8 +139,9 @@ fun MasteredLevelItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            val lang = LanguageManager.getLanguageSuffix()
             Text(
-                text = level.levelName["es"] ?: "Nivel Desconocido",
+                text = level.levelName[lang] ?: level.levelName["es"] ?: level.levelId,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -163,12 +174,12 @@ fun MasteredLevelItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Récord: ${formatNumber(level.highScore)}",
+                    text = stringResource(R.string.free_mode_record, formatNumber(level.highScore)),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
                     // Siempre mostramos el máximo real (de Difícil).
-                    text = "Máximo: ${formatNumber(maxScoreDificil)}",
+                    text = stringResource(R.string.free_mode_max, formatNumber(maxScoreDificil)),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -177,7 +188,7 @@ fun MasteredLevelItem(
             if (shouldShowHint && selectedDifficulty == "principiante") {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "(Máx. en Principiante: ${formatNumber(maxScorePrincipiante)})",
+                    text = stringResource(R.string.free_mode_beginner_max_hint, formatNumber(maxScorePrincipiante)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.align(Alignment.End)
@@ -190,7 +201,7 @@ fun MasteredLevelItem(
                 onClick = onPlayClick,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Jugar")
+                Text(stringResource(R.string.free_mode_button_play))
             }
         }
     }

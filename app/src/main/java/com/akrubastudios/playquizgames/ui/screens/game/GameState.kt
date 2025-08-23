@@ -5,6 +5,7 @@ import com.akrubastudios.playquizgames.domain.Question
 data class GameState(
     val isLoading: Boolean = true,
     val currentQuestion: Question? = null,
+    val currentCorrectAnswer: String = "",
     val questionText: String = "",
     val score: Int = 0,
     val questionNumber: Int = 1,

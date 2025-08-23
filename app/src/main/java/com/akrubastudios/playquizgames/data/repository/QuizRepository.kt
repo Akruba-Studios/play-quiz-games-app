@@ -68,8 +68,8 @@ class QuizRepository @Inject constructor(
                 Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1}: El campo 'id' está vacío.")
                 isValid = false
             }
-            if (question.correctAnswer.isBlank()) {
-                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1} ('${question.id}'): El campo 'correctAnswer' está vacío.")
+            if (question.correctAnswer_es.isBlank() || question.correctAnswer_en.isBlank()) {
+                Log.w(TAG, "Nivel '$levelId', Pregunta #${index + 1} ('${question.id}'): Uno de los campos 'correctAnswer' está vacío.")
                 isValid = false
             }
             if (question.validAnswers.isEmpty()) {

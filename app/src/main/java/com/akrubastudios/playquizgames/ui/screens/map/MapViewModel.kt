@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.akrubastudios.playquizgames.R
 
 data class MapState(
     val countries: List<Country> = emptyList(),
@@ -34,7 +36,8 @@ class MapViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    private val application: Application
 ) : ViewModel() {
 
     val currentUser = authRepository.currentUser
@@ -77,14 +80,18 @@ class MapViewModel @Inject constructor(
                         .toSet()
 
                     val allPossibleExpeditions = mapOf(
-                        "europe" to "Explorar Europa",
-                        "north_america" to "Explorar Norteamérica",
-                        "south_america" to "Explorar Sudamérica"
+                        "europe" to application.getString(R.string.continent_europe),
+                        "north_america" to application.getString(R.string.continent_north_america),
+                        "south_america" to application.getString(R.string.continent_south_america)
                     )
 
                     val filteredExpeditions = allPossibleExpeditions
                         .filter { !unlockedContinents.contains(it.key) }
-                        .map { Pair(it.key, it.value) }
+                        .map { (continentId, continentName) ->
+                            // Construimos el texto "Explorar..."
+                            val buttonText = application.getString(R.string.expedition_dialog_button_explore, continentName)
+                            Pair(continentId, buttonText)
+                        }
 
                     var isExpeditionAvailable = false
                     if (unlockedContinents.size == 1 && conqueredIds.size >= 3 && levelInfo.level >= 5) {

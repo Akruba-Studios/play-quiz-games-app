@@ -14,6 +14,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 
 @Composable
 fun ResultScreen(
@@ -35,10 +37,12 @@ fun ResultScreen(
     ) {
         Text(text = title, style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
-        Text(text = "Puntaje Final", style = MaterialTheme.typography.titleMedium)
+        Text(text = stringResource(R.string.result_final_score), style = MaterialTheme.typography.titleMedium)
         Text(text = "$score", style = MaterialTheme.typography.displayMedium)
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Acertaste $correctAnswers de $totalQuestions preguntas.")
+        Text(
+            text = stringResource(R.string.result_questions_summary, correctAnswers, totalQuestions)
+        )
 
         // --- AÑADE ESTE COMPONENTE PARA MOSTRAR LAS ESTRELLAS ---
         Spacer(modifier = Modifier.height(16.dp))
@@ -46,7 +50,7 @@ fun ResultScreen(
             (1..3).forEach { starIndex ->
                 Icon(
                     imageVector = Icons.Default.Star,
-                    contentDescription = "Estrella $starIndex",
+                    contentDescription = stringResource(R.string.cd_star_number, starIndex),
                     modifier = Modifier.size(48.dp),
                     tint = if (starIndex <= starsEarned) Color(0xFFFFD700) else Color.Gray
                 )

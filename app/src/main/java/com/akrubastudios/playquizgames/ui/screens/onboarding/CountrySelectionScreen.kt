@@ -13,6 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
 
 @Composable
 fun CountrySelectionScreen(
@@ -36,7 +39,7 @@ fun CountrySelectionScreen(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Elige tu País de Inicio", style = MaterialTheme.typography.headlineMedium)
+        Text(text = stringResource(R.string.country_selection_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(32.dp))
 
         if (uiState.isLoading) {
@@ -53,7 +56,9 @@ fun CountrySelectionScreen(
                             viewModel.onCountrySelected(country.countryId) },
                         modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
                     ) {
-                        Text(text = country.name["es"] ?: country.countryId)
+                        // Obtenemos el idioma y mostramos el nombre del país correcto.
+                        val lang = LanguageManager.getLanguageSuffix()
+                        Text(text = country.name[lang] ?: country.name["es"] ?: country.countryId)
                     }
                 }
             }

@@ -27,6 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.akrubastudios.playquizgames.ui.theme.PlayQuizGamesTheme
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -67,7 +69,7 @@ fun PlayerLevelIndicator(
             // Agrupamos el Nivel y el Boost en una Row anidada
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Nivel ${levelInfo.level}",
+                    text = stringResource(R.string.player_level, levelInfo.level),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )

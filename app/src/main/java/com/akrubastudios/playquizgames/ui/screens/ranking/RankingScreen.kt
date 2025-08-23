@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.akrubastudios.playquizgames.domain.RankedUser
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 
 @Composable
 fun RankingScreen(
@@ -25,7 +27,7 @@ fun RankingScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "Ranking Global",
+            text = stringResource(R.string.ranking_title),
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(16.dp)
         )
@@ -63,7 +65,7 @@ fun RankedUserItem(user: RankedUser) {
             Spacer(modifier = Modifier.width(16.dp))
             AsyncImage(
                 model = user.photoUrl,
-                contentDescription = "Foto de perfil de ${user.displayName}",
+                contentDescription = stringResource(R.string.cd_profile_picture_of, user.displayName),
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape),

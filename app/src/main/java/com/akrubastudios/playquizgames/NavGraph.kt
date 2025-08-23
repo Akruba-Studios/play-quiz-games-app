@@ -19,6 +19,7 @@ import android.app.Activity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.ui.screens.boss.BossScreen
 import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
@@ -254,28 +255,29 @@ fun NavGraph() {
             val isFromBossFight = backStackEntry.arguments?.getBoolean("isFromBossFight") ?: false
             val victory = backStackEntry.arguments?.getBoolean("victory") ?: false
 
-            val title: String
+            val title = if (isFromBossFight) {
+                if (victory) stringResource(R.string.result_title_boss_victory) else stringResource(R.string.result_title_boss_defeat)
+            } else {
+                stringResource(R.string.result_title_game_over)
+            }
             val showPlayAgainButton: Boolean
             val playAgainText: String
             val backButtonText: String
 
             if (isFromBossFight) {
                 if (victory) {
-                    title = "¡Guardián Derrotado!"
                     showPlayAgainButton = false // No se puede rejugar una victoria
                     playAgainText = ""
-                    backButtonText = "Celebrar Victoria"
+                    backButtonText = stringResource(R.string.result_button_celebrate)
                 } else {
-                    title = "Desafío Fallido"
                     showPlayAgainButton = true
-                    playAgainText = "Reintentar Desafío"
-                    backButtonText = "Retirada"
+                    playAgainText = stringResource(R.string.result_button_retry_challenge)
+                    backButtonText = stringResource(R.string.result_button_retreat)
                 }
             } else {
-                title = "¡Juego Terminado!"
                 showPlayAgainButton = true
-                playAgainText = "Jugar de Nuevo"
-                backButtonText = "Volver al Menú"
+                playAgainText = stringResource(R.string.result_button_play_again)
+                backButtonText = stringResource(R.string.result_button_back_to_menu)
             }
 
             // Mostramos la ResultScreen con los datos extraídos

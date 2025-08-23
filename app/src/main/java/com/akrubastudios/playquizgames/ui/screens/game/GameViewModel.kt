@@ -21,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import com.akrubastudios.playquizgames.core.LanguageManager
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
@@ -58,13 +59,20 @@ class GameViewModel @Inject constructor(
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
                 val firstQuestion = loadedLevel.questions[currentQuestionIndex]
-                val hints = generateHintLetters(firstQuestion.correctAnswer)
+                val lang = LanguageManager.getLanguageSuffix()
+
+                // 1. Determinamos la respuesta correcta UNA SOLA VEZ.
+                val correctAnswerForUi = if (lang == "es") firstQuestion.correctAnswer_es else firstQuestion.correctAnswer_en
+
+                // 2. Generamos las pistas basadas en esa respuesta.
+                val hints = generateHintLetters(correctAnswerForUi)
 
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
                         currentQuestion = firstQuestion,
-                        questionText = firstQuestion.questionText_es,
+                        currentCorrectAnswer = correctAnswerForUi,
+                        questionText = if (lang == "es") firstQuestion.questionText_es else firstQuestion.questionText_en,
                         totalQuestions = loadedLevel.questions.size,
                         questionNumber = currentQuestionIndex + 1,
                         generatedHintLetters = hints,
@@ -79,9 +87,9 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    private fun generateHintLetters(correctAnswer: String): String {
+    private fun generateHintLetters(localizedCorrectAnswer: String): String {
         // Obtenemos todos los caracteres de la respuesta.
-        val allCharsInAnswer = correctAnswer.uppercase().toList()
+        val allCharsInAnswer = localizedCorrectAnswer.uppercase().toList()
 
         // Para el banco de letras, SIEMPRE trabajaremos solo con las letras, sin espacios.
         val lettersOnlyFromAnswer = allCharsInAnswer.filter { it.isLetter() }
@@ -124,8 +132,8 @@ class GameViewModel @Inject constructor(
         }
 
         // --- LÓGICA CORREGIDA ---
-        // 1. Calculamos la longitud REQUERIDA de la respuesta (solo letras).
-        val requiredLength = uiState.value.currentQuestion?.correctAnswer?.count { it.isLetter() } ?: 0
+        // Ahora leemos la longitud de la respuesta correcta que guardamos en el estado.
+        val requiredLength = uiState.value.currentCorrectAnswer.count { it.isLetter() }
 
         // 2. Comprobamos contra la longitud actual de la respuesta del usuario (que no tiene espacios).
         if (uiState.value.userAnswer.length < requiredLength) {
@@ -174,18 +182,21 @@ class GameViewModel @Inject constructor(
             // --- LOGS CRÍTICOS PARA DIAGNÓSTICO ---
             Log.d("GameViewModel_Debug", "--- INICIANDO CHECKANSWER ---")
             Log.d("GameViewModel_Debug", "Respuesta del Usuario: '${state.userAnswer.lowercase()}'")
-            Log.d("GameViewModel_Debug", "Respuesta Correcta (base): '${state.currentQuestion?.correctAnswer}'")
+            Log.d("GameViewModel_Debug", "Respuesta Correcta (actual): '${state.currentCorrectAnswer}'")
             Log.d("GameViewModel_Debug", "Respuestas Válidas: ${state.currentQuestion?.validAnswers}")
             // ------------------------------------
 
 
-            // Normalizamos la respuesta del usuario quitándole los espacios.
             val normalizedUserAnswer = state.userAnswer.replace(" ", "").lowercase()
+            val lang = LanguageManager.getLanguageSuffix()
 
-            // Verificamos si alguna de las respuestas válidas, también normalizada, coincide.
-            val isCorrect = state.currentQuestion?.validAnswers?.any { validAnswer ->
+            // Obtenemos la LISTA de respuestas válidas para el idioma actual.
+            val validAnswersForLang = state.currentQuestion?.validAnswers?.get(lang) ?: emptyList()
+
+            // Verificamos si la respuesta del usuario está en la lista correcta.
+            val isCorrect = validAnswersForLang.any { validAnswer ->
                 validAnswer.replace(" ", "").lowercase() == normalizedUserAnswer
-            } == true
+            }
 
             // --- LOG DEL RESULTADO DE LA COMPARACIÓN ---
             Log.d("GameViewModel_Debug", "Resultado de la verificación (isCorrect): $isCorrect")
@@ -230,12 +241,16 @@ class GameViewModel @Inject constructor(
         currentQuestionIndex++
         if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
             val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
-            val hints = generateHintLetters(nextQuestion.correctAnswer) // <-- Genera las pistas
+            val lang = LanguageManager.getLanguageSuffix()
+
+            val correctAnswerForUi = if (lang == "es") nextQuestion.correctAnswer_es else nextQuestion.correctAnswer_en
+            val hints = generateHintLetters(correctAnswerForUi)
 
             _uiState.update {
                 it.copy(
                     currentQuestion = nextQuestion,
-                    questionText = nextQuestion.questionText_es,
+                    currentCorrectAnswer = correctAnswerForUi,
+                    questionText = if (lang == "es") nextQuestion.questionText_es else nextQuestion.questionText_en,
                     questionNumber = currentQuestionIndex + 1,
                     userAnswer = "",
                     generatedHintLetters = hints,

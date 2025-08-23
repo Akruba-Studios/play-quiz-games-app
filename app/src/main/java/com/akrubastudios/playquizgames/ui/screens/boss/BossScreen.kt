@@ -526,7 +526,7 @@ fun BossScreen(
 
                     // Casillas de respuesta - SIN SCROLL HORIZONTAL
                     AnswerSlotsFixed(
-                        correctAnswer = question.correctAnswer,
+                        correctAnswer = uiState.currentCorrectAnswer,
                         userAnswer = uiState.userAnswer,
                         onClear = { viewModel.clearUserAnswer() }
                     )

@@ -23,6 +23,8 @@ import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.akrubastudios.playquizgames.ui.components.PlayerLevelIndicator
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
 
 @Composable
 fun ProfileScreen(
@@ -46,7 +48,7 @@ fun ProfileScreen(
         }
     } else if (uiState.user == null || uiState.levelInfo == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No se pudieron cargar los datos del perfil.")
+            Text(stringResource(R.string.profile_error_loading))
         }
     } else {
         LazyColumn(
@@ -56,7 +58,7 @@ fun ProfileScreen(
         ) {
             item {
                 ProfileHeader(
-                    name = uiState.user?.displayName ?: "Jugador",
+                    name = uiState.user?.displayName ?: stringResource(R.string.default_player_name),
                     imageUrl = uiState.user?.photoUrl
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -89,19 +91,19 @@ fun ProfileScreen(
     if (showSignOutDialog) {
         AlertDialog(
             onDismissRequest = { showSignOutDialog = false },
-            title = { Text("Cerrar Sesión") },
-            text = { Text("¿Estás seguro de que quieres cerrar sesión?") },
+            title = { Text(stringResource(R.string.profile_sign_out_dialog_title)) },
+            text = { Text(stringResource(R.string.profile_sign_out_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.signOut()
                     showSignOutDialog = false
                 }) {
-                    Text("Confirmar")
+                    Text(stringResource(R.string.dialog_button_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSignOutDialog = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.dialog_button_cancel))
                 }
             }
         )
@@ -128,13 +130,13 @@ private fun ProfileHeader(name: String, imageUrl: String?) {
 private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Estadísticas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.profile_stats_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
-            StatisticRow(icon = Icons.Default.EmojiEvents, label = "XP Total", value = formatNumber(totalXp))
+            StatisticRow(icon = Icons.Default.EmojiEvents, label = stringResource(R.string.profile_stats_total_xp), value = formatNumber(totalXp))
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            StatisticRow(icon = Icons.Default.Flag, label = "Países Conquistados", value = conquered.toString())
+            StatisticRow(icon = Icons.Default.Flag, label = stringResource(R.string.profile_stats_conquered), value = conquered.toString())
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            StatisticRow(icon = Icons.Default.Celebration, label = "Países Dominados", value = dominated.toString())
+            StatisticRow(icon = Icons.Default.Celebration, label = stringResource(R.string.profile_stats_dominated), value = dominated.toString())
         }
     }
 }
@@ -146,13 +148,13 @@ private fun ActionsCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Cuenta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = onSettingsClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Ajustes")
+                Text(stringResource(R.string.profile_button_settings))
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
@@ -162,11 +164,10 @@ private fun ActionsCard(
             ) {
                 Icon(Icons.Default.Logout, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión")
+                Text(stringResource(R.string.profile_button_sign_out))
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Versión 1.0.0", style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))
-            // TODO: Añadir enlaces a Política de Privacidad y Créditos
+            Text(stringResource(R.string.app_version), style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
     }
 }
