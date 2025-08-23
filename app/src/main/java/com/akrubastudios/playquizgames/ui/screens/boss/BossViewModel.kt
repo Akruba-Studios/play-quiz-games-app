@@ -17,7 +17,10 @@ import kotlinx.coroutines.launch
 import com.akrubastudios.playquizgames.core.LanguageManager
 import javax.inject.Inject
 import android.app.Application
+import android.util.Log
 import com.akrubastudios.playquizgames.R
+import android.content.res.Configuration
+import java.util.Locale
 
 // Datos de tematización del Guardián
 data class GuardianTheme(
@@ -86,9 +89,25 @@ class BossViewModel @Inject constructor(
     private var isAnswerProcessing = false
     private var reshuffleJob: Job? = null
     private var timerJob: Job? = null
+    private var currentLanguage: String = ""
 
     init {
+        Log.d("BossViewModel", "Init empezando")
+        Log.d("BossViewModel", "Idioma inicial: ${languageManager.languageStateFlow.value}")
+
         loadBossLevel()
+
+        viewModelScope.launch {
+            Log.d("BossViewModel", "Iniciando observer de idioma")
+            languageManager.languageStateFlow.collect { newLang ->
+                Log.d("BossViewModel", "Idioma detectado: $newLang, actual: $currentLanguage")
+                if (currentLanguage.isNotEmpty() && currentLanguage != newLang) {
+                    Log.d("BossViewModel", "CAMBIO DETECTADO: $currentLanguage -> $newLang")
+                    updateDialoguesForNewLanguage()
+                }
+                currentLanguage = newLang
+            }
+        }
     }
 
     private fun loadBossLevel() {
@@ -112,9 +131,39 @@ class BossViewModel @Inject constructor(
         }
     }
 
+    private fun updateDialoguesForNewLanguage() {
+        Log.d("BossViewModel", "Actualizando diálogos por cambio de idioma")
+        val newTheme = generateGuardianTheme(countryId)
+        Log.d("BossViewModel", "Nuevo diálogo: ${newTheme.dialogues[0].firstOrNull()}")
+        val currentPhase = uiState.value.currentPhase
+
+        // Mantener el índice actual del diálogo
+        val currentDialogueIndex = uiState.value.dialogueIndexInPhase
+        val newDialogue = if (currentPhase > 0 && currentPhase <= newTheme.dialogues.size) {
+            val phaseDialogues = newTheme.dialogues[currentPhase - 1]
+            if (phaseDialogues.isNotEmpty()) {
+                phaseDialogues[currentDialogueIndex % phaseDialogues.size]
+            } else ""
+        } else ""
+
+        _uiState.update {
+            it.copy(
+                guardianTheme = newTheme,
+                currentDialogue = newDialogue
+            )
+        }
+    }
+
     private fun generateGuardianTheme(countryId: String): GuardianTheme {
-        // Importa R si es necesario
-        val resources = application.resources
+        // FORZAR idioma de la app, no del sistema
+        val appLanguage = languageManager.languageStateFlow.value
+        val locale = Locale(appLanguage)
+        val config = Configuration(application.resources.configuration)
+        config.setLocale(locale)
+        val localizedResources = application.createConfigurationContext(config).resources
+
+        Log.d("BossViewModel", "Generando tema con idioma: $appLanguage")
+
         val (nameRes, emoji, dialoguePrefix) = when (countryId.lowercase()) {
             "mexico" -> Triple(R.string.guardian_name_mexico, "⚡", "guardian_dialogue_mexico")
             "japan" -> Triple(R.string.guardian_name_japan, "⚔️", "guardian_dialogue_japan")
@@ -124,16 +173,16 @@ class BossViewModel @Inject constructor(
         }
 
         val dialogues = (1..3).map { phase ->
-            val arrayId = resources.getIdentifier("${dialoguePrefix}_phase$phase", "array", application.packageName)
+            val arrayId = localizedResources.getIdentifier("${dialoguePrefix}_phase$phase", "array", application.packageName)
             if (arrayId != 0) {
-                resources.getStringArray(arrayId).toList()
+                localizedResources.getStringArray(arrayId).toList()
             } else {
                 emptyList()
             }
         }
 
         return GuardianTheme(
-            name = resources.getString(nameRes),
+            name = localizedResources.getString(nameRes),
             emoji = emoji,
             dialogues = dialogues
         )
