@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.akrubastudios.playquizgames.core.LanguageManager
 import javax.inject.Inject
+import android.app.Application
+import com.akrubastudios.playquizgames.R
 
 // Datos de tematización del Guardián
 data class GuardianTheme(
@@ -58,11 +60,13 @@ data class BossState(
     val lettersReshuffleCounter: Int = 0,
     val timeRemaining: Int = 30, // segundos restantes
     val isTimerRunning: Boolean = false,
+    val dialogueIndexInPhase: Int = 0,
 )
 
 @HiltViewModel
 class BossViewModel @Inject constructor(
     private val quizRepository: QuizRepository,
+    private val application: Application,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -90,10 +94,11 @@ class BossViewModel @Inject constructor(
             levelPackage = quizRepository.getLevel(levelId)
             if (levelPackage != null) {
                 val theme = generateGuardianTheme(countryId)
+                val lang = LanguageManager.getLanguageSuffix()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        levelName = levelPackage!!.levelName["es"] ?: "Desafío del Guardián",
+                        levelName = levelPackage!!.levelName[lang] ?: levelPackage!!.levelName["es"] ?: "Guardian Challenge",
                         totalQuestions = levelPackage!!.questions.size,
                         guardianTheme = theme,
                         currentDialogue = theme.dialogues[0].random(),
@@ -106,52 +111,46 @@ class BossViewModel @Inject constructor(
     }
 
     private fun generateGuardianTheme(countryId: String): GuardianTheme {
-        return when(countryId.lowercase()) {
-            "mexico" -> GuardianTheme(
-                "Guardián Azteca 🏛️",
-                "⚡",
-                listOf(
-                    listOf("¡Soy el protector eterno de estas tierras sagradas!", "¿Crees poder desafiar mi sabiduría milenaria?"),
-                    listOf("¡Imposible! ¿Cómo conoces estos secretos?", "Mi poder se debilita... pero no me rendiré"),
-                    listOf("¡JAMÁS PERMITIRÉ QUE DOMINES MÉXICO!", "¡Uso mi último aliento de furia ancestral!")
+        // Importa R si es necesario
+        val resources = application.resources
+        val (nameRes, emoji, dialoguePrefix) = when (countryId.lowercase()) {
+            "mexico" -> Triple(R.string.guardian_name_mexico, "⚡", "guardian_dialogue_mexico")
+            "japan" -> Triple(R.string.guardian_name_japan, "⚔️", "guardian_dialogue_japan")
+            "egypt" -> Triple(R.string.guardian_name_egypt, "☥", "guardian_dialogue_egypt")
+            "france" -> Triple(R.string.guardian_name_france, "⚜️", "guardian_dialogue_france")
+            else -> Triple(R.string.guardian_name_default, "⭐", "guardian_dialogue_default")
+        }
+
+        val dialogues = (1..3).map { phase ->
+            val arrayId = resources.getIdentifier("${dialoguePrefix}_phase$phase", "array", application.packageName)
+            if (arrayId != 0) {
+                resources.getStringArray(arrayId).toList()
+            } else {
+                emptyList()
+            }
+        }
+
+        return GuardianTheme(
+            name = resources.getString(nameRes),
+            emoji = emoji,
+            dialogues = dialogues
+        )
+    }
+
+    private fun updateDialogue() {
+        val phaseIndex = uiState.value.currentPhase - 1
+        val possibleDialogues = uiState.value.guardianTheme.dialogues.getOrNull(phaseIndex) ?: emptyList()
+
+        if (possibleDialogues.isNotEmpty()) {
+            val currentDialogueIndex = uiState.value.dialogueIndexInPhase % possibleDialogues.size
+            val selectedDialogue = possibleDialogues[currentDialogueIndex]
+
+            _uiState.update {
+                it.copy(
+                    currentDialogue = selectedDialogue,
+                    dialogueIndexInPhase = it.dialogueIndexInPhase + 1
                 )
-            )
-            "japan" -> GuardianTheme(
-                "Guardián Samurai ⛩️",
-                "⚔️",
-                listOf(
-                    listOf("El honor del Japón fluye por mis venas", "Tu conocimiento será probado por mi katana"),
-                    listOf("Tu sabiduría es... impresionante, forastero", "El bushido me enseña a luchar hasta el final"),
-                    listOf("¡Por el honor de mis ancestros, resistiré!", "¡Mi último seppuku intelectual!")
-                )
-            )
-            "egypt" -> GuardianTheme(
-                "Guardián Faraónico 🔺",
-                "☥",
-                listOf(
-                    listOf("Los secretos del Nilo fluyen por mi esencia", "¿Osas desafiar la sabiduría de los faraones?"),
-                    listOf("¡Ra me abandona! Tu conocimiento es vasto", "Las pirámides tiemblan ante tu sabiduría"),
-                    listOf("¡Por Anubis, nunca te rendiré mi reino!", "¡Invoco la maldición final de los faraones!")
-                )
-            )
-            "france" -> GuardianTheme(
-                "Guardián Galo 🗼",
-                "⚜️",
-                listOf(
-                    listOf("La elegancia francesa nunca será tuya", "¿Mon Dieu! ¿Quién osa desafiarme?"),
-                    listOf("C'est impossible! Tu cultura me sorprende", "¡Mi orgullo galo está en peligro!"),
-                    listOf("¡Vive la France! ¡Nunca me rendiré!", "¡Mi último croissant de resistencia!")
-                )
-            )
-            else -> GuardianTheme(
-                "Guardián Ancestral 🏰",
-                "⭐",
-                listOf(
-                    listOf("Soy el protector eterno de esta tierra", "¿Crees tener el conocimiento para vencerme?"),
-                    listOf("Tu sabiduría es... preocupante", "No esperaba tal desafío"),
-                    listOf("¡Nunca me rendiré sin luchar!", "¡Mi último aliento de resistencia!")
-                )
-            )
+            }
         }
     }
 
@@ -163,7 +162,11 @@ class BossViewModel @Inject constructor(
 
             if (phaseChanged && newPhase > 1) {
                 triggerPhaseTransition(newPhase)
+                // ← AÑADIR ESTA LÍNEA JUSTO DESPUÉS:
+                _uiState.update { it.copy(dialogueIndexInPhase = 0) }
             }
+
+            updateDialogue()
 
             val lang = LanguageManager.getLanguageSuffix()
             val correctAnswerForUi = if (lang == "es") question.correctAnswer_es else question.correctAnswer_en
@@ -240,13 +243,9 @@ class BossViewModel @Inject constructor(
     }
 
     private fun triggerPhaseTransition(newPhase: Int) {
-        val theme = uiState.value.guardianTheme
-        val newDialogue = theme.dialogues.getOrNull(newPhase - 1)?.random() ?: ""
-
         _uiState.update {
             it.copy(
                 isPhaseTransition = true,
-                currentDialogue = newDialogue
             )
         }
 

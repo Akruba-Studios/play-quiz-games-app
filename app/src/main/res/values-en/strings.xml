@@ -56,6 +56,19 @@
     <string name="game_top_bar_score">Score: %1$d</string> <!-- %1$d = score -->
     <string name="cd_question_image">Question image</string>
 
+    <!-- BossScreen -->
+    <string name="cd_life">Life</string>
+    <string name="cd_question_image_boss">Boss question image</string>
+    <string name="boss_phase_transition_2">⚡ THE GUARDIAN IS ENRAGED ⚡</string>
+    <string name="boss_phase_transition_3">🔥 FINAL FURY PHASE! 🔥</string>
+    <string name="boss_phase_transition_default">⭐ NEW PHASE ⭐</string>
+    <string name="boss_victory_title">🏆 EPIC VICTORY! 🏆</string>
+    <string name="boss_victory_subtitle">You have dominated the %1$s!</string>
+    <string name="boss_battle_stats_title">📊 BATTLE STATS</string>
+    <string name="boss_battle_stats_time">⏱️ Time: %1$s</string>
+    <string name="boss_battle_stats_accuracy">🎯 Accuracy: %1$d%%</string>
+    <string name="boss_battle_stats_streak">🔥 Longest streak: %1$d</string>
+
     <!-- ResultScreen -->
     <string name="result_title_boss_victory">Guardian Defeated!</string>
     <string name="result_title_boss_defeat">Challenge Failed</string>
@@ -112,5 +125,82 @@
 
     <!-- PlayerLevelIndicator -->
     <string name="player_level">Level %1$d</string>
+
+    <!-- Guardian Themes -->
+    <string name="guardian_name_default">Ancestral Guardian 🏰</string>
+    <string name="guardian_name_mexico">Aztec Guardian 🏛️</string>
+    <string name="guardian_name_japan">Samurai Guardian ⛩️</string>
+    <string name="guardian_name_egypt">Pharaonic Guardian 🔺</string>
+    <string name="guardian_name_france">Gallic Guardian 🗼</string>
+
+    <!-- Guardian Themes - Default Ancestral -->
+    <string-array name="guardian_dialogue_default_phase1">
+        <item>I am the eternal protector of this land</item>
+        <item>Do you think you have the knowledge to defeat me?</item>
+    </string-array>
+    <string-array name="guardian_dialogue_default_phase2">
+        <item>Your wisdom is... troubling</item>
+        <item>I did not expect such a challenge</item>
+    </string-array>
+    <string-array name="guardian_dialogue_default_phase3">
+        <item>I will never surrender without a fight!</item>
+        <item>My last breath of resistance!</item>
+    </string-array>
+
+    <!-- Guardian Mexico-->
+    <string-array name="guardian_dialogue_mexico_phase1">
+        <item>I am the eternal protector of these sacred lands!</item>
+        <item>Do you think you can challenge my ancient wisdom?</item>
+    </string-array>
+    <string-array name="guardian_dialogue_mexico_phase2">
+        <item>Impossible! How do you know these secrets?</item>
+        <item>My power weakens... but I will not surrender</item>
+    </string-array>
+    <string-array name="guardian_dialogue_mexico_phase3">
+        <item>I WILL NEVER LET YOU DOMINATE MEXICO!</item>
+        <item>I use my last breath of ancestral fury!</item>
+    </string-array>
+
+    <!-- Guardian Japon-->
+    <string-array name="guardian_dialogue_japan_phase1">
+        <item>The honor of Japan flows through my veins</item>
+        <item>Your knowledge will be tested by my katana</item>
+    </string-array>
+    <string-array name="guardian_dialogue_japan_phase2">
+        <item>Your wisdom is... impressive, foreigner</item>
+        <item>Bushido teaches me to fight to the end</item>
+    </string-array>
+    <string-array name="guardian_dialogue_japan_phase3">
+        <item>For the honor of my ancestors, I will resist!</item>
+        <item>My final knowledge strike!</item>
+    </string-array>
+
+    <!-- Guardian Egipto-->
+    <string-array name="guardian_dialogue_egypt_phase1">
+        <item>The secrets of the Nile flow in my essence</item>
+        <item>Do you dare challenge the wisdom of the pharaohs?</item>
+    </string-array>
+    <string-array name="guardian_dialogue_egypt_phase2">
+        <item>Ra forsakes me! Your knowledge is vast</item>
+        <item>The pyramids tremble before your wisdom</item>
+    </string-array>
+    <string-array name="guardian_dialogue_egypt_phase3">
+        <item>By Anubis, I will never surrender my kingdom to you!</item>
+        <item>I invoke the final curse of knowledge!</item>
+    </string-array>
+
+    <!-- Guardian Francia-->
+    <string-array name="guardian_dialogue_france_phase1">
+        <item>The elegance and knowledge of France will never be yours</item>
+        <item>Mon Dieu! Who dares to challenge me?</item>
+    </string-array>
+    <string-array name="guardian_dialogue_france_phase2">
+        <item>C\'est impossible! Your culture surprises me</item>
+        <item>My Gallic pride is in jeopardy!</item>
+    </string-array>
+    <string-array name="guardian_dialogue_france_phase3">
+        <item>Vive la France! I will never surrender!</item>
+        <item>My final act of resistance!</item>
+    </string-array>
 
 </resources>

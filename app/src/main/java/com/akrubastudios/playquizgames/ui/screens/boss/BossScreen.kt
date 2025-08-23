@@ -50,6 +50,10 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.unit.times
 
+import androidx.compose.ui.res.stringResource
+import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
+
 // Datos para las partículas de confeti
 data class Particle(
     val x: Float,
@@ -129,7 +133,7 @@ private fun BossHeaderFixed(
                             Icons.Default.Favorite
                         else
                             Icons.Default.FavoriteBorder,
-                        contentDescription = "Vida",
+                        contentDescription = stringResource(R.string.cd_life),
                         tint = Color.Magenta,
                         modifier = Modifier.size(20.dp)
                     )
@@ -150,7 +154,7 @@ private fun QuestionImageFixed(imageUrl: String) {
     ) {
         AsyncImage(
             model = imageUrl,
-            contentDescription = "Imagen de la pregunta",
+            contentDescription = stringResource(R.string.cd_question_image_boss),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 120.dp, max = 200.dp),
@@ -518,11 +522,13 @@ fun BossScreen(
 
                 // 2. CONTENIDO DE LA PREGUNTA
                 uiState.currentQuestion?.let { question ->
+                    val lang = LanguageManager.getLanguageSuffix()
+                    val localizedQuestionText = if (lang == "es") question.questionText_es else question.questionText_en
                     // Imagen de la pregunta
                     // QuestionImageFixed(imageUrl = question.imageUrl)
 
                     // Texto de la pregunta
-                    QuestionTextFixed(questionText = question.questionText_es)
+                    QuestionTextFixed(questionText = localizedQuestionText)
 
                     // Casillas de respuesta - SIN SCROLL HORIZONTAL
                     AnswerSlotsFixed(
@@ -587,9 +593,9 @@ private fun PhaseTransitionOverlay(
     onDismiss: () -> Unit
 ) {
     val transitionText = when (phase) {
-        2 -> "⚡ EL GUARDIÁN SE AGITA ⚡"
-        3 -> "🔥 ¡FASE FINAL DE FURIA! 🔥"
-        else -> "⭐ NUEVA FASE ⭐"
+        2 -> stringResource(R.string.boss_phase_transition_2)
+        3 -> stringResource(R.string.boss_phase_transition_3)
+        else -> stringResource(R.string.boss_phase_transition_default)
     }
 
     val backgroundColor = when (phase) {
@@ -655,7 +661,7 @@ private fun VictorySequence(
                 modifier = Modifier.padding(24.dp)
             ) {
                 Text(
-                    text = "🏆 ¡VICTORIA ÉPICA! 🏆",
+                    stringResource(R.string.boss_victory_title),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -665,7 +671,7 @@ private fun VictorySequence(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "¡Has dominado al $guardianName!",
+                    stringResource(R.string.boss_victory_subtitle, guardianName),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White,
@@ -686,7 +692,7 @@ private fun VictorySequence(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "📊 ESTADÍSTICAS DE BATALLA",
+                            stringResource(R.string.boss_battle_stats_title),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -695,19 +701,19 @@ private fun VictorySequence(
                         Spacer(Modifier.height(8.dp))
 
                         Text(
-                            text = "⏱️ Tiempo: ${formatBattleTime(battleStats.totalTime)}",
+                            stringResource(R.string.boss_battle_stats_time, formatBattleTime(battleStats.totalTime)),
                             fontSize = 12.sp,
                             color = Color.White
                         )
 
                         Text(
-                            text = "🎯 Precisión: ${battleStats.accuracy.toInt()}%",
+                            stringResource(R.string.boss_battle_stats_accuracy, battleStats.accuracy.toInt()),
                             fontSize = 12.sp,
                             color = Color.White
                         )
 
                         Text(
-                            text = "🔥 Racha máxima: ${battleStats.longestStreak}",
+                            stringResource(R.string.boss_battle_stats_streak, battleStats.longestStreak),
                             fontSize = 12.sp,
                             color = Color.White
                         )

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Category
 import com.akrubastudios.playquizgames.domain.Country
@@ -121,13 +122,14 @@ class CountryViewModel @Inject constructor(
 
                     // NUEVO: Usar el progreso del país del listener en tiempo real
                     val currentPc = countryProgress?.currentPc ?: 0
+                    val lang = LanguageManager.getLanguageSuffix()
 
                     // 3. Actualizamos el estado final y APAGAMOS la carga.
                     _uiState.value = _uiState.value.copy(
                         country = country,
                         countryStatus = status,
                         availableCategories = filteredCategories,
-                        studyTopics = bossQuiz?.studyTopics ?: emptyList(),
+                        studyTopics = bossQuiz?.studyTopics?.get(lang) ?: emptyList(),
                         currentPc = currentPc,
                         pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
                         isScreenLoading = false,

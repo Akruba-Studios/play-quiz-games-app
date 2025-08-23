@@ -5,5 +5,5 @@ data class QuizLevelPackage(
     val levelName: Map<String, String> = emptyMap(),
     val questions: List<Question> = emptyList(),
     val isBossLevel: Boolean = false,
-    val studyTopics: List<String> = emptyList()
+    val studyTopics: Map<String, List<String>> = emptyMap()
 )
