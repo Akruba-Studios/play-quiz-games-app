@@ -1,6 +1,9 @@
 package com.akrubastudios.playquizgames.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore // <-- NUEVA IMPORTACIÓN
+import androidx.datastore.preferences.core.Preferences // <-- NUEVA IMPORTACIÓN
+import androidx.datastore.preferences.preferencesDataStore // <-- NUEVA IMPORTACIÓN
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
@@ -13,6 +16,9 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope // <-- NUEVA IMPORTACIÓN
+import kotlinx.coroutines.Dispatchers // <-- NUEVA IMPORTACIÓN
+import kotlinx.coroutines.SupervisorJob // <-- NUEVA IMPORTACIÓN
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,12 +26,25 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+// Definimos la instancia de DataStore aquí, de forma centralizada.
+private const val USER_PREFERENCES_NAME = "user_settings"
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = USER_PREFERENCES_NAME
+)
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
     // --- PROVEEDORES DE SERVICIOS DE FIREBASE ---
     // Son las únicas herramientas de la nube que nuestra app necesita directamente.
+
+    // --- PROVEEDOR DE DATASTORE ---
+    @Provides
+    @Singleton
+    fun providePreferencesDataStore(@ApplicationContext appContext: Context): DataStore<Preferences> {
+        return appContext.dataStore
+    }
 
     @Provides
     @Singleton
@@ -46,11 +65,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(
-        @ApplicationContext context: Context
-    ): SettingsRepository {
-        // Hilt proveerá el contexto de la aplicación para que SettingsRepository pueda usar DataStore.
-        return SettingsRepository(context)
+    fun provideSettingsRepository(dataStore: DataStore<Preferences>): SettingsRepository {
+        // Ahora inyectamos la instancia de DataStore directamente.
+        return SettingsRepository(dataStore)
     }
     @Provides
     @Singleton
@@ -77,13 +94,10 @@ object AppModule {
     ): AuthRepository {
         return AuthRepository(auth, db, gameDataRepository)
     }
+
     @Provides
     @Singleton
-    fun provideLanguageManager(
-        settingsRepository: SettingsRepository
-    ): LanguageManager {
-        // Hilt ahora sabe que para crear un LanguageManager, primero debe crear
-        // (o reutilizar) un SettingsRepository y pasárselo.
+    fun provideLanguageManager(settingsRepository: SettingsRepository): LanguageManager {
         return LanguageManager(settingsRepository)
     }
 }
