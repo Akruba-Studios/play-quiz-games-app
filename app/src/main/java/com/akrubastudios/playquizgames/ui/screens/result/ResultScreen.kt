@@ -10,12 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ResultScreen(
@@ -28,8 +33,11 @@ fun ResultScreen(
     playAgainText: String,
     backButtonText: String,
     onPlayAgain: () -> Unit,
-    onBackToMenu: () -> Unit
+    onBackToMenu: () -> Unit,
+    viewModel: ResultViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -67,5 +75,19 @@ fun ResultScreen(
         Button(onClick = onBackToMenu) {
             Text(text = backButtonText)
         }
+    }
+    if (uiState.showXpTutorial) {
+        AlertDialog(
+            // onDismissRequest se llama si el usuario toca fuera del diálogo
+            onDismissRequest = { viewModel.xpTutorialShown() },
+            title = { Text(text = stringResource(R.string.xp_tutorial_title)) },
+            text = { Text(text = stringResource(R.string.xp_tutorial_message)) },
+            confirmButton = {
+                // El botón llama a la misma función de limpieza
+                TextButton(onClick = { viewModel.xpTutorialShown() }) {
+                    Text(stringResource(R.string.dialog_button_ok_levelup))
+                }
+            }
+        )
     }
 }
