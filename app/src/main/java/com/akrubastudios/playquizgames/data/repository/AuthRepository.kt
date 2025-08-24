@@ -50,7 +50,8 @@ class AuthRepository @Inject constructor(
                     "photoUrl" to user.photoUrl,
                     "totalXp" to 0,
                     "conqueredCountries" to emptyList<String>(),
-                    "createdAt" to System.currentTimeMillis()
+                    "createdAt" to System.currentTimeMillis(),
+                    "hasSeenWelcomeDialog" to false
                 )
                 userRef.set(newUserMap).await()
             } else {

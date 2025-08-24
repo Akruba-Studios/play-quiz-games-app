@@ -208,4 +208,9 @@
         <item>¡Mi último ataque de resistencia!</item>
     </string-array>
 
+    <!-- Diálogos de Hito -->
+    <string name="welcome_dialog_title">¡Comienza la Expedición!</string>
+    <string name="welcome_dialog_message">Has establecido tu primer campamento en %1$s. Tu misión: explora las categorías de conocimiento, gana Puntos de Conquista (PC) y demuestra tu dominio sobre esta nación. ¡Buena suerte, explorador!</string>
+    <string name="dialog_button_ok">¡Entendido!</string>
+
 </resources>

@@ -1,25 +1,25 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
 import android.app.Application
+import android.content.res.Configuration
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.akrubastudios.playquizgames.data.repository.AuthRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import androidx.lifecycle.viewModelScope
+import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.akrubastudios.playquizgames.R
-import com.akrubastudios.playquizgames.core.LanguageManager
-import android.content.res.Configuration
 import java.util.Locale
+import javax.inject.Inject
 
 data class MapState(
     val countries: List<Country> = emptyList(),
@@ -31,7 +31,9 @@ data class MapState(
     val expeditionAvailable: Boolean = false,
     val availableExpeditions: List<Pair<String, String>> = emptyList(),
     val pendingBossChallenge: String? = null,
-    val unassignedPcBoosts: Int = 0
+    val unassignedPcBoosts: Int = 0,
+    val showWelcomeDialog: Boolean = false,
+    val firstCountryName: String = ""
 )
 
 @HiltViewModel
@@ -81,6 +83,16 @@ class MapViewModel @Inject constructor(
                 }
 
                 if (userData != null) {
+                    var showWelcome = false
+                    var welcomeCountryName = ""
+                    if (!userData.hasSeenWelcomeDialog && userData.availableCountries.isNotEmpty()) {
+                        showWelcome = true
+                        val firstCountryId = userData.availableCountries.first()
+                        val firstCountry = countryList.find { it.countryId == firstCountryId }
+                        val lang = Locale.getDefault().language
+                        welcomeCountryName = firstCountry?.name?.get(lang) ?: firstCountry?.name?.get("es") ?: ""
+                    }
+
                     val levelInfo = PlayerLevelManager.calculateLevelInfo(userData.totalXp)
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
@@ -132,7 +144,9 @@ class MapViewModel @Inject constructor(
                         expeditionAvailable = isExpeditionAvailable,
                         availableExpeditions = filteredExpeditions,
                         pendingBossChallenge = userData.pendingBossChallenge,
-                        unassignedPcBoosts = userData.unassignedPcBoosts
+                        unassignedPcBoosts = userData.unassignedPcBoosts,
+                        showWelcomeDialog = showWelcome,
+                        firstCountryName = welcomeCountryName
                     )
                 }
             }
@@ -216,6 +230,22 @@ class MapViewModel @Inject constructor(
         // Ponemos expeditionAvailable a false en el estado de la UI para ocultar el diálogo.
         // La próxima vez que se carguen los datos del usuario, la condición se re-evaluará.
         _uiState.value = _uiState.value.copy(expeditionAvailable = false)
+    }
+    fun welcomeDialogShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        // Ocultamos el diálogo inmediatamente en la UI para una respuesta rápida.
+        _uiState.value = _uiState.value.copy(showWelcomeDialog = false)
+
+        viewModelScope.launch {
+            try {
+                // Actualizamos la bandera en Firestore para que no se vuelva a mostrar.
+                db.collection("users").document(uid)
+                    .update("hasSeenWelcomeDialog", true)
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error al actualizar hasSeenWelcomeDialog", e)
+            }
+        }
     }
 }
 

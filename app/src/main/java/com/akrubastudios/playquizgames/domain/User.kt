@@ -10,5 +10,6 @@ data class User(
     val unassignedPcBoosts: Int = 0,
     val totalXp: Long = 0,
     val availableCountries: List<String> = emptyList(),// <-- Y ESTA
-    val createdAt: Long = 0
+    val createdAt: Long = 0,
+    val hasSeenWelcomeDialog: Boolean = false
 )

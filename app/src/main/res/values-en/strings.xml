@@ -208,4 +208,9 @@
         <item>My final act of resistance!</item>
     </string-array>
 
+    <!-- Dialogos de Hito -->
+    <string name="welcome_dialog_title">The Expedition Begins!</string>
+    <string name="welcome_dialog_message">You have set up your first camp in %1$s. Your mission: explore the knowledge categories, earn Conquest Points (CP), and prove your dominance over this nation. Good luck, explorer!</string>
+    <string name="dialog_button_ok">Got It!</string>
+
 </resources>

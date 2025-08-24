@@ -295,6 +295,18 @@ fun MapScreen(
             }
         )
     }
+    if (uiState.showWelcomeDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.welcomeDialogShown() }, // Tocar fuera también lo marca como visto
+            title = { Text(text = stringResource(R.string.welcome_dialog_title)) },
+            text = { Text(text = stringResource(R.string.welcome_dialog_message, uiState.firstCountryName)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.welcomeDialogShown() }) {
+                    Text(stringResource(R.string.dialog_button_ok))
+                }
+            }
+        )
+    }
 }
 
 
