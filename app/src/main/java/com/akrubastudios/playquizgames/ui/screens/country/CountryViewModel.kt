@@ -38,7 +38,8 @@ data class CountryState(
     val pcRequired: Long = 1, // Evita división por cero
     val isScreenLoading: Boolean = true, // Para la carga inicial
     val isApplyingBoost: Boolean = false,
-    val canApplyBoost: Boolean = false
+    val canApplyBoost: Boolean = false,
+    val showConquestTutorialDialog: Boolean = false
 )
 // Representará una categoría con su nombre ya localizado.
 data class CategoryState(
@@ -101,6 +102,8 @@ class CountryViewModel @Inject constructor(
             }.collect { (userData, countryProgress, langCode) -> // <-- DESESTRUCTURAMOS LA TUPLA
 
                 if (userData != null) {
+
+                    val showTutorial = !userData.hasSeenConquestTutorial
                     // Solo cuando tenemos tanto los datos estáticos como los del usuario,
                     // procedemos a calcular el estado final.
 
@@ -154,7 +157,8 @@ class CountryViewModel @Inject constructor(
                         currentPc = currentPc,
                         pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
                         isScreenLoading = false,
-                        canApplyBoost = canApplyBoost
+                        canApplyBoost = canApplyBoost,
+                        showConquestTutorialDialog = showTutorial
                     )
 
                     Log.d("CountryViewModel", "🔄 Estado actualizado - PC: $currentPc, Status: $status")
@@ -201,5 +205,20 @@ class CountryViewModel @Inject constructor(
             }
         }
     }
-    // --- FIN DE LA MODIFICACIÓN ---
+    fun conquestTutorialShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        // Ocultamos el diálogo en la UI.
+        _uiState.value = _uiState.value.copy(showConquestTutorialDialog = false)
+
+        viewModelScope.launch {
+            try {
+                // Actualizamos la bandera en Firestore.
+                db.collection("users").document(uid)
+                    .update("hasSeenConquestTutorial", true)
+            } catch (e: Exception) {
+                Log.e("CountryViewModel", "Error al actualizar hasSeenConquestTutorial", e)
+            }
+        }
+    }
 }

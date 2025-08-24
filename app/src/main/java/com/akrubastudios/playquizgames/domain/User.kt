@@ -11,5 +11,6 @@ data class User(
     val totalXp: Long = 0,
     val availableCountries: List<String> = emptyList(),// <-- Y ESTA
     val createdAt: Long = 0,
-    val hasSeenWelcomeDialog: Boolean = false
+    val hasSeenWelcomeDialog: Boolean = false,
+    val hasSeenConquestTutorial: Boolean = false
 )

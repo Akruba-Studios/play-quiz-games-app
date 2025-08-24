@@ -51,7 +51,8 @@ class AuthRepository @Inject constructor(
                     "totalXp" to 0,
                     "conqueredCountries" to emptyList<String>(),
                     "createdAt" to System.currentTimeMillis(),
-                    "hasSeenWelcomeDialog" to false
+                    "hasSeenWelcomeDialog" to false,
+                    "hasSeenConquestTutorial" to false
                 )
                 userRef.set(newUserMap).await()
             } else {

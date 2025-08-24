@@ -213,4 +213,7 @@
     <string name="welcome_dialog_message">Has establecido tu primer campamento en %1$s. Tu misión: explora las categorías de conocimiento, gana Puntos de Conquista (PC) y demuestra tu dominio sobre esta nación. ¡Buena suerte, explorador!</string>
     <string name="dialog_button_ok">¡Entendido!</string>
 
+    <string name="conquest_tutorial_title">¡Tu Misión de Conquista!</string>
+    <string name="conquest_tutorial_message">Cada País tiene una barra de Progreso de Conquista. Tu objetivo es llenarla para conquistar %1$s y desafiar a su Guardián.\n\nPara conseguir los Puntos de Conquista (PC) necesarios, ¡debes ganar ⭐ en las diferentes categorías de conocimiento!</string>
+
 </resources>

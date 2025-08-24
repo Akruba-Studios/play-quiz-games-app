@@ -210,7 +210,10 @@
 
     <!-- Dialogos de Hito -->
     <string name="welcome_dialog_title">The Expedition Begins!</string>
-    <string name="welcome_dialog_message">You have set up your first camp in %1$s. Your mission: explore the knowledge categories, earn Conquest Points (CP), and prove your dominance over this nation. Good luck, explorer!</string>
+    <string name="welcome_dialog_message">You have set up your first camp in %1$s. Your mission: explore the knowledge categories, earn Conquest Points (PC), and prove your dominance over this nation. Good luck, explorer!</string>
     <string name="dialog_button_ok">Got It!</string>
+
+    <string name="conquest_tutorial_title">Your Conquest Mission!</string>
+    <string name="conquest_tutorial_message">Every Country, has a Conquest Progress bar. Your goal is to fill it to conquer %1$s and challenge its Guardian.\n\nTo get the required Conquest Points (PC), you must earn ⭐ in the different knowledge categories!</string>
 
 </resources>

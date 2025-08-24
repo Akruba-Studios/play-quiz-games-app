@@ -22,9 +22,11 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -160,6 +162,18 @@ fun CountryScreen(
                 }
             }
         }
+    }
+    if (uiState.showConquestTutorialDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.conquestTutorialShown() },
+            title = { Text(text = stringResource(R.string.conquest_tutorial_title)) },
+            text = { Text(text = stringResource(R.string.conquest_tutorial_message, uiState.countryName)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.conquestTutorialShown() }) {
+                    Text(stringResource(R.string.dialog_button_ok))
+                }
+            }
+        )
     }
 }
 
