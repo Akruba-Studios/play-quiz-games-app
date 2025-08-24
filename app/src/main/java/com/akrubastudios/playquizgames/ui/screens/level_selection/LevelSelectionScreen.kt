@@ -86,6 +86,18 @@ fun LevelSelectionScreen(
             }
         }
     }
+    if (uiState.showLevelUnlockTutorialDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.levelUnlockTutorialShown() },
+            title = { Text(text = stringResource(R.string.level_unlock_tutorial_title)) },
+            text = { Text(text = stringResource(R.string.level_unlock_tutorial_message)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.levelUnlockTutorialShown() }) {
+                    Text(stringResource(R.string.dialog_button_ok))
+                }
+            }
+        )
+    }
 }
 
 @Composable

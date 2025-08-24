@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.level_selection
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,17 +12,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 data class LevelSelectionState(
     val levels: List<LevelStatus> = emptyList(),
     val categoryName: String = "",
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val showLevelUnlockTutorialDialog: Boolean = false
 )
 
 @HiltViewModel
 class LevelSelectionViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val languageManager: LanguageManager,
+    private val auth: FirebaseAuth,
+    private val db: FirebaseFirestore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -65,6 +71,9 @@ class LevelSelectionViewModel @Inject constructor(
             val completionsMap = userCompletions.associateBy { it.levelId }
             languageManager.languageStateFlow.collect { langCode ->
 
+                val userData = gameDataRepository.getUserData()
+                val showTutorial = userData?.hasSeenLevelUnlockTutorial == false
+
                 val levelStatuses = levelsForThisScreen.mapIndexed { index, level ->
                     val starsEarned = completionsMap[level.levelId]?.starsEarned ?: 0
 
@@ -89,8 +98,24 @@ class LevelSelectionViewModel @Inject constructor(
                     levels = levelStatuses,
                     categoryName = category?.name?.get(langCode) ?: category?.name?.get("es")
                     ?: categoryId,
-                    isLoading = false
+                    isLoading = false,
+                    showLevelUnlockTutorialDialog = showTutorial
                 )
+            }
+        }
+    }
+    fun levelUnlockTutorialShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        _uiState.value = _uiState.value.copy(showLevelUnlockTutorialDialog = false)
+
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(uid)
+                    .update("hasSeenLevelUnlockTutorial", true)
+            } catch (e: Exception) {
+                // Manejar el error silenciosamente por ahora
+                Log.e("LevelSelectionVM", "Error al actualizar hasSeenLevelUnlockTutorial", e)
             }
         }
     }

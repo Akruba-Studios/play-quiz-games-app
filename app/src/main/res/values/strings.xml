@@ -216,4 +216,8 @@
     <string name="conquest_tutorial_title">¡Tu Misión de Conquista!</string>
     <string name="conquest_tutorial_message">Cada País tiene una barra de Progreso de Conquista. Tu objetivo es llenarla para conquistar %1$s y desafiar a su Guardián.\n\nPara conseguir los Puntos de Conquista (PC) necesarios, ¡debes ganar ⭐ en las diferentes categorías de conocimiento!</string>
 
+    <!-- Diálogos de Hito -->
+    <string name="level_unlock_tutorial_title">¡Desbloquea tu Camino!</string>
+    <string name="level_unlock_tutorial_message">Para desbloquear los niveles siguientes, demuestra tu conocimiento consiguiendo al menos 2 ⭐.\n\n¡Cada nivel es un nuevo desafío!</string>
+
 </resources>

@@ -216,4 +216,8 @@
     <string name="conquest_tutorial_title">Your Conquest Mission!</string>
     <string name="conquest_tutorial_message">Every Country, has a Conquest Progress bar. Your goal is to fill it to conquer %1$s and challenge its Guardian.\n\nTo get the required Conquest Points (PC), you must earn ⭐ in the different knowledge categories!</string>
 
+    <!-- Milestone Dialogs -->
+    <string name="level_unlock_tutorial_title">Unlock Your Path!</string>
+    <string name="level_unlock_tutorial_message">To unlock the next levels, prove your knowledge by earning at least 2 ⭐.\n\nEvery level is a new challenge!</string>
+
 </resources>

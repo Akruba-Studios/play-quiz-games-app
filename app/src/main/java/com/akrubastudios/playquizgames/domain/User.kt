@@ -12,5 +12,6 @@ data class User(
     val availableCountries: List<String> = emptyList(),// <-- Y ESTA
     val createdAt: Long = 0,
     val hasSeenWelcomeDialog: Boolean = false,
-    val hasSeenConquestTutorial: Boolean = false
+    val hasSeenConquestTutorial: Boolean = false,
+    val hasSeenLevelUnlockTutorial: Boolean = false
 )
