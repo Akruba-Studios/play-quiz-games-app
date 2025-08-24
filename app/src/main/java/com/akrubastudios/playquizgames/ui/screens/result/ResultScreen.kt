@@ -29,6 +29,8 @@ fun ResultScreen(
     totalQuestions: Int,
     correctAnswers: Int,
     starsEarned: Int,
+    pcGained: Int,
+    isFromBossFight: Boolean,
     showPlayAgainButton: Boolean,
     playAgainText: String,
     backButtonText: String,
@@ -46,22 +48,39 @@ fun ResultScreen(
         Text(text = title, style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
         Text(text = stringResource(R.string.result_final_score), style = MaterialTheme.typography.titleMedium)
-        Text(text = "$score", style = MaterialTheme.typography.displayMedium)
+        Text(text = "$score XP", style = MaterialTheme.typography.displayMedium)
         Spacer(modifier = Modifier.height(16.dp))
+        if (!isFromBossFight && pcGained > 0) {
+            Text(
+                text = stringResource(R.string.result_conquest_points),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "+$pcGained PC",
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.primary // Un color destacado
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
         Text(
             text = stringResource(R.string.result_questions_summary, correctAnswers, totalQuestions)
         )
-
-        // --- AÑADE ESTE COMPONENTE PARA MOSTRAR LAS ESTRELLAS ---
-        Spacer(modifier = Modifier.height(16.dp))
-        Row {
-            (1..3).forEach { starIndex ->
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = stringResource(R.string.cd_star_number, starIndex),
-                    modifier = Modifier.size(48.dp),
-                    tint = if (starIndex <= starsEarned) Color(0xFFFFD700) else Color.Gray
-                )
+        // Mostramos las estrellas SOLO si NO es una batalla de jefe.
+        if (!isFromBossFight) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row {
+                // Iteramos de 1 a 3 para crear cada una de las 3 estrellas.
+                (1..3).forEach { starIndex ->
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = stringResource(R.string.cd_star_number, starIndex),
+                        modifier = Modifier.size(48.dp),
+                        // Lógica de color: si el índice de la estrella (1, 2, o 3)
+                        // es menor o igual a las estrellas que ganó el jugador (starsEarned),
+                        // la pintamos de dorado. Si no, la pintamos de gris.
+                        tint = if (starIndex <= starsEarned) Color(0xFFFFD700) else Color.Gray
+                    )
+                }
             }
         }
         Spacer(modifier = Modifier.height(48.dp))

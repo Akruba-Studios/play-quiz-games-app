@@ -22,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
@@ -29,6 +30,7 @@ class GameViewModel @Inject constructor(
     private val db: FirebaseFirestore,       // <-- AÑADE ESTO
     private val auth: FirebaseAuth,
     private val languageManager: LanguageManager,
+    private val gameDataRepository: GameDataRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -264,38 +266,44 @@ class GameViewModel @Inject constructor(
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
 
-            // 1. Calcular el porcentaje de aciertos
-            val correctAnswers = uiState.value.correctAnswersCount
-            val totalQuestions = uiState.value.totalQuestions
-            val accuracy = if (totalQuestions > 0) {
-                (correctAnswers.toFloat() / totalQuestions.toFloat()) * 100
-            } else {
-                0f
+            // Cuando el juego termina, lanzamos una nueva corrutina
+            // para manejar los cálculos asíncronos de recompensas.
+            viewModelScope.launch {
+                Log.d("GameViewModel", "Juego Terminado. Calculando recompensas...")
+
+                // 1. Calcular el porcentaje de aciertos
+                val correctAnswers = uiState.value.correctAnswersCount
+                val totalQuestions = uiState.value.totalQuestions
+                val accuracy = if (totalQuestions > 0) {
+                    (correctAnswers.toFloat() / totalQuestions.toFloat()) * 100
+                } else {
+                    0f
+                }
+
+                // 2. Aplicar la regla para calcular las estrellas ganadas
+                val starsEarned = when {
+                    accuracy >= 100f -> 3
+                    accuracy >= 80f -> 2
+                    accuracy >= 50f -> 1
+                    else -> 0
+                }
+
+                val pcGained = calculatePcWon(starsEarned)
+
+                // 3. Preparamos el objeto GameResult con toda la información
+                val result = GameResult(
+                    score = uiState.value.score,
+                    correctAnswers = correctAnswers,
+                    totalQuestions = totalQuestions,
+                    starsEarned = starsEarned,
+                    pcGained = pcGained
+                )
+                _gameResult.value = result
+
+                sendScoreRequestToFirebase(result)
+
+                isAnswerProcessing = false
             }
-
-            // 2. Aplicar la regla para calcular las estrellas ganadas
-            val starsEarned = when {
-                accuracy >= 100f -> 3
-                accuracy >= 80f -> 2
-                accuracy >= 50f -> 1
-                else -> 0
-            }
-
-            // 3. Preparamos el objeto GameResult con toda la información
-            val result = GameResult(
-                score = uiState.value.score,
-                correctAnswers = correctAnswers,
-                totalQuestions = totalQuestions,
-                starsEarned = starsEarned
-            )
-
-            sendScoreRequestToFirebase(result)
-
-            // 4. En lugar de llamar a la Cloud Function aquí, simplemente actualizamos
-            // el estado _gameResult. La UI reaccionará a este cambio.
-            // La llamada a la Cloud Function la hará la ResultScreen o su futuro ViewModel.
-            _gameResult.value = result
-            isAnswerProcessing = false
         }
     }
 
@@ -356,5 +364,43 @@ class GameViewModel @Inject constructor(
 
     fun difficultyForNav(): String {
         return difficulty
+    }
+    // CUIDADO: Esta lógica duplica el cálculo de PC de la Cloud Function 'processScoreRequest'.
+    // Si se cambia la regla de negocio, actualizar en AMBOS sitios.
+    private suspend fun calculatePcWon(newStars: Int): Int {
+        if (countryId == "freemode") return 0
+
+        // Transcripción de: const currentGlobalRecord = completionData.starsEarned || 0;
+        val globalRecordStars = gameDataRepository.getUserGlobalLevelProgress(levelId)
+
+        // Transcripción de: if (starsEarned <= currentGlobalRecord) { return; }
+        if (newStars <= globalRecordStars) {
+            return 0 // No se ganan PC si no se supera el récord global.
+        }
+
+        // Transcripción de: const starsInThisCountry = countryProgressData.starsEarnedInCountry || 0;
+        val starsAlreadyRewardedInCountry = gameDataRepository.getUserLevelCountryProgress(levelId, countryId)
+
+        // Transcripción de: const rewards = [5000, 10000, 15000];
+        val rewards = listOf(5000, 10000, 15000)
+        var pcGained = 0
+
+        // Transcripción de: const starsGained = Math.min(starsEarned - currentGlobalRecord, 3 - starsInThisCountry);
+        // Calcula cuántas estrellas NUEVAS son elegibles para recompensa.
+        val starsGained = minOf(newStars - globalRecordStars, 3 - starsAlreadyRewardedInCountry)
+
+        // Transcripción del bucle 'for' y su lógica interna.
+        if (starsGained > 0) {
+            for (i in 0 until starsGained) {
+                // const starPosition = starsInThisCountry + i + 1;
+                val starPositionInCountry = starsAlreadyRewardedInCountry + i + 1
+                if (starPositionInCountry <= 3) {
+                    // pcGained += rewards[starPosition - 1];
+                    pcGained += rewards[starPositionInCountry - 1]
+                }
+            }
+        }
+
+        return pcGained
     }
 }

@@ -82,6 +82,8 @@
     <string name="result_button_back_to_menu">Volver al Menú</string>
     <string name="cd_star_number">Estrella %1$d</string>
 
+    <string name="result_conquest_points">Puntos de Conquista</string>
+
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Modo Libre</string>
     <string name="free_mode_subtitle">Repite tus niveles de 3 estrellas para mejorar tu puntaje y ganar más XP.</string>

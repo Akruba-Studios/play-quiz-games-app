@@ -73,6 +73,7 @@ fun GameScreen(
                 .replace("{difficulty}", viewModel.difficultyForNav())
                 .replace("{isFromBossFight}", "false")
                 .replace("{victory}", "false") // Irrelevante en partidas normales
+                .replace("{pcGained}", result.pcGained.toString())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

@@ -483,6 +483,7 @@ fun BossScreen(
                 .replace("{difficulty}", "dificil")
                 .replace("{isFromBossFight}", "true")
                 .replace("{victory}", isVictory.toString())
+                .replace("{pcGained}", "0")
 
             navController.navigate(route) {
                 popUpTo(Routes.MAP_SCREEN)
