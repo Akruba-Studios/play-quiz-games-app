@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.level_selection
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +20,13 @@ import com.akrubastudios.playquizgames.domain.LevelStatus
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 @Composable
 fun LevelSelectionScreen(
@@ -28,60 +37,81 @@ fun LevelSelectionScreen(
     val uiState by viewModel.uiState.collectAsState()
     val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Aquí podrías añadir un botón de "Atrás"
-        Text(
-            text = uiState.categoryName,
-            style = MaterialTheme.typography.headlineLarge,
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    Scaffold( // <-- ENVUELVE EL COLUMN CON SCAFFOLD
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.CenterHorizontally)
-        )
-
-        // --- INICIO DEL CÓDIGO AÑADIDO: SELECTOR DE DIFICULTAD ---
-        // 1. Usamos una lista de IDs para la lógica. No se traduce.
-        val difficultyIds = listOf("principiante", "dificil")
-        // 2. El índice se calcula comparando con la lista de IDs.
-        val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
-
-        TabRow(
-            selectedTabIndex = selectedIndex,
-            modifier = Modifier.fillMaxWidth()
+                .fillMaxSize()
+                .padding(innerPadding) // <-- APLICA EL PADDING
         ) {
-            // 3. Iteramos sobre los IDs.
-            difficultyIds.forEachIndexed { index, id ->
-                Tab(
-                    selected = selectedIndex == index,
-                    onClick = { viewModel.onDifficultyChange(id) },
-                    // 4. Obtenemos el texto traducido DENTRO del Tab.
-                    text = {
-                        val textRes = if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                        Text(text = stringResource(textRes))
-                    }
-                )
-            }
-        }
+            // Aquí podrías añadir un botón de "Atrás"
+            Text(
+                text = uiState.categoryName,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
 
-        // NUEVO: Pequeño texto explicativo del bono
-        Text(
-            text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(R.string.difficulty_beginner_tip),
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        )
+            // --- INICIO DEL CÓDIGO AÑADIDO: SELECTOR DE DIFICULTAD ---
+            // 1. Usamos una lista de IDs para la lógica. No se traduce.
+            val difficultyIds = listOf("principiante", "dificil")
+            // 2. El índice se calcula comparando con la lista de IDs.
+            val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
 
-        if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                items(uiState.levels) { level ->
-                    LevelItem(
-                        level = level,
-                        onLevelClick = { onLevelClick(it, selectedDifficulty) }
+            TabRow(
+                selectedTabIndex = selectedIndex,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 3. Iteramos sobre los IDs.
+                difficultyIds.forEachIndexed { index, id ->
+                    Tab(
+                        selected = selectedIndex == index,
+                        onClick = { viewModel.onDifficultyChange(id) },
+                        // 4. Obtenemos el texto traducido DENTRO del Tab.
+                        text = {
+                            val textRes =
+                                if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                            Text(text = stringResource(textRes))
+                        }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
+            // NUEVO: Pequeño texto explicativo del bono
+            Text(
+                text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
+                    R.string.difficulty_beginner_tip
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            )
+
+            if (uiState.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                    items(uiState.levels) { level ->
+                        LevelItem(
+                            level = level,
+                            onLevelClick = { onLevelClick(it, selectedDifficulty) },
+                            onLockedClick = {
+                                scope.launch {
+                                    val message = context.getString(R.string.level_unlock_toast)
+                                    snackbarHostState.showSnackbar(message)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
@@ -100,25 +130,61 @@ fun LevelSelectionScreen(
     }
 }
 
+// REEMPLAZA ESTA FUNCIÓN COMPLETA
 @Composable
-fun LevelItem(level: LevelStatus, onLevelClick: (String) -> Unit) {
-    OutlinedButton(
-        onClick = { onLevelClick(level.levelId) },
-        modifier = Modifier.fillMaxWidth(),
-        enabled = !level.isLocked
+fun LevelItem(
+    level: LevelStatus,
+    onLevelClick: (String) -> Unit,
+    onLockedClick: () -> Unit
+) {
+    // Usamos una Surface que actúa como nuestro contenedor principal.
+    // Le damos forma, borde y un modificador clickable que SIEMPRE funciona.
+    Surface(
+        onClick = {
+            // Decidimos qué lambda llamar basado en si el nivel está bloqueado.
+            if (level.isLocked) {
+                onLockedClick()
+            } else {
+                onLevelClick(level.levelId)
+            }
+        },
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        // Hacemos que el color de fondo parezca un botón deshabilitado si está bloqueado.
+        color = if (level.isLocked) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
     ) {
-        Text(text = level.levelName)
-        Spacer(Modifier.weight(1f))
-        if (level.isLocked) {
-            Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.cd_locked))
-        } else {
-            Row {
-                (1..3).forEach { starIndex ->
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = if (starIndex <= level.starsEarned) Color(0xFFFFD700) else Color.Gray
-                    )
+        // El contenido interno es una Row, que es lo que tienen los Buttons.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 8.dp), // Padding similar al de un OutlinedButton
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Hacemos que el texto parezca deshabilitado si está bloqueado.
+            val contentColor = if (level.isLocked) {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            } else {
+                MaterialTheme.colorScheme.primary
+            }
+
+            Text(text = level.levelName, color = contentColor)
+            Spacer(Modifier.weight(1f))
+
+            if (level.isLocked) {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = stringResource(R.string.cd_locked),
+                    tint = contentColor // Usamos el mismo color atenuado.
+                )
+            } else {
+                Row {
+                    (1..3).forEach { starIndex ->
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = if (starIndex <= level.starsEarned) Color(0xFFFFD700) else Color.Gray
+                        )
+                    }
                 }
             }
         }

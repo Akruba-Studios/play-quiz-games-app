@@ -51,6 +51,8 @@
     <string name="difficulty_hard_bonus">Hard Mode: +50% XP!</string>
     <string name="difficulty_beginner_tip">Beginner Mode: Great for learning!</string>
 
+    <string name="level_unlock_toast">You need 2 ⭐ on the previous level to unlock this one!</string>
+
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Question: %1$d / %2$d</string> <!-- %1$d = current, %2$d = total -->
     <string name="game_top_bar_score">Score: %1$d</string> <!-- %1$d = score -->

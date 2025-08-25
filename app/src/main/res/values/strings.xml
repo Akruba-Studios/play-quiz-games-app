@@ -51,6 +51,8 @@
     <string name="difficulty_hard_bonus">Modo Difícil: ¡+50% XP!</string>
     <string name="difficulty_beginner_tip">Modo Principiante: ¡Ideal para aprender!</string>
 
+    <string name="level_unlock_toast">¡Necesitas 2 ⭐ en el nivel anterior para desbloquear este!</string>
+
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Pregunta: %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
     <string name="game_top_bar_score">Puntaje: %1$d</string> <!-- %1$d = puntaje -->
