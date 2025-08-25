@@ -71,6 +71,14 @@ import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import java.util.Locale
 
+import androidx.compose.foundation.clickable // <-- AÑADE ESTA
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.SnackbarHost // <-- AÑADE ESTA
+import androidx.compose.material3.SnackbarHostState // <-- AÑADE ESTA
+import androidx.compose.runtime.remember // <-- AÑADE ESTA (si no está)
+import androidx.compose.runtime.rememberCoroutineScope // <-- AÑADE ESTA
+import kotlinx.coroutines.launch // <-- AÑADE ESTA (si no está)
+
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -82,6 +90,10 @@ fun MapScreen(
     // 1. Nueva bandera de estado para "recordar" si el diálogo ya se mostró.
     // 'rememberSaveable' sobrevive a cambios de configuración como la rotación de pantalla.
     var hasShownInitialDialog by rememberSaveable { mutableStateOf(false) }
+
+    val context = LocalContext.current // Necesitaremos el contexto para los strings
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // 2. El LaunchedEffect ahora tiene una lógica más inteligente.
     LaunchedEffect(uiState.expeditionAvailable, hasShownInitialDialog) {
@@ -98,45 +110,59 @@ fun MapScreen(
         // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
         Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 BottomAppBar {
+                    // --- Elemento 1: Ranking (sin cambios) ---
                     NavigationBarItem(
                         selected = false,
                         onClick = { navController.navigate(Routes.RANKING_SCREEN) },
-                        icon = {
-                            Icon(
-                                Icons.Filled.Leaderboard,
-                                contentDescription = stringResource(R.string.bottom_nav_ranking)
-                            )
-                        },
+                        icon = { Icon(Icons.Filled.Leaderboard, contentDescription = stringResource(R.string.bottom_nav_ranking)) },
                         label = { Text(stringResource(R.string.bottom_nav_ranking)) }
                     )
 
+                    // --- Elemento 2: Modo Libre (Lógica Corregida) ---
+                    val isFreeModeEnabled = (uiState.playerLevelInfo?.level ?: 0) >= 5
+
                     NavigationBarItem(
-                        // El botón solo está habilitado si el nivel del jugador es 5 o superior.
-                        // El operador "?." (safe call) se asegura de que no haya un error si
-                        // playerLevelInfo es nulo durante la carga.
-                        enabled = (uiState.playerLevelInfo?.level ?: 0) >= 5,
+                        enabled = isFreeModeEnabled,
                         selected = false,
-                        onClick = { navController.navigate(Routes.FREE_MODE_SCREEN) },
+                        onClick = {
+                            // Este onClick solo se disparará si isFreeModeEnabled es true.
+                            navController.navigate(Routes.FREE_MODE_SCREEN)
+                        },
                         icon = {
-                            Icon(
-                                Icons.Filled.SwapHoriz,
-                                contentDescription = stringResource(R.string.bottom_nav_free_mode)
-                            )
+                            // Si está deshabilitado, envolvemos el icono en un Box para capturar el clic.
+                            if (!isFreeModeEnabled) {
+                                Box(
+                                    modifier = Modifier.clickable(
+                                        // Recordatorio: interactionSource y indication en null para
+                                        // quitar el efecto de "ripple" al tocar.
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = {
+                                            scope.launch {
+                                                val message = context.getString(R.string.free_mode_unlock_toast)
+                                                snackbarHostState.showSnackbar(message)
+                                            }
+                                        }
+                                    )
+                                ) {
+                                    Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode))
+                                }
+                            } else {
+                                // Si está habilitado, mostramos el icono normalmente.
+                                Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode))
+                            }
                         },
                         label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
                     )
 
+                    // --- Elemento 3: Perfil (sin cambios) ---
                     NavigationBarItem(
                         selected = false,
                         onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
-                        icon = {
-                            Icon(
-                                Icons.Filled.AccountCircle,
-                                contentDescription = stringResource(R.string.bottom_nav_profile)
-                            )
-                        },
+                        icon = { Icon(Icons.Filled.AccountCircle, contentDescription = stringResource(R.string.bottom_nav_profile)) },
                         label = { Text(stringResource(R.string.bottom_nav_profile)) }
                     )
                 }

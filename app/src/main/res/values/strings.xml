@@ -27,6 +27,8 @@
     <string name="conquest_dialog_text">Tu dominio sobre %1$s es indiscutible, ¡y las naciones vecinas ahora están a tu alcance!\n\nPero tu conquista ha llamado la atención del Guardián. ¿Aceptarás su desafío final para lograr la dominación total?</string> <!-- %1$s será el nombre del país -->
     <string name="conquest_dialog_button_challenge">Desafiar Ahora</string>
 
+    <string name="free_mode_unlock_toast">¡Alcanza el Nivel 5 para desbloquear el Modo Libre!</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>
