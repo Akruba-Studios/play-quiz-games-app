@@ -24,7 +24,7 @@
     <string name="expedition_dialog_button_later">Más Tarde</string>
     <string name="expedition_dialog_button_explore">Explorar %1$s</string> <!-- %1$s será reemplazado por el nombre del continente -->
     <string name="conquest_dialog_title">¡País Conquistado!</string>
-    <string name="conquest_dialog_text">Has demostrado tu dominio sobre %1$s. Un último desafío te espera: el Guardián de la nación te reta a una prueba final. ¿Aceptas el desafío ahora?</string> <!-- %1$s será el nombre del país -->
+    <string name="conquest_dialog_text">Tu dominio sobre %1$s es indiscutible, ¡y las naciones vecinas ahora están a tu alcance!\n\nPero tu conquista ha llamado la atención del Guardián. ¿Aceptarás su desafío final para lograr la dominación total?</string> <!-- %1$s será el nombre del país -->
     <string name="conquest_dialog_button_challenge">Desafiar Ahora</string>
 
     <!-- CountryScreen -->

@@ -24,7 +24,7 @@
     <string name="expedition_dialog_button_later">Later</string>
     <string name="expedition_dialog_button_explore">Explore %1$s</string> <!-- %1$s will be replaced by the continent name -->
     <string name="conquest_dialog_title">Country Conquered!</string>
-    <string name="conquest_dialog_text">You have proven your mastery over %1$s. A final challenge awaits: the nation\'s Guardian challenges you to a final test. Do you accept the challenge now?</string> <!-- %1$s will be the country name -->
+    <string name="conquest_dialog_text">Your dominance over %1$s is undeniable, and the neighboring nations are now within your reach!\n\nBut your conquest has drawn the Guardian\'s attention. Will you accept their final challenge to achieve total domination?</string> <!-- %1$s will be the country name -->
     <string name="conquest_dialog_button_challenge">Challenge Now</string>
 
     <!-- CountryScreen -->
