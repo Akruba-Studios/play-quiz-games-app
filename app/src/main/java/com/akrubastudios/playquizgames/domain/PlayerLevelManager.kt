@@ -12,13 +12,18 @@ object PlayerLevelManager {
         0L,         // Nivel 1
         10000L,     // Nivel 2
         25000L,     // Nivel 3
-        50000L,     // Nivel 4
-        80000L,     // Nivel 5
-        120000L,    // Nivel 6
+        45000L,     // Nivel 4
+        75000L,     // Nivel 5
+        115000L,    // Nivel 6
         170000L,    // Nivel 7
-        230000L,    // Nivel 8
-        300000L,    // Nivel 9
-        400000L     // Nivel 10
+        240000L,    // Nivel 8
+        330000L,    // Nivel 9
+        450000L,    // Nivel 10
+        600000L,    // Nivel 11
+        780000L,    // Nivel 12
+        1000000L,   // Nivel 13
+        1270000L,   // Nivel 14
+        1600000L    // Nivel 15
         // ... podemos añadir más niveles fácilmente aquí.
     )
 

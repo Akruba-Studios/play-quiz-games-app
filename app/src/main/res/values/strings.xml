@@ -62,7 +62,7 @@
     <string name="difficulty_hard_bonus">Modo Difícil: ¡+50% XP!</string>
     <string name="difficulty_beginner_tip">Modo Principiante: ¡Ideal para aprender!</string>
 
-    <string name="level_unlock_toast">¡Necesitas 2 ⭐ en el nivel anterior para desbloquear este!</string>
+    <string name="level_unlock_toast">¡Necesitas 1 ⭐ en el nivel anterior para desbloquear este!</string>
 
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Pregunta: %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
@@ -237,7 +237,7 @@
     <string name="conquest_tutorial_message">Cada País tiene una barra de Progreso de Conquista. Tu objetivo es llenarla para conquistar %1$s y desafiar a su Guardián.\n\nPara conseguir los Puntos de Conquista (PC) necesarios, ¡debes ganar ⭐ en las diferentes categorías de conocimiento!</string>
 
     <string name="level_unlock_tutorial_title">¡Desbloquea tu Camino!</string>
-    <string name="level_unlock_tutorial_message">Para desbloquear los niveles siguientes, demuestra tu conocimiento consiguiendo al menos 2 ⭐.\n\n¡Cada nivel es un nuevo desafío!</string>
+    <string name="level_unlock_tutorial_message">Para desbloquear los niveles siguientes, demuestra tu conocimiento consiguiendo al menos 1 ⭐.\n\n¡Cada nivel es un nuevo desafío!</string>
 
     <string name="xp_tutorial_title">¡Experiencia Ganada!</string>
     <string name="xp_tutorial_message">¡Felicidades por completar el nivel! Cada vez que terminas una partida, los Puntos de Experiencia (XP) de tus respuestas correctas se suman a tu total global.\n\n¡Acumula XP para subir de Nivel y desbloquear grandes recompensas!</string>

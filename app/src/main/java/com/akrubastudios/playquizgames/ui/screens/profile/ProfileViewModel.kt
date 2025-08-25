@@ -143,7 +143,7 @@ class ProfileViewModel @Inject constructor(
         // 2. Opcional: Podríamos añadir una comprobación de continentes si fuera necesario,
         //    pero basarse en el número de conquistas es más simple y robusto.
         val localizedResources = getLocalizedResources()
-        val targetLevel1 = 5
+        val targetLevel1 = 7
         val targetConquests1 = 3
         if (levelInfo.level < targetLevel1 || conqueredCount < targetConquests1) {
             return Milestone(
@@ -166,7 +166,7 @@ class ProfileViewModel @Inject constructor(
         // --- Hito 2: Segunda Expedición ---
         // Se muestra solo si ya se cumplió el anterior.
         val targetLevel2 = 10
-        val targetConquests2 = 6
+        val targetConquests2 = 7
         if (levelInfo.level < targetLevel2 || conqueredCount < targetConquests2) {
             return Milestone(
                 title = localizedResources.getString(R.string.milestone_title_expedition_2),

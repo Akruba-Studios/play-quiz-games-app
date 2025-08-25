@@ -62,7 +62,7 @@
     <string name="difficulty_hard_bonus">Hard Mode: +50% XP!</string>
     <string name="difficulty_beginner_tip">Beginner Mode: Great for learning!</string>
 
-    <string name="level_unlock_toast">You need 2 ⭐ on the previous level to unlock this one!</string>
+    <string name="level_unlock_toast">You need 1 ⭐ on the previous level to unlock this one!</string>
 
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Question: %1$d / %2$d</string> <!-- %1$d = current, %2$d = total -->
@@ -237,7 +237,7 @@
     <string name="conquest_tutorial_message">Every Country, has a Conquest Progress bar. Your goal is to fill it to conquer %1$s and challenge its Guardian.\n\nTo get the required Conquest Points (PC), you must earn ⭐ in the different knowledge categories!</string>
 
     <string name="level_unlock_tutorial_title">Unlock Your Path!</string>
-    <string name="level_unlock_tutorial_message">To unlock the next levels, prove your knowledge by earning at least 2 ⭐.\n\nEvery level is a new challenge!</string>
+    <string name="level_unlock_tutorial_message">To unlock the next levels, prove your knowledge by earning at least 1 ⭐.\n\nEvery level is a new challenge!</string>
 
     <string name="xp_tutorial_title">Experience Gained!</string>
     <string name="xp_tutorial_message">Congratulations on completing the level! Every time you finish a match, the Experience Points (XP) from your correct answers are added to your total.\n\nCollect XP to Level Up and unlock great rewards!</string>

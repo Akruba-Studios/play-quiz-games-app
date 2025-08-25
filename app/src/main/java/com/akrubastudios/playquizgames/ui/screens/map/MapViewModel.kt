@@ -143,9 +143,9 @@ class MapViewModel @Inject constructor(
                         }
 
                     var expeditionTier = 0
-                    if (unlockedContinents.size == 1 && conqueredIds.size >= 3 && levelInfo.level >= 5) {
+                    if (unlockedContinents.size == 1 && conqueredIds.size >= 3 && levelInfo.level >= 7) {
                         expeditionTier = 1
-                    } else if (unlockedContinents.size == 2 && conqueredIds.size >= 6 && levelInfo.level >= 10) {
+                    } else if (unlockedContinents.size == 2 && conqueredIds.size >= 7 && levelInfo.level >= 10) {
                         expeditionTier = 2
                     }
                     val showAutoDialog = expeditionTier > dismissedLevel && filteredExpeditions.isNotEmpty()

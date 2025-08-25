@@ -82,7 +82,7 @@ class LevelSelectionViewModel @Inject constructor(
                     } else {
                         val previousLevelId = levelsForThisScreen[index - 1].levelId
                         val previousLevelStars = completionsMap[previousLevelId]?.starsEarned ?: 0
-                        previousLevelStars < 2
+                        previousLevelStars < 1
                     }
 
                     LevelStatus(
