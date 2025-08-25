@@ -9,6 +9,7 @@ import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
+import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.google.firebase.auth.FirebaseAuth
@@ -17,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -29,6 +31,7 @@ data class MapState(
     val isLoading: Boolean = true,
     val playerLevelInfo: PlayerLevelManager.LevelInfo? = null,
     val expeditionAvailable: Boolean = false,
+    val showExpeditionDialog: Boolean = false,
     val availableExpeditions: List<Pair<String, String>> = emptyList(),
     val pendingBossChallenge: String? = null,
     val unassignedPcBoosts: Int = 0,
@@ -45,7 +48,8 @@ class MapViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val application: Application,
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     val currentUser = authRepository.currentUser
@@ -77,9 +81,13 @@ class MapViewModel @Inject constructor(
 
             // Se suscribe al StateFlow compartido del repositorio.
             // 'collect' se ejecutará cada vez que los datos del usuario cambien en Firestore.
-            gameDataRepository.userStateFlow.collect { userData ->
+            combine(
+                gameDataRepository.userStateFlow,
+                settingsRepository.dismissedExpeditionLevelFlow
+            ) { userData, dismissedLevel ->
+                Pair(userData, dismissedLevel)
+            }.collect { (userData, dismissedLevel) ->
 
-                // Ponemos el estado de carga solo si no tenemos datos de usuario aún.
                 if (_uiState.value.playerLevelInfo == null) {
                     _uiState.value = _uiState.value.copy(isLoading = true)
                 }
@@ -132,12 +140,13 @@ class MapViewModel @Inject constructor(
                             Pair(continentId, buttonText)
                         }
 
-                    var isExpeditionAvailable = false
+                    var expeditionTier = 0
                     if (unlockedContinents.size == 1 && conqueredIds.size >= 3 && levelInfo.level >= 5) {
-                        isExpeditionAvailable = true
+                        expeditionTier = 1
                     } else if (unlockedContinents.size == 2 && conqueredIds.size >= 6 && levelInfo.level >= 10) {
-                        isExpeditionAvailable = true
+                        expeditionTier = 2
                     }
+                    val showAutoDialog = expeditionTier > dismissedLevel && filteredExpeditions.isNotEmpty()
 
                     val influentialCountryIds = (conqueredIds + dominatedIds).toSet()
                     val availableIds = mutableSetOf<String>()
@@ -149,14 +158,15 @@ class MapViewModel @Inject constructor(
                         }
                     }
 
-                    _uiState.value = MapState(
+                    _uiState.value = _uiState.value.copy(
                         countries = countryList,
                         conqueredCountryIds = conqueredIds,
                         dominatedCountryIds = dominatedIds,
                         availableCountryIds = availableIds.toList(),
                         isLoading = false,
                         playerLevelInfo = levelInfo,
-                        expeditionAvailable = isExpeditionAvailable,
+                        expeditionAvailable = expeditionTier > 0 && filteredExpeditions.isNotEmpty(),
+                        showExpeditionDialog = showAutoDialog,
                         availableExpeditions = filteredExpeditions,
                         pendingBossChallenge = userData.pendingBossChallenge,
                         unassignedPcBoosts = userData.unassignedPcBoosts,
@@ -244,9 +254,29 @@ class MapViewModel @Inject constructor(
      * Oculta el diálogo para la sesión actual.
      */
     fun dismissExpeditionDialog() {
-        // Ponemos expeditionAvailable a false en el estado de la UI para ocultar el diálogo.
-        // La próxima vez que se carguen los datos del usuario, la condición se re-evaluará.
-        _uiState.value = _uiState.value.copy(expeditionAvailable = false)
+        // Ocultamos el diálogo en la UI.
+        _uiState.value = _uiState.value.copy(showExpeditionDialog = false)
+
+        viewModelScope.launch {
+            // Calculamos qué nivel de oferta está activo AHORA.
+            val ui = _uiState.value
+            val conqueredIds = ui.conqueredCountryIds
+            val unlockedContinents = ui.countries
+                .filter { conqueredIds.contains(it.countryId) || ui.availableCountryIds.contains(it.countryId) }
+                .map { it.continentId }.toSet()
+
+            var currentTier = 0
+            if (unlockedContinents.size == 1) currentTier = 1
+            else if (unlockedContinents.size == 2) currentTier = 2
+
+            // Guardamos el nivel que acabamos de ignorar.
+            if (currentTier > 0) {
+                settingsRepository.saveDismissedExpeditionLevel(currentTier)
+            }
+        }
+    }
+    fun requestExpeditionDialog() {
+        _uiState.value = _uiState.value.copy(showExpeditionDialog = true)
     }
     fun welcomeDialogShown() {
         val uid = auth.currentUser?.uid ?: return

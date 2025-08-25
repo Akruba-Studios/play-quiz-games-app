@@ -94,27 +94,12 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showExpeditionDialog by remember { mutableStateOf(false) }
-    // --- INICIO DE LA CORRECCIÓN ---
-    // 1. Nueva bandera de estado para "recordar" si el diálogo ya se mostró.
-    // 'rememberSaveable' sobrevive a cambios de configuración como la rotación de pantalla.
-    var hasShownInitialDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     val sheetState = rememberModalBottomSheetState()
-
-    // 2. El LaunchedEffect ahora tiene una lógica más inteligente.
-    LaunchedEffect(uiState.expeditionAvailable, hasShownInitialDialog) {
-        // Mostramos el diálogo solo si la expedición está disponible Y si NO lo hemos mostrado antes.
-        if (uiState.expeditionAvailable && !hasShownInitialDialog) {
-            showExpeditionDialog = true
-            // 3. Una vez que lo mostramos, levantamos la bandera para no volver a mostrarlo.
-            hasShownInitialDialog = true
-        }
-    }
 
     val currentLanguageCode = Locale.getDefault().language
 
@@ -243,7 +228,7 @@ fun MapScreen(
                 // El icono del avión (botón flotante) se muestra si una expedición está disponible.
                 if (uiState.expeditionAvailable) {
                     FloatingActionButton(
-                        onClick = { showExpeditionDialog = true }, // Al hacer clic, abre el diálogo
+                        onClick = { viewModel.requestExpeditionDialog() }, // Al hacer clic, abre el diálogo
                         modifier = Modifier
                             .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
                             .padding(16.dp),
@@ -259,9 +244,9 @@ fun MapScreen(
         }
     }
     // El diálogo ahora es controlado por el estado local 'showExpeditionDialog'.
-    if (showExpeditionDialog) {
+    if (uiState.showExpeditionDialog) {
         AlertDialog(
-            onDismissRequest = { showExpeditionDialog = false }, // Tocar fuera cierra el diálogo
+            onDismissRequest = { viewModel.dismissExpeditionDialog() }, // Tocar fuera lo cierra
             title = { Text(text = stringResource(R.string.expedition_dialog_title)) },
             text = {
                 Column(
@@ -274,7 +259,7 @@ fun MapScreen(
                         Button(
                             onClick = {
                                 viewModel.onExpeditionContinentSelected(continentId)
-                                showExpeditionDialog = false // Cierra el diálogo al elegir
+                                // El ViewModel se encargará de ocultar el diálogo al cambiar el estado.
                             },
                             modifier = Modifier.fillMaxWidth().height(50.dp)
                         ) {
@@ -285,7 +270,7 @@ fun MapScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showExpeditionDialog = false }) { // "Más Tarde" cierra el diálogo
+                TextButton(onClick = { viewModel.dismissExpeditionDialog() }) { // El botón "Más Tarde" también lo cierra
                     Text(stringResource(R.string.expedition_dialog_button_later))
                 }
             },
