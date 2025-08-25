@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.profile
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +78,13 @@ fun ProfileScreen(
                     dominated = uiState.user?.dominatedCountries?.size ?: 0
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item {
+                uiState.nextMilestone?.let { milestone ->
+                    MilestoneCard(milestone = milestone)
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
 
             item {
@@ -185,4 +194,50 @@ private fun StatisticRow(icon: ImageVector, label: String, value: String) {
 
 private fun formatNumber(number: Long): String {
     return NumberFormat.getNumberInstance(Locale.getDefault()).format(number)
+}
+
+@Composable
+private fun MilestoneCard(milestone: Milestone) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = milestone.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Creamos una fila por cada meta dentro del hito.
+            milestone.goals.forEach { goal ->
+                GoalProgressRow(goal = goal)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun GoalProgressRow(goal: GoalProgress) {
+    val progress = (goal.current.toFloat() / goal.target.toFloat()).coerceIn(0f, 1f)
+    val animatedProgress by animateFloatAsState(targetValue = progress, label = "GoalProgressAnimation")
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = goal.description, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "${goal.current} / ${goal.target}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier.fillMaxWidth().height(6.dp),
+            strokeCap = StrokeCap.Round
+        )
+    }
 }

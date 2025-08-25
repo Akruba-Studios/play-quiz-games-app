@@ -122,6 +122,11 @@
     <string name="app_version">Versión 1.0.0</string>
     <string name="default_player_name">Jugador</string>
 
+    <string name="milestone_title_expedition_1">Próxima Expedición: Nuevo Continente</string>
+    <string name="milestone_title_expedition_2">Próxima Expedición: El Último Continente</string>
+    <string name="milestone_goal_level">Alcanzar Nivel %1$d</string>
+    <string name="milestone_goal_conquests">Conquistar %1$d Países</string>
+
     <!-- SettingsScreen -->
     <string name="settings_title">Ajustes</string>
     <string name="settings_sound_section">Sonido</string>

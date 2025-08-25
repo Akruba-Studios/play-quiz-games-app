@@ -122,6 +122,11 @@
     <string name="app_version">Version 1.0.0</string>
     <string name="default_player_name">Player</string>
 
+    <string name="milestone_title_expedition_1">Next Expedition: New Continent</string>
+    <string name="milestone_title_expedition_2">Next Expedition: The Final Continent</string>
+    <string name="milestone_goal_level">Reach Level %1$d</string>
+    <string name="milestone_goal_conquests">Conquer %1$d Countries</string>
+
     <!-- SettingsScreen -->
     <string name="settings_title">Settings</string>
     <string name="settings_sound_section">Sound</string>
