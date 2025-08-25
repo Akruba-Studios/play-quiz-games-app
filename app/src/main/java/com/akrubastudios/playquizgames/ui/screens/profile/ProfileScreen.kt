@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.profile
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,7 +30,17 @@ import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ProfileScreen(
@@ -54,19 +65,50 @@ fun ProfileScreen(
     var cardColor by remember { mutableStateOf(baseCardColor) }
     val animatedCardColor by animateColorAsState(
         targetValue = cardColor,
-        animationSpec = tween(durationMillis = 500),
+        animationSpec = tween(durationMillis = 1000),
         label = "MilestoneCardColorAnimation" // Cambiamos la etiqueta para claridad
     )
-    LaunchedEffect(uiState.triggerMilestoneAnimation) {
+    var scaleAnimation by remember { mutableFloatStateOf(1f) }
+    val animatedScale by animateFloatAsState(
+        targetValue = scaleAnimation,
+        animationSpec = tween(durationMillis = 1000),
+        label = "ScaleAnimation"
+    )
+    LaunchedEffect(Unit) { // CAMBIAR de uiState.triggerMilestoneAnimation a Unit
+        Log.d("MILESTONE_ANIM", "🔥 ENTRANDO - trigger: ${uiState.triggerMilestoneAnimation}, played: $animationPlayed")
+
         if (uiState.triggerMilestoneAnimation && !animationPlayed) {
-            cardColor = highlightCardColor
-            kotlinx.coroutines.delay(600)
-            cardColor = baseCardColor
-            kotlinx.coroutines.delay(600)
-            cardColor = highlightCardColor
-            kotlinx.coroutines.delay(600)
-            cardColor = baseCardColor
+            Log.d("MILESTONE_ANIM", "🚀 INICIANDO ANIMACIÓN")
             animationPlayed = true
+            viewModel.resetMilestoneAnimation() // RESETEAR AQUÍ para que no interfiera
+
+            try {
+                Log.d("MILESTONE_ANIM", "🔄 PULSO 1 - START")
+                cardColor = highlightCardColor
+                scaleAnimation = 1.08f
+                Log.d("MILESTONE_ANIM", "⏰ Delay 1...")
+                delay(1500)
+                Log.d("MILESTONE_ANIM", "⏰ Delay 1 OK")
+
+                cardColor = baseCardColor
+                scaleAnimation = 1f
+                Log.d("MILESTONE_ANIM", "⏰ Delay 2...")
+                delay(1500)
+                Log.d("MILESTONE_ANIM", "⏰ Delay 2 OK - PULSO 1 COMPLETADO")
+
+                Log.d("MILESTONE_ANIM", "🔄 PULSO 2 - START")
+                cardColor = highlightCardColor
+                scaleAnimation = 1.08f
+                delay(1500)
+
+                cardColor = baseCardColor
+                scaleAnimation = 1f
+                delay(1500)
+                Log.d("MILESTONE_ANIM", "✅ TODO TERMINADO")
+
+            } catch (e: Exception) {
+                Log.e("MILESTONE_ANIM", "❌ ERROR: $e")
+            }
         }
     }
 
@@ -111,7 +153,8 @@ fun ProfileScreen(
                     // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
                     MilestoneCard(
                         milestone = milestone,
-                        cardColor = animatedCardColor // <-- APLICA EL COLOR ANIMADO
+                        cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
+                        scale = animatedScale
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -230,11 +273,14 @@ private fun formatNumber(number: Long): String {
 private fun MilestoneCard(
     milestone: Milestone,
     modifier: Modifier = Modifier,
-    cardColor: Color = CardDefaults.cardColors().containerColor
+    cardColor: Color = CardDefaults.cardColors().containerColor,
+    scale: Float = 1f
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardColor) // <-- Usa el color del parámetro
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer(scaleX = scale, scaleY = scale),
+        colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

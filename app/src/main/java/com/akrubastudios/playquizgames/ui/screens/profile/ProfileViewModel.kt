@@ -20,6 +20,7 @@ import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import java.util.Locale
 
 /**
@@ -186,6 +187,10 @@ class ProfileViewModel @Inject constructor(
 
         // Si todos los hitos definidos se han cumplido, no devolvemos nada.
         return null
+    }
+
+    fun resetMilestoneAnimation() {
+        _uiState.update { it.copy(triggerMilestoneAnimation = false) }
     }
 
     fun signOut() {
