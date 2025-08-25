@@ -14,5 +14,6 @@ data class User(
     val hasSeenWelcomeDialog: Boolean = false,
     val hasSeenConquestTutorial: Boolean = false,
     val hasSeenLevelUnlockTutorial: Boolean = false,
-    val hasSeenXpTutorial: Boolean = false
+    val hasSeenXpTutorial: Boolean = false,
+    val hasSeenFreeModeUnlockedDialog: Boolean = false
 )

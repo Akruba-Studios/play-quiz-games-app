@@ -29,6 +29,10 @@
 
     <string name="free_mode_unlock_toast">¡Alcanza el Nivel 5 para desbloquear el Modo Libre!</string>
 
+    <string name="free_mode_unlocked_title">¡Modo Libre Desbloqueado!</string>
+    <string name="free_mode_unlocked_message">¡Felicidades por alcanzar el Nivel 5! Ahora puedes acceder al Modo Libre desde la barra de navegación.\n\nVuelve a jugar tus niveles de 3 ⭐, compite por un puntaje más alto y gana más XP.</string>
+    <string name="dialog_button_awesome">¡Genial!</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>

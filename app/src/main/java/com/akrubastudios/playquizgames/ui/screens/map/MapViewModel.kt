@@ -33,7 +33,8 @@ data class MapState(
     val pendingBossChallenge: String? = null,
     val unassignedPcBoosts: Int = 0,
     val showWelcomeDialog: Boolean = false,
-    val firstCountryName: String = ""
+    val firstCountryName: String = "",
+    val showFreeModeUnlockedDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -94,6 +95,12 @@ class MapViewModel @Inject constructor(
                     }
 
                     val levelInfo = PlayerLevelManager.calculateLevelInfo(userData.totalXp)
+                    var showFreeModeDialog = false
+                    // La condición: ha llegado al nivel 5 y NUNCA ha visto el diálogo.
+                    if (levelInfo.level >= 5 && !userData.hasSeenFreeModeUnlockedDialog) {
+                        showFreeModeDialog = true
+                    }
+
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
                     val dominatedIds = userData.dominatedCountries
@@ -146,7 +153,8 @@ class MapViewModel @Inject constructor(
                         pendingBossChallenge = userData.pendingBossChallenge,
                         unassignedPcBoosts = userData.unassignedPcBoosts,
                         showWelcomeDialog = showWelcome,
-                        firstCountryName = welcomeCountryName
+                        firstCountryName = welcomeCountryName,
+                        showFreeModeUnlockedDialog = showFreeModeDialog
                     )
                 }
             }
@@ -244,6 +252,22 @@ class MapViewModel @Inject constructor(
                     .update("hasSeenWelcomeDialog", true)
             } catch (e: Exception) {
                 Log.e("MapViewModel", "Error al actualizar hasSeenWelcomeDialog", e)
+            }
+        }
+    }
+    fun freeModeTutorialShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        // Ocultamos el diálogo en la UI.
+        _uiState.value = _uiState.value.copy(showFreeModeUnlockedDialog = false)
+
+        viewModelScope.launch {
+            try {
+                // Actualizamos la bandera en Firestore.
+                db.collection("users").document(uid)
+                    .update("hasSeenFreeModeUnlockedDialog", true)
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error al actualizar hasSeenFreeModeUnlockedDialog", e)
             }
         }
     }

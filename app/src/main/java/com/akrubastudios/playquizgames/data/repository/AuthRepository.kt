@@ -54,7 +54,8 @@ class AuthRepository @Inject constructor(
                     "hasSeenWelcomeDialog" to false,
                     "hasSeenConquestTutorial" to false,
                     "hasSeenLevelUnlockTutorial" to false,
-                    "hasSeenXpTutorial" to false
+                    "hasSeenXpTutorial" to false,
+                    "hasSeenFreeModeUnlockedDialog" to false
                 )
                 userRef.set(newUserMap).await()
             } else {

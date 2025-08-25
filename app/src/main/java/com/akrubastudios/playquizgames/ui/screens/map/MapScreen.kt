@@ -333,6 +333,18 @@ fun MapScreen(
             }
         )
     }
+    if (uiState.showFreeModeUnlockedDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.freeModeTutorialShown() },
+            title = { Text(text = stringResource(R.string.free_mode_unlocked_title)) },
+            text = { Text(text = stringResource(R.string.free_mode_unlocked_message)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.freeModeTutorialShown() }) {
+                    Text(stringResource(R.string.dialog_button_awesome))
+                }
+            }
+        )
+    }
 }
 
 

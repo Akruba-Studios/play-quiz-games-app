@@ -29,6 +29,10 @@
 
     <string name="free_mode_unlock_toast">Reach Level 5 to unlock Free Mode!</string>
 
+    <string name="free_mode_unlocked_title">Free Mode Unlocked!</string>
+    <string name="free_mode_unlocked_message">Congratulations on reaching Level 5! You can now access Free Mode from the navigation bar.\n\nReplay your 3 ⭐ levels, compete for a higher score, and earn more XP.</string>
+    <string name="dialog_button_awesome">Awesome!</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>
     <string name="country_status_conquered">Country Conquered!</string>
