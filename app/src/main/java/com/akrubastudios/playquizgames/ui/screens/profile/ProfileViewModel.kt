@@ -41,7 +41,8 @@ data class ProfileState(
     val isLoading: Boolean = true,
     val user: User? = null,
     val levelInfo: PlayerLevelManager.LevelInfo? = null,
-    val nextMilestone: Milestone? = null
+    val nextMilestone: Milestone? = null,
+    val triggerMilestoneAnimation: Boolean = false
 )
 
 @HiltViewModel
@@ -83,6 +84,12 @@ class ProfileViewModel @Inject constructor(
                     clearProfileNotifications()
                 }
 
+                var shouldTriggerAnimation = false // <-- Variable local
+                if (currentUser != null && currentUser.pendingProfileNotifications.isNotEmpty()) {
+                    clearProfileNotifications()
+                    shouldTriggerAnimation = true // <-- La activamos
+                }
+
                 //isLoading se sigue controlando igual.
                 _uiState.value = _uiState.value.copy(isLoading = (currentUser == null))
 
@@ -93,11 +100,12 @@ class ProfileViewModel @Inject constructor(
                     // por lo que se vuelve a ejecutar con el idioma actualizado.
                     val nextMilestone = determineNextMilestone(currentUser, levelInfo)
 
-                    _uiState.value = ProfileState(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         user = currentUser,
                         levelInfo = levelInfo,
-                        nextMilestone = nextMilestone
+                        nextMilestone = nextMilestone,
+                        triggerMilestoneAnimation = shouldTriggerAnimation
                     )
                 }
             }

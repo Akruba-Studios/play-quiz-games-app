@@ -27,6 +27,9 @@ import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ProfileScreen(
@@ -41,6 +44,29 @@ fun ProfileScreen(
     LaunchedEffect(Unit) {
         viewModel.signOutEvent.collect {
             onSignOut()
+        }
+    }
+
+    // --- LÓGICA DE ANIMACIÓN (SIN CAMBIOS, PERO AHORA SABEMOS DÓNDE SE APLICARÁ) ---
+    val baseCardColor = CardDefaults.cardColors().containerColor
+    val highlightCardColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    var animationPlayed by remember { mutableStateOf(false) }
+    var cardColor by remember { mutableStateOf(baseCardColor) }
+    val animatedCardColor by animateColorAsState(
+        targetValue = cardColor,
+        animationSpec = tween(durationMillis = 500),
+        label = "MilestoneCardColorAnimation" // Cambiamos la etiqueta para claridad
+    )
+    LaunchedEffect(uiState.triggerMilestoneAnimation) {
+        if (uiState.triggerMilestoneAnimation && !animationPlayed) {
+            cardColor = highlightCardColor
+            kotlinx.coroutines.delay(600)
+            cardColor = baseCardColor
+            kotlinx.coroutines.delay(600)
+            cardColor = highlightCardColor
+            kotlinx.coroutines.delay(600)
+            cardColor = baseCardColor
+            animationPlayed = true
         }
     }
 
@@ -82,7 +108,11 @@ fun ProfileScreen(
 
             item {
                 uiState.nextMilestone?.let { milestone ->
-                    MilestoneCard(milestone = milestone)
+                    // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
+                    MilestoneCard(
+                        milestone = milestone,
+                        cardColor = animatedCardColor // <-- APLICA EL COLOR ANIMADO
+                    )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -197,8 +227,15 @@ private fun formatNumber(number: Long): String {
 }
 
 @Composable
-private fun MilestoneCard(milestone: Milestone) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun MilestoneCard(
+    milestone: Milestone,
+    modifier: Modifier = Modifier,
+    cardColor: Color = CardDefaults.cardColors().containerColor
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor) // <-- Usa el color del parámetro
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = milestone.title,
