@@ -16,5 +16,6 @@ data class User(
     val hasSeenLevelUnlockTutorial: Boolean = false,
     val hasSeenXpTutorial: Boolean = false,
     val hasSeenFreeModeUnlockedDialog: Boolean = false,
-    val hasSeenDominationTutorial: Boolean = false
+    val hasSeenDominationTutorial: Boolean = false,
+    val pendingProfileNotifications: List<String> = emptyList()
 )

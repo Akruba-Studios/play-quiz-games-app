@@ -13,6 +13,7 @@ import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +39,8 @@ data class MapState(
     val showWelcomeDialog: Boolean = false,
     val firstCountryName: String = "",
     val showFreeModeUnlockedDialog: Boolean = false,
-    val showDominationRewardsSheet: Boolean = false
+    val showDominationRewardsSheet: Boolean = false,
+    val hasProfileNotification: Boolean = false
 )
 
 @HiltViewModel
@@ -158,6 +160,29 @@ class MapViewModel @Inject constructor(
                         }
                     }
 
+                    // --- INICIO DE LA MODIFICACIÓN: Notificacion de Detección de Hitos ---
+                    // Guardamos el estado anterior para comparar.
+                    val previousState = _uiState.value
+
+                    // Hito 1: Dos Conquistas
+                    // Condición: Antes tenía menos de 2 conquistas Y ahora tiene 2 o más.
+                    if (previousState.conqueredCountryIds.size < 2 && userData.conqueredCountries.size >= 2) {
+                        addProfileNotification("CONQUEST_2_MILESTONE")
+                    }
+
+                    // Hito 2: Expansión Intercontinental
+                    // Calculamos los continentes desbloqueados antes y ahora.
+                    val previousUnlockedContinents = (previousState.conqueredCountryIds + previousState.availableCountryIds)
+                        .mapNotNull { countryId -> countryList.find { it.countryId == countryId }?.continentId }
+                        .toSet()
+                    // 'unlockedContinents' ya lo calculaste antes, lo reutilizamos.
+                    if (previousUnlockedContinents.size == 1 && unlockedContinents.size > 1) {
+                        addProfileNotification("INTERCONTINENTAL_EXPANSION_MILESTONE")
+                    }
+
+                    val hasNotification = userData.pendingProfileNotifications.isNotEmpty()
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                     _uiState.value = _uiState.value.copy(
                         countries = countryList,
                         conqueredCountryIds = conqueredIds,
@@ -173,9 +198,22 @@ class MapViewModel @Inject constructor(
                         showWelcomeDialog = showWelcome,
                         firstCountryName = welcomeCountryName,
                         showFreeModeUnlockedDialog = showFreeModeDialog,
-                        showDominationRewardsSheet = showDominationSheet
+                        showDominationRewardsSheet = showDominationSheet,
+                        hasProfileNotification = hasNotification
                     )
                 }
+            }
+        }
+    }
+
+    private fun addProfileNotification(notificationId: String) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(uid)
+                    .update("pendingProfileNotifications", FieldValue.arrayUnion(notificationId))
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error al añadir notificación de perfil", e)
             }
         }
     }

@@ -87,6 +87,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.graphics.vector.ImageVector
 
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
@@ -158,7 +161,22 @@ fun MapScreen(
                     NavigationBarItem(
                         selected = false,
                         onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
-                        icon = { Icon(Icons.Filled.AccountCircle, contentDescription = stringResource(R.string.bottom_nav_profile)) },
+                        icon = {
+                            // --- INICIO DE LA MODIFICACIÓN ---
+                            BadgedBox(
+                                badge = {
+                                    // El Badge solo se muestra si hasProfileNotification es true.
+                                    if (uiState.hasProfileNotification) {
+                                        Badge() // El punto rojo por defecto
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Filled.AccountCircle,
+                                    contentDescription = stringResource(R.string.bottom_nav_profile)
+                                )
+                            }
+                        },
                         label = { Text(stringResource(R.string.bottom_nav_profile)) }
                     )
                 }

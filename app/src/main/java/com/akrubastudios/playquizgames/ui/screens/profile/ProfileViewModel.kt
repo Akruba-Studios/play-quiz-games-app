@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.combine
 import java.util.Locale
 
@@ -48,7 +49,8 @@ class ProfileViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val authRepository: AuthRepository,
     private val application: Application,
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    private val db: FirebaseFirestore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileState())
@@ -76,6 +78,11 @@ class ProfileViewModel @Inject constructor(
                 Pair(currentUser, langCode)
             }.collect { (currentUser, langCode) ->
 
+                // Si el usuario llega al perfil y tiene notificaciones pendientes, las limpiamos.
+                if (currentUser != null && currentUser.pendingProfileNotifications.isNotEmpty()) {
+                    clearProfileNotifications()
+                }
+
                 //isLoading se sigue controlando igual.
                 _uiState.value = _uiState.value.copy(isLoading = (currentUser == null))
 
@@ -93,6 +100,19 @@ class ProfileViewModel @Inject constructor(
                         nextMilestone = nextMilestone
                     )
                 }
+            }
+        }
+    }
+
+    private fun clearProfileNotifications() {
+        val uid = authRepository.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                // Obtenemos una referencia a la base de datos (necesitarás inyectar 'db: FirebaseFirestore')
+                db.collection("users").document(uid)
+                    .update("pendingProfileNotifications", emptyList<String>())
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Error al limpiar notificaciones de perfil", e)
             }
         }
     }

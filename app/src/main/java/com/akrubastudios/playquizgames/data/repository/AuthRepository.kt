@@ -56,7 +56,8 @@ class AuthRepository @Inject constructor(
                     "hasSeenLevelUnlockTutorial" to false,
                     "hasSeenXpTutorial" to false,
                     "hasSeenFreeModeUnlockedDialog" to false,
-                    "hasSeenDominationTutorial" to false
+                    "hasSeenDominationTutorial" to false,
+                    "pendingProfileNotifications" to emptyList<String>()
                 )
                 userRef.set(newUserMap).await()
             } else {
