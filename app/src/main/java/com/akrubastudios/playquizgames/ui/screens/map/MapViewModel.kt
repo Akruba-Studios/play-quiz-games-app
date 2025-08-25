@@ -165,19 +165,16 @@ class MapViewModel @Inject constructor(
                     val previousState = _uiState.value
 
                     // Hito 1: Dos Conquistas
-                    // Condición: Antes tenía menos de 2 conquistas Y ahora tiene 2 o más.
-                    if (previousState.conqueredCountryIds.size < 2 && userData.conqueredCountries.size >= 2) {
-                        addProfileNotification("CONQUEST_2_MILESTONE")
+                    // Condición: Ha conquistado 2 o más países Y NUNCA se ha disparado este hito antes.
+                    if (userData.conqueredCountries.size >= 2 && !userData.hasTriggeredConquest2Milestone) {
+                        // Añadimos la notificación y actualizamos la bandera para que no vuelva a pasar.
+                        addProfileNotificationAndUpdateFlag("CONQUEST_2_MILESTONE", "hasTriggeredConquest2Milestone")
                     }
 
                     // Hito 2: Expansión Intercontinental
-                    // Calculamos los continentes desbloqueados antes y ahora.
-                    val previousUnlockedContinents = (previousState.conqueredCountryIds + previousState.availableCountryIds)
-                        .mapNotNull { countryId -> countryList.find { it.countryId == countryId }?.continentId }
-                        .toSet()
-                    // 'unlockedContinents' ya lo calculaste antes, lo reutilizamos.
-                    if (previousUnlockedContinents.size == 1 && unlockedContinents.size > 1) {
-                        addProfileNotification("INTERCONTINENTAL_EXPANSION_MILESTONE")
+                    // Reutilizamos la lógica de 'unlockedContinents' que ya tienes
+                    if (unlockedContinents.size > 1 && !userData.hasTriggeredExpansionMilestone) {
+                        addProfileNotificationAndUpdateFlag("INTERCONTINENTAL_EXPANSION_MILESTONE", "hasTriggeredExpansionMilestone")
                     }
 
                     val hasNotification = userData.pendingProfileNotifications.isNotEmpty()
@@ -206,14 +203,18 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun addProfileNotification(notificationId: String) {
+    private fun addProfileNotificationAndUpdateFlag(notificationId: String, flagName: String) {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             try {
-                db.collection("users").document(uid)
-                    .update("pendingProfileNotifications", FieldValue.arrayUnion(notificationId))
+                db.collection("users").document(uid).update(
+                    mapOf(
+                        "pendingProfileNotifications" to FieldValue.arrayUnion(notificationId),
+                        flagName to true
+                    )
+                )
             } catch (e: Exception) {
-                Log.e("MapViewModel", "Error al añadir notificación de perfil", e)
+                Log.e("MapViewModel", "Error al añadir notificación y bandera: $flagName", e)
             }
         }
     }
