@@ -33,6 +33,11 @@
     <string name="free_mode_unlocked_message">Congratulations on reaching Level 5! You can now access Free Mode from the navigation bar.\n\nReplay your 3 ⭐ levels, compete for a higher score, and earn more XP.</string>
     <string name="dialog_button_awesome">Awesome!</string>
 
+    <string name="domination_rewards_title">Domination Rewards!</string>
+    <string name="domination_reward_xp"><b>Experience Bonus:</b> You will receive <b>%1$d XP</b> every time you dominate a new country.</string>
+    <string name="domination_reward_category"><b>Secret Category:</b> You have unlocked a unique, hidden knowledge category in the country you dominated. Go find it!</string>
+    <string name="domination_reward_boost"><b>Conquest Boost:</b> You have earned a Boost to add <b>%1$d PC</b> to any country.</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>
     <string name="country_status_conquered">Country Conquered!</string>

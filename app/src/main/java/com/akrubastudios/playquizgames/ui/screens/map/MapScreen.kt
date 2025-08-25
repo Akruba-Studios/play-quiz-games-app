@@ -73,12 +73,21 @@ import java.util.Locale
 
 import androidx.compose.foundation.clickable // <-- AÑADE ESTA
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material3.SnackbarHost // <-- AÑADE ESTA
 import androidx.compose.material3.SnackbarHostState // <-- AÑADE ESTA
 import androidx.compose.runtime.remember // <-- AÑADE ESTA (si no está)
 import androidx.compose.runtime.rememberCoroutineScope // <-- AÑADE ESTA
 import kotlinx.coroutines.launch // <-- AÑADE ESTA (si no está)
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.vector.ImageVector
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     navController: NavController,
@@ -94,6 +103,8 @@ fun MapScreen(
     val context = LocalContext.current // Necesitaremos el contexto para los strings
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    val sheetState = rememberModalBottomSheetState()
 
     // 2. El LaunchedEffect ahora tiene una lógica más inteligente.
     LaunchedEffect(uiState.expeditionAvailable, hasShownInitialDialog) {
@@ -345,8 +356,90 @@ fun MapScreen(
             }
         )
     }
+
+
+    if (uiState.showDominationRewardsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.dominationTutorialShown() },
+            sheetState = sheetState
+        ) {
+            // Contenido del Bottom Sheet
+            DominationRewardsContent(
+                onDismiss = {
+                    // Podemos añadir una corrutina para cerrar el sheet con animación
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        if (!sheetState.isVisible) {
+                            viewModel.dominationTutorialShown()
+                        }
+                    }
+                }
+            )
+        }
+    }
 }
 
+// Crea este nuevo Composable separado para el contenido del Bottom Sheet.
+@Composable
+private fun DominationRewardsContent(onDismiss: () -> Unit) {
+    // Definimos los valores de recompensa (para no hardcodearlos)
+    val xpBonus = 10000
+    val pcBonus = 5000
+
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.domination_rewards_title),
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Recompensa 1: XP
+        RewardRow(
+            icon = Icons.Default.EmojiEvents,
+            text = stringResource(R.string.domination_reward_xp, xpBonus)
+        )
+        Divider(modifier = Modifier.padding(vertical = 12.dp))
+
+        // Recompensa 2: Categoría Secreta
+        RewardRow(
+            icon = Icons.Default.LockOpen,
+            text = stringResource(R.string.domination_reward_category)
+        )
+        Divider(modifier = Modifier.padding(vertical = 12.dp))
+
+        // Recompensa 3: PC Boost
+        RewardRow(
+            icon = Icons.Default.RocketLaunch, // O algún otro icono bueno
+            text = stringResource(R.string.domination_reward_boost, pcBonus)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(onClick = onDismiss) {
+            Text(stringResource(R.string.dialog_button_awesome))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+// Crea este Composable de utilidad para las filas
+@Composable
+private fun RewardRow(icon: ImageVector, text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
 
 @Composable
 fun InteractiveWorldMap(

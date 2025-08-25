@@ -33,6 +33,11 @@
     <string name="free_mode_unlocked_message">¡Felicidades por alcanzar el Nivel 5! Ahora puedes acceder al Modo Libre desde la barra de navegación.\n\nVuelve a jugar tus niveles de 3 ⭐, compite por un puntaje más alto y gana más XP.</string>
     <string name="dialog_button_awesome">¡Genial!</string>
 
+    <string name="domination_rewards_title">¡Recompensas de Dominación!</string>
+    <string name="domination_reward_xp"><b>Bono de Experiencia:</b> Recibirás <b>%1$d XP</b> cada vez que domines un nuevo país.</string>
+    <string name="domination_reward_category"><b>Categoría Secreta:</b> Has desbloqueado una categoría de conocimiento única en el país que dominaste. ¡Búscala!</string>
+    <string name="domination_reward_boost"><b>Boost de Conquista:</b> Has ganado un Boost para añadir <b>%1$d PC</b> a cualquier país.</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>

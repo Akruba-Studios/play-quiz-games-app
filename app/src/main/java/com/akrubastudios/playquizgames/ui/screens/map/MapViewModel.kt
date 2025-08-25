@@ -34,7 +34,8 @@ data class MapState(
     val unassignedPcBoosts: Int = 0,
     val showWelcomeDialog: Boolean = false,
     val firstCountryName: String = "",
-    val showFreeModeUnlockedDialog: Boolean = false
+    val showFreeModeUnlockedDialog: Boolean = false,
+    val showDominationRewardsSheet: Boolean = false
 )
 
 @HiltViewModel
@@ -101,6 +102,13 @@ class MapViewModel @Inject constructor(
                         showFreeModeDialog = true
                     }
 
+                    var showDominationSheet = false
+                    // La condición: El usuario NUNCA ha visto el tutorial Y
+                    // AHORA tiene al menos un país dominado.
+                    if (!userData.hasSeenDominationTutorial && userData.dominatedCountries.isNotEmpty()) {
+                        showDominationSheet = true
+                    }
+
                     val conqueredIds = userData.conqueredCountries
                     val availableIdsFromDB = userData.availableCountries
                     val dominatedIds = userData.dominatedCountries
@@ -154,7 +162,8 @@ class MapViewModel @Inject constructor(
                         unassignedPcBoosts = userData.unassignedPcBoosts,
                         showWelcomeDialog = showWelcome,
                         firstCountryName = welcomeCountryName,
-                        showFreeModeUnlockedDialog = showFreeModeDialog
+                        showFreeModeUnlockedDialog = showFreeModeDialog,
+                        showDominationRewardsSheet = showDominationSheet
                     )
                 }
             }
@@ -268,6 +277,22 @@ class MapViewModel @Inject constructor(
                     .update("hasSeenFreeModeUnlockedDialog", true)
             } catch (e: Exception) {
                 Log.e("MapViewModel", "Error al actualizar hasSeenFreeModeUnlockedDialog", e)
+            }
+        }
+    }
+    fun dominationTutorialShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        // Ocultamos el Bottom Sheet en la UI.
+        _uiState.value = _uiState.value.copy(showDominationRewardsSheet = false)
+
+        viewModelScope.launch {
+            try {
+                // Actualizamos la bandera en Firestore.
+                db.collection("users").document(uid)
+                    .update("hasSeenDominationTutorial", true)
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error al actualizar hasSeenDominationTutorial", e)
             }
         }
     }
