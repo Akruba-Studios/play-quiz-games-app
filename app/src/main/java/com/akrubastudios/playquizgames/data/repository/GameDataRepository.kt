@@ -249,9 +249,17 @@ class GameDataRepository @Inject constructor(
         return try {
             val snapshot = db.collection("quizzes").get().await()
             val levels = snapshot.toObjects(LevelMetadata::class.java)
-            Log.d("Repo_Debug", "getAllLevels: Se encontraron ${levels.size} niveles en la colección 'quizzes'.")
+            Log.d("FirebaseDebug", "[GameDataRepository] getAllLevels: Se encontraron ${snapshot.size()} documentos en la colección 'quizzes'.")
+            Log.d("FirebaseDebug", "[GameDataRepository] getAllLevels: Se convirtieron ${levels.size} objetos LevelMetadata.")
+
+            // Para ver si los datos vienen bien, imprimimos los primeros 5:
+            levels.take(5).forEach { level ->
+                Log.d("FirebaseDebug", "  - Leído LevelID: ${level.levelId}, TierID: ${level.tierId}")
+            }
+
             return levels
         } catch (e: Exception) {
+            Log.e("FirebaseDebug", "[GameDataRepository] getAllLevels: CRASH al leer la colección 'quizzes'", e)
             e.printStackTrace()
             emptyList()
         }

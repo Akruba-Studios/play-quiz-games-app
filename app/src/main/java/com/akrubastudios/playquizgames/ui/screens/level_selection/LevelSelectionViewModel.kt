@@ -59,13 +59,42 @@ class LevelSelectionViewModel @Inject constructor(
             val userCompletions = gameDataRepository.getAllLevelCompletionData()
             val category = gameDataRepository.getCategory(categoryId)
 
+            Log.d("FirebaseDebug", "[ViewModel] Intentando filtrar niveles con categoryId: '$categoryId' y continentId: '$continentId'")
+
+
             // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
             // 2. Filtramos para quedarnos solo con los del continente y categoría correctos
             val levelsForThisScreen = allLevels.filter { level ->
-                level.tierId == continentId && level.levelId.startsWith(categoryId)
-            }.sortedBy { levelId -> // Ordenamos numéricamente
+                // --- INICIO DE LA MODIFICACIÓN ---
+
+                // 1. Mapeo de continentId a su prefijo de 2 letras.
+                val continentPrefix = when (continentId) {
+                    "south_america" -> "sa"
+                    "north_america" -> "na"
+                    "europe" -> "eu"
+                    "asia" -> "as"
+                    "africa" -> "af"
+                    "oceania" -> "oc"
+                    else -> "" // Un valor por defecto por si acaso
+                }
+
+                // 2. Construimos el ID de categoría esperado. Ej: "eu_logos"
+                val expectedCategoryId = "${continentPrefix}_${categoryId}"
+
+                // 3. Comprobamos si el levelId empieza con este ID construido.
+                val categoryMatch = level.levelId.startsWith(expectedCategoryId)
+
+                // --- FIN DE LA MODIFICACIÓN ---
+
+                val continentMatch = level.tierId == continentId
+
+                return@filter categoryMatch && continentMatch
+            }.sortedBy { levelId ->
                 levelId.levelId.filter { it.isDigit() }.toIntOrNull() ?: 0
             }
+
+
+            Log.d("FirebaseDebug", "[ViewModel] Después de filtrar, se encontraron ${levelsForThisScreen.size} niveles para mostrar.")
 
             // (El resto de la lógica de desbloqueo y mapeo se queda igual)
             val completionsMap = userCompletions.associateBy { it.levelId }
