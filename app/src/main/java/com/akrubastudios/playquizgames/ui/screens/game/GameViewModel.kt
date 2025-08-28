@@ -163,11 +163,21 @@ class GameViewModel @Inject constructor(
     }
 
     fun clearUserAnswer() {
-        _uiState.update { currentState ->
-            currentState.copy(
-                userAnswer = "",
-                usedLetterIndices = emptySet() // Reseteamos los índices usados.
-            )
+        viewModelScope.launch {
+            // Activar animación de clear
+            _uiState.update { it.copy(showClearAnimation = true) }
+
+            // Esperar un poco para que se vea la animación
+            delay(300L)
+
+            // Limpiar y resetear animación
+            _uiState.update { currentState ->
+                currentState.copy(
+                    userAnswer = "",
+                    usedLetterIndices = emptySet(),
+                    showClearAnimation = false
+                )
+            }
         }
     }
 
@@ -275,6 +285,7 @@ class GameViewModel @Inject constructor(
                     showCorrectAnimation = false,
                     showIncorrectAnimation = false,
                     timerExplosion = false,
+                    showClearAnimation = false,
                 )
             }
             isAnswerProcessing = false

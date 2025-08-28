@@ -134,7 +134,8 @@ fun GameScreen(
                 userAnswer = uiState.userAnswer,
                 onClear = { viewModel.clearUserAnswer() },
                 showCorrectAnimation = uiState.showCorrectAnimation,
-                showIncorrectAnimation = uiState.showIncorrectAnimation
+                showIncorrectAnimation = uiState.showIncorrectAnimation,
+                showClearAnimation = uiState.showClearAnimation
             )
             LetterBank(
                 hintLetters = uiState.generatedHintLetters,
@@ -215,6 +216,7 @@ fun AnswerSlots(
     onClear: () -> Unit,
     showCorrectAnimation: Boolean = false,
     showIncorrectAnimation: Boolean = false,
+    showClearAnimation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Animaciones
@@ -233,6 +235,21 @@ fun AnswerSlots(
         label = "shake"
     )
 
+    // Animaciones de clear (shake + fade)
+    val clearOffsetX by animateFloatAsState(
+        targetValue = if (showClearAnimation) {
+            if ((System.currentTimeMillis() / 80) % 2 == 0L) -8f else 8f
+        } else 0f,
+        animationSpec = tween(80),
+        label = "clear_shake"
+    )
+
+    val clearAlpha by animateFloatAsState(
+        targetValue = if (showClearAnimation) 0.3f else 1.0f,
+        animationSpec = tween(200),
+        label = "clear_fade"
+    )
+
     val userAnswerLetters = userAnswer
     var letterIndex = 0
 
@@ -241,7 +258,8 @@ fun AnswerSlots(
         modifier = modifier
             .padding(vertical = 24.dp)
             .scale(scale)
-            .offset(x = offsetX.dp)
+            .offset(x = if (showClearAnimation) clearOffsetX.dp else offsetX.dp)
+            .alpha(if (showClearAnimation) clearAlpha else 1.0f)
             .clickable { onClear() },
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
