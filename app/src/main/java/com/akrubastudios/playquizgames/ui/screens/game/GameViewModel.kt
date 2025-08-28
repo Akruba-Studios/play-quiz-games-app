@@ -266,30 +266,39 @@ class GameViewModel @Inject constructor(
     private fun moveToNextQuestion() {
         currentQuestionIndex++
         if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
-            val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
-            val lang = languageManager.languageStateFlow.value
+            viewModelScope.launch {
 
-            val correctAnswerForUi = if (lang == "es") nextQuestion.correctAnswer_es else nextQuestion.correctAnswer_en
-            val hints = generateHintLetters(correctAnswerForUi)
+                // Activar transición fade
+                _uiState.update { it.copy(questionTransition = true) }
+                delay(150L) // Esperar a que termine el fade out
 
-            _uiState.update {
-                it.copy(
-                    currentQuestion = nextQuestion,
-                    currentCorrectAnswer = correctAnswerForUi,
-                    questionText = if (lang == "es") nextQuestion.questionText_es else nextQuestion.questionText_en,
-                    questionNumber = currentQuestionIndex + 1,
-                    userAnswer = "",
-                    generatedHintLetters = hints,
-                    difficulty = difficulty,
-                    usedLetterIndices = emptySet(),
-                    showCorrectAnimation = false,
-                    showIncorrectAnimation = false,
-                    timerExplosion = false,
-                    showClearAnimation = false,
-                )
+                val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
+                val lang = languageManager.languageStateFlow.value
+
+                val correctAnswerForUi =
+                    if (lang == "es") nextQuestion.correctAnswer_es else nextQuestion.correctAnswer_en
+                val hints = generateHintLetters(correctAnswerForUi)
+
+                _uiState.update {
+                    it.copy(
+                        currentQuestion = nextQuestion,
+                        currentCorrectAnswer = correctAnswerForUi,
+                        questionText = if (lang == "es") nextQuestion.questionText_es else nextQuestion.questionText_en,
+                        questionNumber = currentQuestionIndex + 1,
+                        userAnswer = "",
+                        generatedHintLetters = hints,
+                        difficulty = difficulty,
+                        usedLetterIndices = emptySet(),
+                        showCorrectAnimation = false,
+                        showIncorrectAnimation = false,
+                        timerExplosion = false,
+                        showClearAnimation = false,
+                        questionTransition = false,
+                    )
+                }
+                isAnswerProcessing = false
+                startTimer() // Inicia el temporizador para la nueva pregunta
             }
-            isAnswerProcessing = false
-            startTimer() // Inicia el temporizador para la nueva pregunta
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
 

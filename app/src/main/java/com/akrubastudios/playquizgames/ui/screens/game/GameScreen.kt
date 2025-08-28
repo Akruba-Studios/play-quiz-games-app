@@ -59,6 +59,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
 
 @Composable
 fun GameScreen(
@@ -125,11 +127,10 @@ fun GameScreen(
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
 
-            Text(
+            QuestionText(
                 text = uiState.questionText,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
+                showTransition = uiState.questionTransition,
+                remainingTime = uiState.remainingTime,
                 modifier = Modifier.padding(16.dp)
             )
 
@@ -230,6 +231,46 @@ fun QuestionImage(
             )
         }
     }
+}
+
+@Composable
+fun QuestionText(
+    text: String,
+    showTransition: Boolean,
+    remainingTime: Long,
+    modifier: Modifier = Modifier
+) {
+    // Fade cross transition (150ms)
+    val alpha by animateFloatAsState(
+        targetValue = if (showTransition) 0.0f else 1.0f,
+        animationSpec = tween(150),
+        label = "question_fade"
+    )
+
+    // Pulse sutil cuando quedan más de 10 segundos
+    val scale by animateFloatAsState(
+        targetValue = if (remainingTime > 10) {
+            if ((System.currentTimeMillis() / 1500) % 2 == 0L) 1.0f else 1.02f
+        } else 1.0f,
+        animationSpec = tween(1500),
+        label = "question_pulse"
+    )
+
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge.copy(
+            shadow = Shadow(
+                color = Color(0xFF000000).copy(alpha = 0.25f),
+                offset = Offset(1f, 1f),
+                blurRadius = 2f
+            )
+        ),
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier
+            .alpha(alpha)
+            .scale(scale)
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

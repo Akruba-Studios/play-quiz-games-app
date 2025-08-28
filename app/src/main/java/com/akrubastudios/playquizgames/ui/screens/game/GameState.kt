@@ -21,4 +21,5 @@ data class GameState(
     val timerExplosion: Boolean = false,
     val questionResults: List<Boolean?> = emptyList(), // Se inicializa según totalQuestions
     val showClearAnimation: Boolean = false,
+    val questionTransition: Boolean = false,
 )
