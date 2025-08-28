@@ -56,6 +56,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.ui.draw.shadow
 
 @Composable
 fun GameScreen(
@@ -197,15 +198,38 @@ fun QuestionImage(
     imageUrl: String,
     modifier: Modifier = Modifier
 ) {
-    AsyncImage(
-        model = imageUrl,
-        contentDescription = stringResource(R.string.cd_question_image),
+    // Contenedor cuadrado estandarizado
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp) // Damos una altura fija a la imagen
+            .height(200.dp)
             .padding(16.dp),
-        contentScale = ContentScale.Fit // Asegura que la imagen se ajuste bien
-    )
+        contentAlignment = Alignment.Center
+    ) {
+        // Contenedor interno cuadrado con efectos
+        Box(
+            modifier = Modifier
+                .size(168.dp) // Cuadrado fijo (200dp - 32dp de padding)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(12.dp),
+                    clip = false
+                )
+                .background(
+                    color = Color(0xFFF5F5F5), // Fondo gris muy claro
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(12.dp), // Padding interno para que la imagen no toque los bordes
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = stringResource(R.string.cd_question_image),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit // Mantiene proporciones, cabe dentro del contenedor
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
