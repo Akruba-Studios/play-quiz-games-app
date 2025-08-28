@@ -79,7 +79,8 @@ class GameViewModel @Inject constructor(
                         totalQuestions = loadedLevel.questions.size,
                         questionNumber = currentQuestionIndex + 1,
                         generatedHintLetters = hints,
-                        difficulty = difficulty
+                        difficulty = difficulty,
+                        questionResults = List(loadedLevel.questions.size) { null } // Crear lista del tamaño correcto
                     )
                 }
                 startTimer()
@@ -240,6 +241,11 @@ class GameViewModel @Inject constructor(
                 // Activar animación incorrecta
                 _uiState.update { it.copy(showIncorrectAnimation = true) }
             }
+
+            // Actualizar el resultado de la pregunta actual
+            val updatedResults = uiState.value.questionResults.toMutableList()
+            updatedResults[currentQuestionIndex] = isCorrect
+            _uiState.update { it.copy(questionResults = updatedResults) }
 
             delay(1000L)
             moveToNextQuestion()

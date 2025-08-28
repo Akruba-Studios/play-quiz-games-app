@@ -51,6 +51,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.infiniteRepeatable
 
 @Composable
 fun GameScreen(
@@ -110,7 +115,9 @@ fun GameScreen(
                 totalQuestions = uiState.totalQuestions,
                 score = uiState.score,
                 remainingTime = uiState.remainingTime,
-                difficulty = uiState.difficulty
+                difficulty = uiState.difficulty,
+                questionResults = uiState.questionResults,
+                timerExplosion = uiState.timerExplosion
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -148,25 +155,34 @@ fun TopBar(
     score: Int,
     remainingTime: Long,
     difficulty: String,
+    questionResults: List<Boolean?>,
+    timerExplosion: Boolean = false,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
     Row(
         modifier = modifier
-            .fillMaxWidth() // Ocupa todo el ancho
-            .padding(16.dp), // Añade un margen
-        horizontalArrangement = Arrangement.SpaceBetween, // Espacia los elementos
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = stringResource(R.string.game_top_bar_question, questionNumber, totalQuestions))
+        // Lado izquierdo - Círculos de progreso
+        QuestionProgressCircles(
+            currentQuestionIndex = questionNumber - 1, // Convertir a 0-based
+            questionResults = questionResults,
+            totalQuestions = totalQuestions
+        )
 
+        // Centro - Timer
         AnimatedTimer(
             remainingTime = remainingTime,
-            timerExplosion = false // Por ahora siempre false
+            timerExplosion = timerExplosion
         )
+
+        // Lado derecho - Score y dificultad
         Column(horizontalAlignment = Alignment.End) {
             Text(text = stringResource(R.string.game_top_bar_score, score))
-            // Mostramos la dificultad actual con un estilo más pequeño.
             Text(
                 text = difficulty.replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.labelSmall
@@ -403,6 +419,122 @@ fun AnimatedTimer(
             color = if (timerExplosion) Color(0xFFF44336) else circleColor,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+fun QuestionProgressCircles(
+    currentQuestionIndex: Int, // 0-based
+    questionResults: List<Boolean?>,
+    totalQuestions: Int = 10,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+
+        Text(
+            text = stringResource(R.string.game_top_bar_question, currentQuestionIndex + 1, totalQuestions),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(bottom = 2.dp)
+        )
+
+        // Si son 5 preguntas: una sola fila
+        // Si son 10 preguntas: dos filas como antes
+        if (totalQuestions <= 5) {
+            // Una sola fila para 5 preguntas
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(totalQuestions) { index ->
+                    QuestionCircle(
+                        index = index,
+                        currentIndex = currentQuestionIndex,
+                        result = questionResults.getOrNull(index),
+                        isActive = index == currentQuestionIndex
+                    )
+                }
+            }
+        } else {
+            // Primera fila (círculos 0-4)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(5) { index ->
+                    QuestionCircle(
+                        index = index,
+                        currentIndex = currentQuestionIndex,
+                        result = questionResults.getOrNull(index),
+                        isActive = index == currentQuestionIndex
+                    )
+                }
+            }
+
+            // Segunda fila (círculos 5-9)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(totalQuestions - 5) { index ->
+                    val actualIndex = index + 5
+                    QuestionCircle(
+                        index = actualIndex,
+                        currentIndex = currentQuestionIndex,
+                        result = questionResults.getOrNull(actualIndex),
+                        isActive = actualIndex == currentQuestionIndex
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuestionCircle(
+    index: Int,
+    currentIndex: Int,
+    result: Boolean?,
+    isActive: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // Determinar color según el estado
+    val circleColor = when {
+        result == true -> Color(0xFF4CAF50) // Verde para correcta
+        result == false -> Color(0xFFF44336) // Rojo para incorrecta
+        isActive -> Color(0xFFFFD700) // Dorado para pregunta actual
+        else -> Color(0xFFE0E0E0) // Gris para no respondida
+    }
+
+    // Animación de escala cuando se responde
+    val scale by animateFloatAsState(
+        targetValue = if (result != null && index < currentIndex) 1.1f else 1.0f,
+        animationSpec = tween(300),
+        label = "circle_scale"
+    )
+
+    // Animación de pulso para la pregunta actual
+    val alpha by animateFloatAsState(
+        targetValue = if (isActive) 0.7f else 1.0f,
+        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+        label = "circle_pulse"
+    )
+
+    Box(
+        modifier = modifier
+            .size(16.dp)
+            .scale(scale)
+            .alpha(if (isActive) alpha else 1.0f)
+            .background(
+                color = circleColor,
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        // Contenido vacío, solo necesitamos el círculo
     }
 }
 
