@@ -43,10 +43,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.R
 
@@ -157,10 +159,10 @@ fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = stringResource(R.string.game_top_bar_question, questionNumber, totalQuestions))
-        Text(
-            text = remainingTime.toString(),
-            style = MaterialTheme.typography.headlineMedium,
-            color = if (remainingTime <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+
+        AnimatedTimer(
+            remainingTime = remainingTime,
+            timerExplosion = false // Por ahora siempre false
         )
         Column(horizontalAlignment = Alignment.End) {
             Text(text = stringResource(R.string.game_top_bar_score, score))
@@ -329,6 +331,78 @@ fun LetterButton(
         enabled = enabled
     ) {
         Text(text = letter.toString().uppercase(), fontSize = 18.sp)
+    }
+}
+
+@Composable
+fun AnimatedTimer(
+    remainingTime: Long,
+    timerExplosion: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // Calculamos el progreso (0.0 = tiempo completo, 1.0 = sin tiempo)
+    val progress = 1.0f - (remainingTime / 15.0f)
+
+    // Color del círculo según el tiempo
+    val circleColor = when {
+        remainingTime > 10 -> Color(0xFF4CAF50) // Verde
+        remainingTime > 5 -> Color(0xFFFF9800) // Naranja
+        else -> Color(0xFFF44336) // Rojo
+    }
+
+    // Animación de shake
+    val shakeIntensity = when {
+        remainingTime <= 1 -> 12f // MÁS INTENSO
+        remainingTime <= 3 -> 8f
+        remainingTime <= 5 -> 4f
+        else -> 0f
+    }
+
+    val offsetX by animateFloatAsState(
+        targetValue = if (shakeIntensity > 0 && !timerExplosion) {
+            if ((System.currentTimeMillis() / 80) % 2 == 0L) -shakeIntensity else shakeIntensity
+        } else 0f,
+        animationSpec = tween(80),
+        label = "shake"
+    )
+
+    // Animación de explosión MÁS DRAMÁTICA
+    val explosionScale by animateFloatAsState(
+        targetValue = if (timerExplosion) 4.0f else 1.0f, // Más grande
+        animationSpec = tween(800), // Más lenta
+        label = "explosion_scale"
+    )
+
+    val explosionAlpha by animateFloatAsState(
+        targetValue = if (timerExplosion) 0.0f else 1.0f,
+        animationSpec = tween(800), // Más lenta
+        label = "explosion_alpha"
+    )
+
+    Box(
+        modifier = modifier
+            .size(80.dp)
+            .offset(x = offsetX.dp)
+            .scale(explosionScale)
+            .alpha(explosionAlpha),
+        contentAlignment = Alignment.Center
+    ) {
+        // Círculo de progreso
+        CircularProgressIndicator(
+            progress = progress,
+            modifier = Modifier.size(80.dp),
+            color = if (timerExplosion) Color(0xFFF44336) else circleColor, // Rojo en explosión
+            strokeWidth = if (timerExplosion) 12.dp else 6.dp, // Más grueso en explosión
+            trackColor = circleColor.copy(alpha = 0.2f)
+        )
+
+        // Número del timer
+        Text(
+            text = remainingTime.toString(),
+            style = MaterialTheme.typography.headlineLarge,
+            color = if (timerExplosion) Color(0xFFF44336) else circleColor,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

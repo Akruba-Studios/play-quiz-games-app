@@ -178,6 +178,7 @@ class GameViewModel @Inject constructor(
         stopTimer() // Detiene el temporizador inmediatamente
         viewModelScope.launch {
             if (uiState.value.remainingTime == 0L) {
+                _uiState.update { it.copy(timerExplosion = true) }
                 delay(500L) // Tiempo para que onLetterClick termine de actualizar userAnswer
             }
             val state = uiState.value
@@ -266,7 +267,8 @@ class GameViewModel @Inject constructor(
                     difficulty = difficulty,
                     usedLetterIndices = emptySet(),
                     showCorrectAnimation = false,
-                    showIncorrectAnimation = false
+                    showIncorrectAnimation = false,
+                    timerExplosion = false,
                 )
             }
             isAnswerProcessing = false

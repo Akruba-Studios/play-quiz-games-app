@@ -17,5 +17,6 @@ data class GameState(
     val difficulty: String = "principiante",
     val usedLetterIndices: Set<Int> = emptySet(),
     val showCorrectAnimation: Boolean = false,
-    val showIncorrectAnimation: Boolean = false
+    val showIncorrectAnimation: Boolean = false,
+    val timerExplosion: Boolean = false,
 )
