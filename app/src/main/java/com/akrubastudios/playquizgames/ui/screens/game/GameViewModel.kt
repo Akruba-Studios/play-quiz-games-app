@@ -211,6 +211,9 @@ class GameViewModel @Inject constructor(
             if (isCorrect) {
                 Log.d("GameViewModel_Debug", "✅ ¡Respuesta Correcta! Calculando puntos...")
 
+                // Activar animación correcta
+                _uiState.update { it.copy(showCorrectAnimation = true) }
+
                 // Calcula el puntaje base con el bono de tiempo.
                 val basePoints = 1000 + (uiState.value.remainingTime * 100).toInt()
 
@@ -232,6 +235,9 @@ class GameViewModel @Inject constructor(
                 Log.d("GameViewModel_Debug", "Puntos ganados: $pointsWon. Nuevo puntaje: ${uiState.value.score}")
             } else {
                 Log.d("GameViewModel_Debug", "❌ Respuesta Incorrecta.")
+
+                // Activar animación incorrecta
+                _uiState.update { it.copy(showIncorrectAnimation = true) }
             }
 
             delay(1000L)
@@ -258,7 +264,9 @@ class GameViewModel @Inject constructor(
                     userAnswer = "",
                     generatedHintLetters = hints,
                     difficulty = difficulty,
-                    usedLetterIndices = emptySet()
+                    usedLetterIndices = emptySet(),
+                    showCorrectAnimation = false,
+                    showIncorrectAnimation = false
                 )
             }
             isAnswerProcessing = false

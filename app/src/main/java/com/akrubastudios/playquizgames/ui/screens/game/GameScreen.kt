@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.game
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,9 +41,13 @@ import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.ui.components.KeepScreenOn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.R
 
 @Composable
@@ -110,13 +116,16 @@ fun GameScreen(
             Text(
                 text = uiState.questionText,
                 style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(16.dp)
             )
 
             AnswerSlots(
                 correctAnswer = uiState.currentCorrectAnswer,
                 userAnswer = uiState.userAnswer,
-                onClear = { viewModel.clearUserAnswer() }
+                onClear = { viewModel.clearUserAnswer() },
+                showCorrectAnimation = uiState.showCorrectAnimation,
+                showIncorrectAnimation = uiState.showIncorrectAnimation
             )
             LetterBank(
                 hintLetters = uiState.generatedHintLetters,
@@ -186,9 +195,26 @@ fun AnswerSlots(
     correctAnswer: String,
     userAnswer: String,
     onClear: () -> Unit,
+    showCorrectAnimation: Boolean = false,
+    showIncorrectAnimation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // La respuesta del usuario no tiene espacios, es solo una cadena de letras.
+    // Animaciones
+    val scale by animateFloatAsState(
+        targetValue = if (showCorrectAnimation) 1.2f else 1.0f,
+        animationSpec = tween(300),
+        label = "scale"
+    )
+
+    val offsetX by animateFloatAsState(
+        targetValue = if (showIncorrectAnimation) {
+            // Alternamos entre -10 y 10 para crear el shake
+            if ((System.currentTimeMillis() / 100) % 2 == 0L) -10f else 10f
+        } else 0f,
+        animationSpec = tween(100),
+        label = "shake"
+    )
+
     val userAnswerLetters = userAnswer
     var letterIndex = 0
 
@@ -196,6 +222,8 @@ fun AnswerSlots(
     FlowRow(
         modifier = modifier
             .padding(vertical = 24.dp)
+            .scale(scale)
+            .offset(x = offsetX.dp)
             .clickable { onClear() },
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -214,7 +242,12 @@ fun AnswerSlots(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
-                    AnswerSlot(char = charToShow, size = globalSlotSize)
+                    AnswerSlot(
+                        char = charToShow,
+                        size = globalSlotSize,
+                        showCorrectAnimation = showCorrectAnimation,
+                        showIncorrectAnimation = showIncorrectAnimation
+                    )
                     letterIndex++
                 }
             }
@@ -223,11 +256,22 @@ fun AnswerSlots(
 }
 
 @Composable
-fun AnswerSlot(char: Char, size: Dp = 40.dp) {
+fun AnswerSlot(
+    char: Char,
+    size: Dp = 40.dp,
+    showCorrectAnimation: Boolean = false,
+    showIncorrectAnimation: Boolean = false
+) {
+    val borderColor = when {
+        showCorrectAnimation -> Color(0xFF4CAF50) // Verde
+        showIncorrectAnimation -> Color(0xFFF44336) // Rojo
+        else -> MaterialTheme.colorScheme.outline
+    }
+
     Box(
         modifier = Modifier
             .size(size)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+            .border(2.dp, borderColor, RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text(

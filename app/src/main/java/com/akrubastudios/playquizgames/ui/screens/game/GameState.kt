@@ -15,5 +15,7 @@ data class GameState(
     val userAnswer: String = "",
     val remainingTime: Long = 15L, // <-- Tiempo 15 segundos por respuesta
     val difficulty: String = "principiante",
-    val usedLetterIndices: Set<Int> = emptySet()
+    val usedLetterIndices: Set<Int> = emptySet(),
+    val showCorrectAnimation: Boolean = false,
+    val showIncorrectAnimation: Boolean = false
 )
