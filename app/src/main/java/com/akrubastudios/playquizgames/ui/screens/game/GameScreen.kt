@@ -56,6 +56,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.draw.shadow
 
 @Composable
@@ -127,6 +129,7 @@ fun GameScreen(
                 text = uiState.questionText,
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(16.dp)
             )
 
@@ -182,14 +185,11 @@ fun TopBar(
             timerExplosion = timerExplosion
         )
 
-        // Lado derecho - Score y dificultad
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = stringResource(R.string.game_top_bar_score, score))
-            Text(
-                text = difficulty.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
+        // Lado derecho - Card de Score y dificultad
+        ScoreAndDifficultyCard(
+            score = score,
+            difficulty = difficulty
+        )
     }
 }
 
@@ -577,6 +577,61 @@ fun QuestionCircle(
         contentAlignment = Alignment.Center
     ) {
         // Contenido vacío, solo necesitamos el círculo
+    }
+}
+
+@Composable
+fun ScoreAndDifficultyCard(
+    score: Int,
+    difficulty: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Fila del XP con trofeo
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "🏆",
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "$score XP",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Fila de la dificultad con icono
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = if (difficulty == "principiante") "🪶" else "🔥",
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = stringResource(
+                        if (difficulty == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                    ),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
     }
 }
 
