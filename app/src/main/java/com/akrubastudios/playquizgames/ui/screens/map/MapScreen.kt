@@ -90,6 +90,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
+import androidx.compose.animation.core.*
+import kotlin.math.sin
+import kotlin.math.cos
+import kotlin.math.PI
+import kotlin.math.abs
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
@@ -449,6 +455,70 @@ private fun RewardRow(icon: ImageVector, text: String) {
     }
 }
 
+private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
+    // Colores del océano
+    val deepOcean = Color(0xFF0D4F8C)     // Azul profundo
+    val midOcean = Color(0xFF1E88E5)      // Azul medio
+    val shallowOcean = Color(0xFF42A5F5)  // Azul claro
+
+    // Fondo base del océano
+    drawRect(color = deepOcean, size = canvasSize)
+
+    // Generar ondas concéntricas desde múltiples puntos
+    val waveOrigins = listOf(
+        Offset(canvasSize.width * 0.2f, canvasSize.height * 0.3f),
+        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.6f),
+        Offset(canvasSize.width * 0.5f, canvasSize.height * 0.8f),
+        Offset(canvasSize.width * 0.1f, canvasSize.height * 0.7f),
+        Offset(canvasSize.width * 0.9f, canvasSize.height * 0.2f)
+    )
+
+    // Dibujar ondas concéntricas
+    waveOrigins.forEachIndexed { index, origin ->
+        val timeOffset = index * PI.toFloat() / 3f
+        val animatedTime = waveTime + timeOffset
+
+        for (ring in 1..8) {
+            val radius = ring * 80f + sin(animatedTime * 0.8f + ring * 0.5f) * 20f
+            val alpha = (0.15f / ring) * (1f + sin(animatedTime * 1.2f) * 0.3f)
+
+            if (radius > 0) {
+                drawCircle(
+                    color = midOcean.copy(alpha = alpha.coerceIn(0f, 0.3f)),
+                    radius = radius,
+                    center = origin
+                )
+            }
+        }
+    }
+
+    // Efecto shimmer global
+    val shimmerIntensity = (sin(waveTime * 1.5f) + 1f) / 2f * 0.1f
+    drawRect(
+        color = shallowOcean.copy(alpha = shimmerIntensity),
+        size = canvasSize
+    )
+
+    // Ondas direccionales sutiles
+    val path = androidx.compose.ui.graphics.Path()
+    for (y in 0..canvasSize.height.toInt() step 40) {
+        path.reset()
+        path.moveTo(0f, y.toFloat())
+
+        for (x in 0..canvasSize.width.toInt() step 10) {
+            val waveY = y + sin(x * 0.01f + waveTime * 2f) * 8f
+            path.lineTo(x.toFloat(), waveY)
+        }
+
+        val alpha = abs(sin(waveTime * 0.5f + y * 0.01f)) * 0.1f
+        drawPath(
+            path = path,
+            color = shallowOcean.copy(alpha = alpha),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+        )
+    }
+}
+
 @Composable
 fun InteractiveWorldMap(
     countries: List<Country>,
@@ -461,6 +531,8 @@ fun InteractiveWorldMap(
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1.6f) } // 1.6f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
+    // Estados para la animación del océano
+    var waveTime by remember { mutableStateOf(0f) }
 
     var canvasWidth by remember { mutableStateOf(1080f) }
     var canvasHeight by remember { mutableStateOf(1812f) }
@@ -483,10 +555,10 @@ fun InteractiveWorldMap(
     val density = LocalDensity.current
 
     // Definir colores
-    val dominatedColor = Color(0xFFD4373C).toArgb() // Rojo para Dominado
-    val conqueredColor = Color(0xFFD4AF37).toArgb() // Dorado
-    val availableColor = Color(0xFF2196F3).toArgb() // Azul
-    val defaultColor = Color(0xFF4A5568).toArgb() // Gris azulado congelado
+    val dominatedColor = Color(0xFF8B1538).toArgb() // Borgoña mas elegante
+    val conqueredColor = Color(0xFFBF8C3A).toArgb() // Dorado más terroso
+    val availableColor = Color(0xFF10B981).toArgb() // Verde Esmeralda
+    val defaultColor = Color(0xFF6B7280).toArgb() // Gris neutro
 
     // Función para extraer coordenadas de paths del SVG
     suspend fun extractPathCoordinates(
@@ -560,6 +632,22 @@ fun InteractiveWorldMap(
         }
     }
 
+    // Animación del océano
+    LaunchedEffect(Unit) {
+        val animationSpec = infiniteRepeatable<Float>(
+            animation = tween(8000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+
+        animate(
+            initialValue = 0f,
+            targetValue = 2f * PI.toFloat(),
+            animationSpec = animationSpec
+        ) { value, _ ->
+            waveTime = value
+        }
+    }
+
     // Recalcular colores cuando cambien las listas
     LaunchedEffect(dominatedCountryIds, conqueredCountryIds, availableCountryIds, countries) {
         if (countries.isEmpty()) return@LaunchedEffect
@@ -624,7 +712,7 @@ fun InteractiveWorldMap(
                                 val crackPaint = android.graphics.Paint().apply {
                                     isAntiAlias = true
                                     style = android.graphics.Paint.Style.STROKE
-                                    strokeWidth = 2f // Grosor de las lineas o bordes de los paises grises
+                                    strokeWidth = 1f // Grosor de las lineas o bordes de los paises grises
                                     setColor(android.graphics.Color.argb(128, 255, 255, 255)) // Blanco 25% transparente
                                     pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 6f), 0f)
                                 }
@@ -766,11 +854,8 @@ fun InteractiveWorldMap(
         canvasWidth = size.width
         canvasHeight = size.height
 
-        // Fondo gris claro
-        drawRect(
-            color = Color.White,
-            size = size
-        )
+        // Fondo oceánico animado
+        drawOceanBackground(waveTime, size)
 
         // MODIFICADO: Renderizado condicional mejorado
         when {
