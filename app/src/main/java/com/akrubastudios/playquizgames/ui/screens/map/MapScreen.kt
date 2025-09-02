@@ -459,7 +459,7 @@ fun InteractiveWorldMap(
     modifier: Modifier = Modifier
 ) {
     // Estados para zoom y pan
-    var scale by remember { mutableStateOf(1.6f) } // 1.5f es la escala para agrandar por defecto el mapa
+    var scale by remember { mutableStateOf(1.6f) } // 1.6f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
 
     var canvasWidth by remember { mutableStateOf(1080f) }
@@ -730,10 +730,10 @@ fun InteractiveWorldMap(
     }
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-        val newScale = (scale * zoomChange).coerceIn(0.8f, 3f)
+        val newScale = (scale * zoomChange).coerceIn(0.8f, 5f) //0.8f y 5f; son el minimo y maximo para hacer zoom
 
         // Usar valores fijos basados en una pantalla promedio (más simple)
-        val maxOffsetX = canvasWidth * 0.18f * newScale   // 18% para hacer drag en horizontal
+        val maxOffsetX = canvasWidth * 0.30f * newScale   // 30% para hacer drag en horizontal
         val maxOffsetY = canvasHeight * 0.10f * newScale  // 12% para hacer drag en vertical
 
         val newOffset = (offset + panChange).copy(
