@@ -48,7 +48,7 @@ data class BossState(
     val totalQuestions: Int = 1,
     val bossHealth: Float = 1.0f,
     val playerMistakes: Int = 0,
-    val maxMistakes: Int = 1,
+    val maxMistakes: Int = 2,
     val correctAnswersCount: Int = 0,
     val generatedHintLetters: String = "",
     val userAnswer: String = "",
@@ -246,10 +246,15 @@ class BossViewModel @Inject constructor(
 
             isAnswerProcessing = false
         } else {
-            val finalBossHealth = uiState.value.bossHealth
-            if (finalBossHealth <= 0.0f) {
+            // Calculamos cuántos aciertos se necesitaban para ganar.
+            val requiredCorrectAnswers = levelPackage!!.questions.size - (uiState.value.maxMistakes - 1)
+            val isVictory = uiState.value.correctAnswersCount >= requiredCorrectAnswers
+
+            if (isVictory) {
+                // Si ha ganado, disparamos la secuencia de victoria.
                 triggerVictorySequence()
             } else {
+                // Si no, termina el juego como una derrota.
                 endGame(victory = false)
             }
         }
