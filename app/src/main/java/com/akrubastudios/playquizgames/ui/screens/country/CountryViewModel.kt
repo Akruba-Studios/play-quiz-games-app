@@ -187,29 +187,41 @@ class CountryViewModel @Inject constructor(
             return
         }
 
-        // Activamos el indicador del botón
+        // --- INICIO DE LA MODIFICACIÓN ---
+
+        // 1. Inicia el efecto visual INMEDIATAMENTE.
         _uiState.value = _uiState.value.copy(isApplyingBoost = true)
 
         viewModelScope.launch {
-            try {
-                val boostRequest = hashMapOf(
-                    "userId" to uid,
-                    "countryId" to countryId,
-                    "timestamp" to System.currentTimeMillis()
-                )
-                db.collection("pc_boost_requests").add(boostRequest).await()
-                Log.d("CountryViewModel", "✅ Petición de boost enviada.")
-                // No hacemos nada más. La escucha en `processCountryData`
-                // detectará automáticamente el cambio en `unassignedPcBoosts`
-                // y refrescará toda la UI, apagando el `isApplyingBoost` y
-                // actualizando el botón.
-            } catch (e: Exception) {
-                Log.e("CountryViewModel", "❌ Error al enviar la petición de boost.", e)
-            } finally {
-                // 2. PASE LO QUE PASE, apagamos el indicador al final.
-                _uiState.value = _uiState.value.copy(isApplyingBoost = false)
+            // 2. Lanza la petición a Firebase en una corrutina separada.
+            //    Esto se ejecuta en segundo plano y no bloquea el efecto visual.
+            launch {
+                try {
+                    val boostRequest = hashMapOf(
+                        "userId" to uid,
+                        "countryId" to countryId,
+                        "timestamp" to System.currentTimeMillis()
+                    )
+                    db.collection("pc_boost_requests").add(boostRequest).await()
+                    Log.d("CountryViewModel", "✅ Petición de boost enviada.")
+                } catch (e: Exception) {
+                    Log.e("CountryViewModel", "❌ Error al enviar la petición de boost.", e)
+                    // Si falla la petición, detenemos la animación inmediatamente para
+                    // que el usuario sepa que algo salió mal.
+                    _uiState.value = _uiState.value.copy(isApplyingBoost = false)
+                }
             }
+
+            // 3. Mientras la petición se envía en segundo plano, la corrutina principal
+            //    espera 2 segundos para el efecto dramático.
+            delay(3000L) // 3000 milisegundos = 3 segundos
+
+            // 4. Después de la espera, detenemos el efecto visual.
+            //    La actualización de los datos (el nuevo valor de PC) llegará
+            //    automáticamente a través del listener del userStateFlow.
+            _uiState.value = _uiState.value.copy(isApplyingBoost = false)
         }
+        // --- FIN DE LA MODIFICACIÓN ---
     }
     fun conquestTutorialShown() {
         val uid = auth.currentUser?.uid ?: return
