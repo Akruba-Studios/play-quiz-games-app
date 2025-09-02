@@ -655,6 +655,7 @@ fun InteractiveWorldMap(
     }
 
     // NUEVO: Animación de pulso para candados
+    /*
     LaunchedEffect(Unit) {
         while (true) {
             animate(
@@ -673,6 +674,7 @@ fun InteractiveWorldMap(
             }
         }
     }
+     */
 
     // Función para detectar qué país fue tocado
     fun detectCountryFromTap(
@@ -801,6 +803,7 @@ fun InteractiveWorldMap(
                 )
 
                 // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
+                /*
                 countries.forEach { country ->
                     if (pathColorMap[country.countryId] == defaultColor) {
                         countryPaths[country.countryId]?.let { path ->
@@ -862,6 +865,7 @@ fun InteractiveWorldMap(
                         }
                     }
                 }
+                 */
 
                 // Debug info (opcional - puedes removarlo)
                 /*
