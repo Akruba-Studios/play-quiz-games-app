@@ -405,12 +405,17 @@ private fun DominationRewardsContent(onDismiss: () -> Unit) {
         )
         Divider(modifier = Modifier.padding(vertical = 12.dp))
 
+        // --- APAGADO POR AHORA ---
+        /* <-- Comienza el comentario aquí
         // Recompensa 2: Categoría Secreta
         RewardRow(
             icon = Icons.Default.LockOpen,
             text = stringResource(R.string.domination_reward_category)
         )
         Divider(modifier = Modifier.padding(vertical = 12.dp))
+        */
+        // --- FIN DEL APAGADO ---
+
 
         // Recompensa 3: PC Boost
         RewardRow(

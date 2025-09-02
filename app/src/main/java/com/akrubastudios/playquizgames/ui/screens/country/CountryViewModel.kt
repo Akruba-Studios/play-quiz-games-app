@@ -125,7 +125,13 @@ class CountryViewModel @Inject constructor(
                     }
 
                     val filteredCategories = country.availableCategories.mapNotNull { (catId, isAvailable) ->
-                        if (isAvailable || status == CountryStatus.DOMINATED) {
+                        // --- INICIO DE LA MODIFICACIÓN ---
+                        // ANTES:
+                        // if (isAvailable || status == CountryStatus.DOMINATED) {
+
+                        // DESPUÉS (eliminamos la condición de dominación):
+                        if (isAvailable) {
+                            // --- FIN DE LA MODIFICACIÓN ---
                             allCategories.find { it.categoryId == catId }
                         } else {
                             null
