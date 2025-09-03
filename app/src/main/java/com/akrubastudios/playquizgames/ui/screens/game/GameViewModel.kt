@@ -38,6 +38,7 @@ class GameViewModel @Inject constructor(
     private val difficulty: String = savedStateHandle.get<String>("difficulty")!!
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
+        private const val FUN_FACT_TIME_PENALTY_SECONDS = 4L // Segundo de penalización al usar un Fun fact
     }
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
@@ -484,7 +485,7 @@ class GameViewModel @Inject constructor(
         }
 
         // Aplica la penalización de tiempo.
-        val newTime = (uiState.value.remainingTime - 5).coerceAtLeast(0L)
+        val newTime = (uiState.value.remainingTime - FUN_FACT_TIME_PENALTY_SECONDS).coerceAtLeast(0L)
         _uiState.update { it.copy(remainingTime = newTime) }
 
         // Si el tiempo llega a 0 por la penalización, termina la pregunta.
