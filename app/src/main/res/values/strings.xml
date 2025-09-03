@@ -12,6 +12,10 @@
     <string name="continent_south_america">Sudamérica</string>
     <string name="continent_europe">Europa</string>
     <string name="continent_north_america">Norteamérica</string>
+    <string name="continent_asia">Asia</string>
+    <string name="continent_africa">África</string>
+    <string name="continent_oceania">Oceanía</string>
+    <string name="unknown_continent">Continente Desconocido</string>
     <string name="country_selection_title">Elige tu País de Inicio</string>
 
     <!-- MapScreen -->

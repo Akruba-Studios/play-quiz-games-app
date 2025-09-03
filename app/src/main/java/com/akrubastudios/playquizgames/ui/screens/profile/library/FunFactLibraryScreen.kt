@@ -16,11 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.R
-import com.akrubastudios.playquizgames.ui.screens.profile.library.FunFactLibraryState
-import com.akrubastudios.playquizgames.ui.screens.profile.library.FunFactLibraryViewModel
-import com.akrubastudios.playquizgames.ui.screens.profile.library.LibraryCategoryItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +44,7 @@ fun FunFactLibraryScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (uiState.categories.isEmpty()) {
+        } else if (uiState.continents.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(paddingValues).padding(32.dp), contentAlignment = Alignment.Center) {
                 Text(
                     text = stringResource(R.string.library_empty_message),
@@ -61,21 +59,23 @@ fun FunFactLibraryScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(uiState.categories) { category ->
-                    CategoryCard(category = category)
+                items(uiState.continents) { continent ->
+                    ContinentCard(continent = continent)
                 }
             }
         }
     }
 }
 
+// --- NUEVA ESTRUCTURA DE COMPOSABLES ANIDADOS ---
+
 @Composable
-private fun CategoryCard(category: LibraryCategoryItem) {
+private fun ContinentCard(continent: LibraryContinentItem) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
             Row(
@@ -86,8 +86,8 @@ private fun CategoryCard(category: LibraryCategoryItem) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = category.categoryName,
-                    style = MaterialTheme.typography.titleLarge,
+                    text = continent.continentName,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
@@ -98,21 +98,83 @@ private fun CategoryCard(category: LibraryCategoryItem) {
             }
 
             AnimatedVisibility(visible = isExpanded) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    category.levels.forEach { level ->
-                        Text(text = level.levelName, style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        level.funFacts.forEach { funFact ->
-                            Text(
-                                text = "• ${funFact.text}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
-                            )
-                        }
-                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                    continent.categories.forEach { category ->
+                        CategorySection(category = category)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CategorySection(category: LibraryCategoryItem) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isExpanded = !isExpanded },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = category.categoryName,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand)
+            )
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp)) {
+                category.levels.forEach { level ->
+                    LevelSection(level = level)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LevelSection(level: LibraryLevelItem) {
+    Column(modifier = Modifier.padding(bottom = 16.dp)) {
+        Text(
+            text = level.levelName,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        level.funFacts.forEach { funFact ->
+            FunFactDisplay(funFact = funFact)
+        }
+    }
+}
+
+@Composable
+private fun FunFactDisplay(funFact: FunFactItem) {
+    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+        Row(verticalAlignment = Alignment.Top) {
+            Text(
+                text = "${funFact.answer}: ",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 20.sp
+            )
+            Text(
+                text = funFact.text,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 20.sp
+            )
         }
     }
 }
