@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.navigation.NavController
+import com.akrubastudios.playquizgames.Routes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -46,7 +48,8 @@ import kotlinx.coroutines.withContext
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onSignOut: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
@@ -163,7 +166,9 @@ fun ProfileScreen(
             item {
                 ActionsCard(
                     onSignOutClick = { showSignOutDialog = true },
-                    onSettingsClick = onSettingsClick
+                    onSettingsClick = onSettingsClick,
+                    onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
+                    isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false
                 )
             }
         }
@@ -226,12 +231,23 @@ private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
 @Composable
 private fun ActionsCard(
     onSignOutClick: () -> Unit,
-    onSettingsClick: () -> Unit // <-- NUEVO PARÁMETRO
+    onSettingsClick: () -> Unit, // <-- NUEVO PARÁMETRO
+    onLibraryClick: () -> Unit,
+    isLibraryEnabled: Boolean
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = onLibraryClick,
+                enabled = isLibraryEnabled, // Se habilita/deshabilita dinámicamente
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.profile_button_library))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedButton(
                 onClick = onSettingsClick,
                 modifier = Modifier.fillMaxWidth()

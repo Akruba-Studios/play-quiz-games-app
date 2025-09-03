@@ -130,6 +130,13 @@
     <string name="milestone_goal_level">Reach Level %1$d</string>
     <string name="milestone_goal_conquests">Conquer %1$d Countries</string>
 
+    <string name="profile_button_library">My Knowledge Library</string>
+
+    <!-- Fun Fact Library -->
+    <string name="library_title">Knowledge Library</string>
+    <string name="library_empty_message">Your library is empty! Master levels (get 3 ⭐) to collect the Fun Facts you discover here.</string>
+    <string name="cd_collapse">Collapse</string>
+
     <!-- SettingsScreen -->
     <string name="settings_title">Settings</string>
     <string name="settings_sound_section">Sound</string>

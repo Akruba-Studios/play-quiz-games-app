@@ -28,6 +28,7 @@ import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
+import com.akrubastudios.playquizgames.ui.screens.profile.library.FunFactLibraryScreen
 import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
 import com.akrubastudios.playquizgames.ui.screens.splash.SplashScreen
 import com.google.firebase.auth.FirebaseAuth
@@ -49,6 +50,7 @@ object Routes {
     const val BOSS_SCREEN = "boss/{countryId}/{levelId}"
     const val PROFILE_SCREEN = "profile"
     const val SETTINGS_SCREEN = "settings"
+    const val FUN_FACT_LIBRARY_SCREEN = "fun_fact_library"
 }
 
 @Composable
@@ -82,6 +84,7 @@ fun NavGraph() {
         composable(Routes.PROFILE_SCREEN) {
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
+                viewModel = viewModel,
                 onSignOut = {
                     // Cuando el ViewModel nos notifica que la sesión se cerró,
                     // navegamos a la pantalla de Login.
@@ -94,13 +97,22 @@ fun NavGraph() {
                 },
                 onSettingsClick = {
                     navController.navigate(Routes.SETTINGS_SCREEN)
-                }
+                },
+                navController = navController
             )
         }
         composable(Routes.SETTINGS_SCREEN) {
             SettingsScreen(
                 onBackClick = {
                     // Simplemente vuelve a la pantalla anterior en la pila (ProfileScreen).
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Routes.FUN_FACT_LIBRARY_SCREEN) {
+            // Necesitamos importar FunFactLibraryScreen
+            FunFactLibraryScreen(
+                onBackClick = {
                     navController.popBackStack()
                 }
             )
