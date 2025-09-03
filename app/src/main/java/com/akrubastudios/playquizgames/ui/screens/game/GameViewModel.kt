@@ -23,6 +23,7 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
+import com.akrubastudios.playquizgames.domain.Question
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
@@ -48,6 +49,7 @@ class GameViewModel @Inject constructor(
     private var timerJob: Job? = null // Para poder controlar (cancelar) el temporizador
     private var isAnswerProcessing = false
     private var levelPackage: QuizLevelPackage? = null
+    private var shuffledQuestions: List<Question> = emptyList()
     private var currentQuestionIndex = 0
     // ---------------------------------------------
 
@@ -63,7 +65,10 @@ class GameViewModel @Inject constructor(
 
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
-                val firstQuestion = loadedLevel.questions[currentQuestionIndex]
+
+                shuffledQuestions = loadedLevel.questions.shuffled()
+
+                val firstQuestion = shuffledQuestions[currentQuestionIndex]
                 val lang = languageManager.languageStateFlow.value
 
                 // Leemos los datos del usuario para ver si ha dominado este nivel.
@@ -80,9 +85,9 @@ class GameViewModel @Inject constructor(
                     currentState.copy(
                         isLoading = false,
                         currentQuestion = firstQuestion,
+                        totalQuestions = shuffledQuestions.size,
                         currentCorrectAnswer = correctAnswerForUi,
                         questionText = if (lang == "es") firstQuestion.questionText_es else firstQuestion.questionText_en,
-                        totalQuestions = loadedLevel.questions.size,
                         questionNumber = currentQuestionIndex + 1,
                         generatedHintLetters = hints,
                         difficulty = difficulty,
@@ -272,14 +277,14 @@ class GameViewModel @Inject constructor(
 
     private fun moveToNextQuestion() {
         currentQuestionIndex++
-        if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
+        if (currentQuestionIndex < shuffledQuestions.size) {
             viewModelScope.launch {
 
                 // Activar transición fade
                 _uiState.update { it.copy(questionTransition = true) }
                 delay(150L) // Esperar a que termine el fade out
 
-                val nextQuestion = levelPackage!!.questions[currentQuestionIndex]
+                val nextQuestion = shuffledQuestions[currentQuestionIndex]
                 val lang = languageManager.languageStateFlow.value
 
                 val correctAnswerForUi =
