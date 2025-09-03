@@ -69,6 +69,9 @@
     <string name="game_top_bar_score">Puntaje: %1$d</string> <!-- %1$d = puntaje -->
     <string name="cd_question_image">Imagen de la pregunta</string>
 
+    <string name="fun_fact_title">Dato Curioso</string>
+    <string name="cd_fun_fact_button">Mostrar Dato Curioso</string>
+
     <!-- BossScreen -->
     <string name="cd_life">Vida</string>
     <string name="cd_question_image_boss">Imagen de la pregunta del Jefe</string>

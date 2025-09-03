@@ -57,12 +57,17 @@ class GameViewModel @Inject constructor(
     private fun loadLevel() {
         // Lanzamos una coroutine para llamar a nuestra función suspendida
         viewModelScope.launch {
+            resetRoundState()
             val loadedLevel = repository.getLevel(levelId) // Llama a la nueva función suspend
 
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
                 val firstQuestion = loadedLevel.questions[currentQuestionIndex]
                 val lang = languageManager.languageStateFlow.value
+
+                // Leemos los datos del usuario para ver si ha dominado este nivel.
+                val userData = gameDataRepository.getUserData()
+                val areFactsUnlocked = userData?.masteredLevelIds?.contains(levelId) ?: false
 
                 // 1. Determinamos la respuesta correcta UNA SOLA VEZ.
                 val correctAnswerForUi = if (lang == "es") firstQuestion.correctAnswer_es else firstQuestion.correctAnswer_en
@@ -80,7 +85,8 @@ class GameViewModel @Inject constructor(
                         questionNumber = currentQuestionIndex + 1,
                         generatedHintLetters = hints,
                         difficulty = difficulty,
-                        questionResults = List(loadedLevel.questions.size) { null } // Crear lista del tamaño correcto
+                        questionResults = List(loadedLevel.questions.size) { null }, // Crear lista del tamaño correcto
+                        areFunFactsUnlockedForLevel = areFactsUnlocked
                     )
                 }
                 startTimer()
@@ -371,10 +377,10 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    private fun startTimer() {
+    private fun startTimer(startTime: Long = QUESTION_TIME_LIMIT_SECONDS) {
         timerJob?.cancel() // Cancela cualquier temporizador anterior
         timerJob = viewModelScope.launch {
-            var timeLeft = QUESTION_TIME_LIMIT_SECONDS
+            var timeLeft = startTime
             _uiState.update { it.copy(remainingTime = timeLeft) }
 
             while (timeLeft > 0) {
@@ -436,7 +442,65 @@ class GameViewModel @Inject constructor(
                 }
             }
         }
-
         return pcGained
+    }
+    /**
+     * Se llama cuando el usuario hace clic en el botón de Fun Fact.
+     */
+    fun onFunFactClicked() {
+        val state = uiState.value
+        // Condición: Se puede usar si (NO se ha usado en esta ronda) O (están desbloqueados permanentemente).
+        if (!state.isFunFactUsedInRound || state.areFunFactsUnlockedForLevel) {
+            timerJob?.cancel() // Pausa el temporizador
+
+            // Obtiene el fun fact en el idioma correcto.
+            val lang = languageManager.languageStateFlow.value
+            val funFactText = if (lang == "es") {
+                state.currentQuestion?.fun_fact_es
+            } else {
+                state.currentQuestion?.fun_fact_en
+            } ?: ""
+
+            // Actualiza el estado para mostrar el diálogo.
+            _uiState.update {
+                it.copy(
+                    showFunFactDialog = true,
+                    currentFunFact = funFactText
+                )
+            }
+        }
+    }
+
+    /**
+     * Se llama cuando el usuario cierra el diálogo del Fun Fact.
+     */
+    fun onFunFactDialogDismissed() {
+        // Oculta el diálogo y marca la pista como usada.
+        _uiState.update {
+            it.copy(
+                showFunFactDialog = false,
+                isFunFactUsedInRound = true
+            )
+        }
+
+        // Aplica la penalización de tiempo.
+        val newTime = (uiState.value.remainingTime - 5).coerceAtLeast(0L)
+        _uiState.update { it.copy(remainingTime = newTime) }
+
+        // Si el tiempo llega a 0 por la penalización, termina la pregunta.
+        if (newTime == 0L) {
+            checkAnswer()
+        } else {
+            // Si no, reanuda el temporizador con el tiempo restante.
+            startTimer(startTime = newTime)
+        }
+    }
+
+    /**
+     * Reinicia el estado de la ronda al pasar a la siguiente pregunta o al final del juego.
+     * Este cambio es para la siguiente versión de startTimer().
+     */
+    private fun resetRoundState() {
+        _uiState.update { it.copy(isFunFactUsedInRound = false) }
     }
 }

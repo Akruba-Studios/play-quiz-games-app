@@ -22,4 +22,8 @@ data class GameState(
     val questionResults: List<Boolean?> = emptyList(), // Se inicializa según totalQuestions
     val showClearAnimation: Boolean = false,
     val questionTransition: Boolean = false,
+    val isFunFactUsedInRound: Boolean = false,      // ¿Ya se usó la pista en esta partida?
+    val areFunFactsUnlockedForLevel: Boolean = false, // ¿El jugador tiene 3 estrellas en este nivel?
+    val showFunFactDialog: Boolean = false,         // ¿Debe mostrarse el diálogo ahora mismo?
+    val currentFunFact: String = ""                 // El texto del fun fact a mostrar
 )

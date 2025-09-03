@@ -19,6 +19,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb // O el icono que prefieras
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -56,6 +62,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.draw.shadow
@@ -122,7 +129,9 @@ fun GameScreen(
                 remainingTime = uiState.remainingTime,
                 difficulty = uiState.difficulty,
                 questionResults = uiState.questionResults,
-                timerExplosion = uiState.timerExplosion
+                timerExplosion = uiState.timerExplosion,
+                isFunFactButtonEnabled = !uiState.isFunFactUsedInRound || uiState.areFunFactsUnlockedForLevel,
+                onFunFactClick = { viewModel.onFunFactClicked() }
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -151,6 +160,19 @@ fun GameScreen(
                 }
             )
         }
+        // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
+        if (uiState.showFunFactDialog) {
+            AlertDialog(
+                onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
+                title = { Text(text = stringResource(R.string.fun_fact_title)) },
+                text = { Text(text = uiState.currentFunFact) },
+                confirmButton = {
+                    IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -163,6 +185,8 @@ fun TopBar(
     difficulty: String,
     questionResults: List<Boolean?>,
     timerExplosion: Boolean = false,
+    isFunFactButtonEnabled: Boolean,
+    onFunFactClick: () -> Unit,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
@@ -177,7 +201,9 @@ fun TopBar(
         QuestionProgressCircles(
             currentQuestionIndex = questionNumber - 1, // Convertir a 0-based
             questionResults = questionResults,
-            totalQuestions = totalQuestions
+            totalQuestions = totalQuestions,
+            isFunFactButtonEnabled = isFunFactButtonEnabled,
+            onFunFactClick = onFunFactClick
         )
 
         // Centro - Timer
@@ -510,6 +536,8 @@ fun QuestionProgressCircles(
     currentQuestionIndex: Int, // 0-based
     questionResults: List<Boolean?>,
     totalQuestions: Int = 10,
+    isFunFactButtonEnabled: Boolean,
+    onFunFactClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -572,6 +600,19 @@ fun QuestionProgressCircles(
                     )
                 }
             }
+        }
+        // Añadimos el botón aquí, debajo de los círculos.
+        Spacer(modifier = Modifier.height(4.dp)) // Pequeño espacio
+        IconButton(
+            onClick = onFunFactClick,
+            enabled = isFunFactButtonEnabled,
+            modifier = Modifier.size(24.dp) // Un tamaño más pequeño y discreto
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lightbulb,
+                contentDescription = stringResource(R.string.cd_fun_fact_button),
+                tint = if (isFunFactButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            )
         }
     }
 }
