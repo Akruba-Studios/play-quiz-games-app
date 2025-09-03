@@ -85,6 +85,7 @@ class BossViewModel @Inject constructor(
     val gameResult = _gameResult.asStateFlow()
 
     private var levelPackage: QuizLevelPackage? = null
+    private var shuffledQuestions: List<Question> = emptyList()
     private var currentQuestionIndex = 0
     private var isAnswerProcessing = false
     private var reshuffleJob: Job? = null
@@ -114,13 +115,14 @@ class BossViewModel @Inject constructor(
         viewModelScope.launch {
             levelPackage = quizRepository.getLevel(levelId)
             if (levelPackage != null) {
+                shuffledQuestions = levelPackage!!.questions.shuffled()
                 val theme = generateGuardianTheme(countryId)
                 val lang = languageManager.languageStateFlow.value
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         levelName = levelPackage!!.levelName[lang] ?: levelPackage!!.levelName["es"] ?: "Guardian Challenge",
-                        totalQuestions = levelPackage!!.questions.size,
+                        totalQuestions = shuffledQuestions.size,
                         guardianTheme = theme,
                         currentDialogue = theme.dialogues[0].random(),
                         battleStats = BattleStats()
@@ -206,8 +208,8 @@ class BossViewModel @Inject constructor(
     }
 
     private fun prepareNextQuestion() {
-        if (currentQuestionIndex < (levelPackage?.questions?.size ?: 0)) {
-            val question = levelPackage!!.questions[currentQuestionIndex]
+        if (currentQuestionIndex < shuffledQuestions.size) {
+            val question = shuffledQuestions[currentQuestionIndex]
             val newPhase = calculatePhase()
             val phaseChanged = newPhase != uiState.value.currentPhase
 
@@ -247,7 +249,7 @@ class BossViewModel @Inject constructor(
             isAnswerProcessing = false
         } else {
             // Calculamos cuántos aciertos se necesitaban para ganar.
-            val requiredCorrectAnswers = levelPackage!!.questions.size - (uiState.value.maxMistakes - 1)
+            val requiredCorrectAnswers = shuffledQuestions.size - (uiState.value.maxMistakes - 1)
             val isVictory = uiState.value.correctAnswersCount >= requiredCorrectAnswers
 
             if (isVictory) {
