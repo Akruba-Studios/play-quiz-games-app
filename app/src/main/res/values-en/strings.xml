@@ -76,6 +76,8 @@
     <string name="fun_fact_title">Fun Fact</string>
     <string name="cd_fun_fact_button">Show Fun Fact</string>
 
+    <string name="toast_no_more_fun_facts">You\'ve already used your fun fact for this round!</string>
+
     <!-- BossScreen -->
     <string name="cd_life">Life</string>
     <string name="cd_question_image_boss">Boss question image</string>

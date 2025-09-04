@@ -1,5 +1,8 @@
 package com.akrubastudios.playquizgames.ui.screens.game
 
+import android.view.LayoutInflater
+import android.widget.TextView
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
@@ -67,9 +70,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Snackbar
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalView
 
 @Composable
 fun GameScreen(
@@ -632,12 +637,36 @@ fun QuestionProgressCircles(
         val finalScale = if (isFunFactButtonEnabled) animatedScale else 1.0f
 
         Spacer(modifier = Modifier.height(4.dp))
+
+        val context = LocalContext.current
+
         IconButton(
-            onClick = onFunFactClick,
-            enabled = isFunFactButtonEnabled,
+            onClick = {
+                if (isFunFactButtonEnabled) {
+                    onFunFactClick()
+                } else {
+                    // Toast personalizado con fondo negro translúcido y texto blanco
+                    val inflater = LayoutInflater.from(context)
+                    val layout = inflater.inflate(
+                        android.R.layout.simple_list_item_1,
+                        null
+                    )
+                    val textView = layout.findViewById<TextView>(android.R.id.text1)
+                    textView.text = context.getString(R.string.toast_no_more_fun_facts)
+                    textView.setTextColor(android.graphics.Color.WHITE) // Texto blanco
+                    textView.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")) // Negro translúcido
+                    textView.setPadding(24, 16, 24, 16)
+
+                    val toast = Toast(context)
+                    toast.duration = Toast.LENGTH_SHORT
+                    toast.view = layout
+                    toast.show()
+                }
+            },
+            enabled = true,
             modifier = Modifier
                 .size(24.dp)
-                .scale(finalScale) // 2. Aplicamos la escala animada aquí.
+                .scale(finalScale)
         ) {
             Icon(
                 imageVector = Icons.Default.Lightbulb,
