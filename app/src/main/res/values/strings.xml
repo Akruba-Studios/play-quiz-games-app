@@ -257,4 +257,7 @@
     <string name="xp_tutorial_message">¡Felicidades por completar el nivel! Cada vez que terminas una partida, los Puntos de Experiencia (XP) de tus respuestas correctas se suman a tu total global.\n\n¡Acumula XP para subir de Nivel y desbloquear grandes recompensas!</string>
     <string name="dialog_button_ok_levelup">¡A subir de nivel!</string>
 
+    <string name="fun_fact_tutorial_title">¿Necesitas una Pista?</string>
+    <string name="fun_fact_tutorial_message">¿Atascado? Usa la bombilla 💡 para revelar un Dato Curioso sobre la pregunta. A veces, ¡contiene la respuesta!\n\n¡Cuidado! Al cerrar la pista, te costará 4 segundos del temporizador.</string>
+
 </resources>

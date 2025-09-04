@@ -92,7 +92,8 @@ class GameViewModel @Inject constructor(
                         generatedHintLetters = hints,
                         difficulty = difficulty,
                         questionResults = List(loadedLevel.questions.size) { null }, // Crear lista del tamaño correcto
-                        areFunFactsUnlockedForLevel = areFactsUnlocked
+                        areFunFactsUnlockedForLevel = areFactsUnlocked,
+                        hasSeenFunFactTutorial = userData?.hasSeenFunFactTutorial ?: true
                     )
                 }
                 startTimer()
@@ -455,24 +456,23 @@ class GameViewModel @Inject constructor(
      */
     fun onFunFactClicked() {
         val state = uiState.value
-        // Condición: Se puede usar si (NO se ha usado en esta ronda) O (están desbloqueados permanentemente).
+
+        // Comprobamos si el botón está lógicamente activo
         if (!state.isFunFactUsedInRound || state.areFunFactsUnlockedForLevel) {
-            timerJob?.cancel() // Pausa el temporizador
+            timerJob?.cancel() // Pausamos el tiempo en ambos casos
 
-            // Obtiene el fun fact en el idioma correcto.
-            val lang = languageManager.languageStateFlow.value
-            val funFactText = if (lang == "es") {
-                state.currentQuestion?.fun_fact_es
+            if (!state.hasSeenFunFactTutorial) {
+                // CASO 1: Es la primera vez que el usuario hace clic. Mostramos el tutorial.
+                _uiState.update { it.copy(showFunFactTutorialDialog = true) }
             } else {
-                state.currentQuestion?.fun_fact_en
-            } ?: ""
-
-            // Actualiza el estado para mostrar el diálogo.
-            _uiState.update {
-                it.copy(
-                    showFunFactDialog = true,
-                    currentFunFact = funFactText
-                )
+                // CASO 2: Ya ha visto el tutorial. Mostramos el Fun Fact directamente.
+                val lang = languageManager.languageStateFlow.value
+                val funFactText = if (lang == "es") {
+                    state.currentQuestion?.fun_fact_es
+                } else {
+                    state.currentQuestion?.fun_fact_en
+                }
+                _uiState.update { it.copy(showFunFactDialog = true, currentFunFact = funFactText ?: "") }
             }
         }
     }
@@ -499,6 +499,24 @@ class GameViewModel @Inject constructor(
         } else {
             // Si no, reanuda el temporizador con el tiempo restante.
             startTimer(startTime = newTime)
+        }
+    }
+    fun funFactTutorialShown() {
+        val uid = auth.currentUser?.uid ?: return
+
+        // Cierra el diálogo del tutorial en la UI y marca el tutorial como "visto" en el estado local.
+        _uiState.update { it.copy(showFunFactTutorialDialog = false, hasSeenFunFactTutorial = true) }
+
+        // Reanuda el temporizador sin penalización de tiempo.
+        startTimer(startTime = uiState.value.remainingTime)
+
+        // Actualiza la bandera en Firestore en segundo plano para que no se vuelva a mostrar.
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(uid).update("hasSeenFunFactTutorial", true)
+            } catch (e: Exception) {
+                Log.e("GameViewModel", "Error al actualizar hasSeenFunFactTutorial", e)
+            }
         }
     }
 

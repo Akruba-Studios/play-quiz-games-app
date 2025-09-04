@@ -61,7 +61,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -157,6 +159,18 @@ fun GameScreen(
                 difficulty = uiState.difficulty, // Borrar para habilitar letras bloqueadas en Modo Dificil
                 onLetterClick = { letter, index -> // <-- MODIFICADO
                     viewModel.onLetterClick(letter, index)
+                }
+            )
+        }
+        if (uiState.showFunFactTutorialDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.funFactTutorialShown() }, // Cerrar tocando fuera
+                title = { Text(text = stringResource(R.string.fun_fact_tutorial_title)) },
+                text = { Text(text = stringResource(R.string.fun_fact_tutorial_message)) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.funFactTutorialShown() }) {
+                        Text(stringResource(R.string.dialog_button_ok))
+                    }
                 }
             )
         }
@@ -601,12 +615,29 @@ fun QuestionProgressCircles(
                 }
             }
         }
-        // Añadimos el botón aquí, debajo de los círculos.
-        Spacer(modifier = Modifier.height(4.dp)) // Pequeño espacio
+        // 1. Animación de escala para el pulso.
+        // Creamos una transición infinita para que el efecto sea constante.
+        val infiniteTransition = rememberInfiniteTransition(label = "FunFactPulse")
+        val animatedScale by infiniteTransition.animateFloat(
+            initialValue = 1.0f,
+            targetValue = 1.2f, // La escala máxima del pulso
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing), // Duración de un ciclo de pulso
+                repeatMode = RepeatMode.Reverse // Hace que vuelva a su tamaño original
+            ),
+            label = "FunFactScale"
+        )
+
+        // Determinamos la escala final: si está habilitado, usa la escala animada; si no, usa 1.0f.
+        val finalScale = if (isFunFactButtonEnabled) animatedScale else 1.0f
+
+        Spacer(modifier = Modifier.height(4.dp))
         IconButton(
             onClick = onFunFactClick,
             enabled = isFunFactButtonEnabled,
-            modifier = Modifier.size(24.dp) // Un tamaño más pequeño y discreto
+            modifier = Modifier
+                .size(24.dp)
+                .scale(finalScale) // 2. Aplicamos la escala animada aquí.
         ) {
             Icon(
                 imageVector = Icons.Default.Lightbulb,

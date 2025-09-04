@@ -257,4 +257,7 @@
     <string name="xp_tutorial_message">Congratulations on completing the level! Every time you finish a match, the Experience Points (XP) from your correct answers are added to your total.\n\nCollect XP to Level Up and unlock great rewards!</string>
     <string name="dialog_button_ok_levelup">Let\'s Level Up!</string>
 
+    <string name="fun_fact_tutorial_title">Need a Hint?</string>
+    <string name="fun_fact_tutorial_message">Stuck? Use the lightbulb 💡 to reveal a Fun Fact about the question. Sometimes, it might even contain the answer!\n\nCareful! Closing the hint will cost you 4 seconds on the clock.</string>
+
 </resources>

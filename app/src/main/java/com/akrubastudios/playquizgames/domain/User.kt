@@ -20,5 +20,6 @@ data class User(
     val pendingProfileNotifications: List<String> = emptyList(),
     val hasTriggeredConquest2Milestone: Boolean = false,
     val hasTriggeredExpansionMilestone: Boolean = false,
-    val masteredLevelIds: List<String> = emptyList()
+    val masteredLevelIds: List<String> = emptyList(),
+    val hasSeenFunFactTutorial: Boolean = false
 )

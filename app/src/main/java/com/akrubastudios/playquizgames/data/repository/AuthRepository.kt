@@ -59,7 +59,8 @@ class AuthRepository @Inject constructor(
                     "hasSeenDominationTutorial" to false,
                     "pendingProfileNotifications" to emptyList<String>(),
                     "hasTriggeredConquest2Milestone" to false,
-                    "hasTriggeredExpansionMilestone" to false
+                    "hasTriggeredExpansionMilestone" to false,
+                    "hasSeenFunFactTutorial" to false
                 )
                 userRef.set(newUserMap).await()
             } else {
