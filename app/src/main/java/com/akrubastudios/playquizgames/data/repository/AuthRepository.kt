@@ -60,7 +60,8 @@ class AuthRepository @Inject constructor(
                     "pendingProfileNotifications" to emptyList<String>(),
                     "hasTriggeredConquest2Milestone" to false,
                     "hasTriggeredExpansionMilestone" to false,
-                    "hasSeenFunFactTutorial" to false
+                    "hasSeenFunFactTutorial" to false,
+                    "gems" to 0
                 )
                 userRef.set(newUserMap).await()
             } else {

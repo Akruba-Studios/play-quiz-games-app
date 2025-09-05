@@ -21,5 +21,6 @@ data class User(
     val hasTriggeredConquest2Milestone: Boolean = false,
     val hasTriggeredExpansionMilestone: Boolean = false,
     val masteredLevelIds: List<String> = emptyList(),
-    val hasSeenFunFactTutorial: Boolean = false
+    val hasSeenFunFactTutorial: Boolean = false,
+    val gems: Int = 0
 )

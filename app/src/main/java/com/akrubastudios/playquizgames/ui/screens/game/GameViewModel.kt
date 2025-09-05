@@ -372,7 +372,8 @@ class GameViewModel @Inject constructor(
                     "starsEarned" to result.starsEarned,
                     "levelId" to levelId,
                     "countryId" to countryId,
-                    "timestamp" to System.currentTimeMillis()
+                    "timestamp" to System.currentTimeMillis(),
+                    "difficulty" to difficulty
                 )
 
                 db.collection("score_requests").add(scoreRequest).await()

@@ -6,5 +6,6 @@ data class UserLevelCompletion(
     val highScore: Int = 0,
     val starsEarned: Int = 0,
     val levelName: Map<String, String> = emptyMap(),
-    val maxScore: Int = 0
+    val maxScore: Int = 0,
+    val gemsEarned: Int = 0
 )
