@@ -106,6 +106,7 @@ fun GameScreen(
                 .replace("{isFromBossFight}", "false")
                 .replace("{victory}", "false") // Irrelevante en partidas normales
                 .replace("{pcGained}", result.pcGained.toString())
+                .replace("{gemsGained}", result.gemsGained.toString())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

@@ -106,6 +106,8 @@
 
     <string name="result_conquest_points">Conquest Points</string>
 
+    <string name="result_gems_won">Gems Won</string>
+
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Free Mode</string>
     <string name="free_mode_subtitle">Replay your 3-star levels to improve your score and earn more XP.</string>

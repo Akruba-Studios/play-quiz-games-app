@@ -30,6 +30,7 @@ fun ResultScreen(
     correctAnswers: Int,
     starsEarned: Int,
     pcGained: Int,
+    gemsGained: Int,
     isFromBossFight: Boolean,
     showPlayAgainButton: Boolean,
     playAgainText: String,
@@ -62,6 +63,24 @@ fun ResultScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
+        if (gemsGained > 0) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.result_gems_won),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "+$gemsGained 💎",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color(0xFFD4AF37) // Dorado
+                )
+            }
+        }
+
         Text(
             text = stringResource(R.string.result_questions_summary, correctAnswers, totalQuestions)
         )

@@ -341,4 +341,14 @@ class GameDataRepository @Inject constructor(
             emptyList() // Devuelve una lista vacía si hay algún error.
         }
     }
+    suspend fun getLevelCompletion(levelId: String): UserLevelCompletion? {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
+        val completionDocId = "${uid}_${levelId}"
+        return try {
+            db.collection("user_level_completion").document(completionDocId).get().await()
+                .toObject(UserLevelCompletion::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

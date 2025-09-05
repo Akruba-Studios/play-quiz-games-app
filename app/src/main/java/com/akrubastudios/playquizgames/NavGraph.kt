@@ -37,7 +37,7 @@ import com.google.firebase.auth.FirebaseAuth
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val SPLASH_SCREEN = "splash"
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
@@ -259,7 +259,8 @@ fun NavGraph() {
                 navArgument("difficulty") { type = NavType.StringType },
                 navArgument("isFromBossFight") { type = NavType.BoolType },
                 navArgument("victory") { type = NavType.BoolType },
-                navArgument("pcGained") { type = NavType.IntType }
+                navArgument("pcGained") { type = NavType.IntType },
+                navArgument("gemsGained") { type = NavType.IntType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -275,6 +276,7 @@ fun NavGraph() {
             val isFromBossFight = backStackEntry.arguments?.getBoolean("isFromBossFight") ?: false
             val victory = backStackEntry.arguments?.getBoolean("victory") ?: false
             val pcGained = backStackEntry.arguments?.getInt("pcGained") ?: 0
+            val gemsGained = backStackEntry.arguments?.getInt("gemsGained") ?: 0
 
             val title = if (isFromBossFight) {
                 if (victory) stringResource(R.string.result_title_boss_victory) else stringResource(R.string.result_title_boss_defeat)
@@ -309,6 +311,7 @@ fun NavGraph() {
                 correctAnswers = correctAnswers,
                 starsEarned = starsEarned,
                 pcGained = pcGained,
+                gemsGained = gemsGained,
                 isFromBossFight = isFromBossFight,
                 showPlayAgainButton = showPlayAgainButton,
                 playAgainText = playAgainText,

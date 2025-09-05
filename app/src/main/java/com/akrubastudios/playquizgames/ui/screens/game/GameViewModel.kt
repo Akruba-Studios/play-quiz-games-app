@@ -339,13 +339,16 @@ class GameViewModel @Inject constructor(
 
                 val pcGained = calculatePcWon(starsEarned)
 
+                val gemsGained = calculateGemsWon(starsEarned)
+
                 // 3. Preparamos el objeto GameResult con toda la información
                 val result = GameResult(
                     score = uiState.value.score,
                     correctAnswers = correctAnswers,
                     totalQuestions = totalQuestions,
                     starsEarned = starsEarned,
-                    pcGained = pcGained
+                    pcGained = pcGained,
+                    gemsGained = gemsGained
                 )
                 _gameResult.value = result
 
@@ -452,6 +455,30 @@ class GameViewModel @Inject constructor(
         }
         return pcGained
     }
+
+    // CUIDADO: Esta lógica duplica el cálculo de Gemas de la Cloud Function.
+    // Si se cambia la regla de negocio, actualizar en AMBOS sitios.
+    private suspend fun calculateGemsWon(newStars: Int): Int {
+        if (newStars < 2) return 0
+
+        val completionData = gameDataRepository.getLevelCompletion(levelId)
+        val gemsAlreadyEarned = completionData?.gemsEarned ?: 0
+
+        // Calculamos la recompensa MÁXIMA potencial para este resultado.
+        var maxPotentialGems = 0
+        if (newStars >= 2) {
+            maxPotentialGems = if (difficulty == "dificil") 3 else 2
+        }
+
+        // Otorgamos solo la diferencia neta.
+        var gemsToAdd = 0
+        if (maxPotentialGems > gemsAlreadyEarned) {
+            gemsToAdd = maxPotentialGems - gemsAlreadyEarned
+        }
+
+        return gemsToAdd
+    }
+
     /**
      * Se llama cuando el usuario hace clic en el botón de Fun Fact.
      */

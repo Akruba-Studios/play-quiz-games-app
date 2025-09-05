@@ -106,6 +106,8 @@
 
     <string name="result_conquest_points">Puntos de Conquista</string>
 
+    <string name="result_gems_won">Gemas Ganadas</string>
+
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Modo Libre</string>
     <string name="free_mode_subtitle">Repite tus niveles de 3 estrellas para mejorar tu puntaje y ganar más XP.</string>
