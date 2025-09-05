@@ -40,7 +40,8 @@ data class MapState(
     val firstCountryName: String = "",
     val showFreeModeUnlockedDialog: Boolean = false,
     val showDominationRewardsSheet: Boolean = false,
-    val hasProfileNotification: Boolean = false
+    val hasProfileNotification: Boolean = false,
+    val gems: Int = 0
 )
 
 @HiltViewModel
@@ -196,7 +197,8 @@ class MapViewModel @Inject constructor(
                         firstCountryName = welcomeCountryName,
                         showFreeModeUnlockedDialog = showFreeModeDialog,
                         showDominationRewardsSheet = showDominationSheet,
-                        hasProfileNotification = hasNotification
+                        hasProfileNotification = hasNotification,
+                        gems = userData.gems
                     )
                 }
             }

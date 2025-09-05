@@ -91,6 +91,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
+import androidx.compose.ui.unit.sp
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
@@ -239,13 +240,29 @@ fun MapScreen(
                             textAlign = TextAlign.Center
                         )
 
-                        // 2. El Indicador de Nivel
-                        // Solo lo mostramos si la información está disponible.
-                        uiState.playerLevelInfo?.let { levelInfo ->
-                            PlayerLevelIndicator(
-                                levelInfo = levelInfo,
-                                boostCount = uiState.unassignedPcBoosts
-                            )
+                        // Envolvemos los indicadores en una Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Indicador de Nivel a la izquierda
+                            Box(modifier = Modifier.weight(1f)) {
+                                uiState.playerLevelInfo?.let { levelInfo ->
+                                    PlayerLevelIndicator(
+                                        levelInfo = levelInfo,
+                                        boostCount = uiState.unassignedPcBoosts
+                                    )
+                                }
+                            }
+
+                            // Espacio entre ellos
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Indicador de Gemas a la derecha
+                            GemsBalanceIndicator(gems = uiState.gems)
                         }
                     }
                 }
@@ -452,6 +469,37 @@ private fun RewardRow(icon: ImageVector, text: String) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun GemsBalanceIndicator(
+    gems: Int,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "💎", // Icono de gema
+                fontSize = 20.sp
+            )
+            Text(
+                text = gems.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
