@@ -611,7 +611,9 @@ fun BossScreen(
                 )
             }
         }
-        val sheetState = rememberModalBottomSheetState()
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
 
         if (uiState.showHelpsSheet) {
             ModalBottomSheet(
@@ -864,7 +866,12 @@ private fun HelpsContent(
             CircularProgressIndicator()
         }
     } else {
-        Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .heightIn(min = 400.dp, max = 550.dp) // Altura específica para mostrar ~3.3 items
+                .verticalScroll(rememberScrollState())
+        ) {
             Text(
                 text = stringResource(R.string.helps_menu_title),
                 style = MaterialTheme.typography.headlineSmall,
@@ -920,6 +927,7 @@ private fun HelpsContent(
                 isUsed = uiState.isShowHintUsed,
                 onClick = onShowHintClick
             )
+            Spacer(modifier = Modifier.height(32.dp)) // Espacio extra para asegurar visibilidad
         }
     }
 }
