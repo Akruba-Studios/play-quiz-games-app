@@ -75,7 +75,10 @@ data class BossState(
     val isProcessingHelp: Boolean = false,
     val isExtraTimeUsed: Boolean = false,
     val isRemoveLettersUsed: Boolean = false,
-    val revealLetterUses: Int = 0
+    val revealLetterUses: Int = 0,
+    val isShowHintUsed: Boolean = false,
+    val showFunFactDialog: Boolean = false,
+    val currentFunFact: String = ""
 )
 
 @HiltViewModel
@@ -96,6 +99,7 @@ class BossViewModel @Inject constructor(
         const val HELP_REMOVE_LETTERS_DIVISOR = 2 // Elimina la mitad (1/2) de las letras
         const val HELP_REVEAL_LETTER_COST_INITIAL = 2 // Costo gemas cheat revelar letras
         const val HELP_REVEAL_LETTER_COST_INCREMENT = 1 // costo gemas cheat revelar letras incremental
+        const val HELP_SHOW_HINT_COST = 7 // Costo gemas cheat mostrar pista o hint
     }
 
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -263,7 +267,8 @@ class BossViewModel @Inject constructor(
                     lettersReshuffleCounter = 0,
                     isExtraTimeUsed = false,
                     isRemoveLettersUsed = false,
-                    revealLetterUses = 0
+                    revealLetterUses = 0,
+                    isShowHintUsed = false
                 )
             }
 
@@ -756,6 +761,68 @@ class BossViewModel @Inject constructor(
                     }
                     _uiState.update { it.copy(isProcessingHelp = false) }
                     closeHelpsSheet()
+                }
+            }
+    }
+    fun onFunFactDialogDismissed() {
+        _uiState.update { it.copy(showFunFactDialog = false) }
+        // Al cerrar el diálogo, ahora sí cerramos el sheet y reanudamos el juego.
+        closeHelpsSheet()
+    }
+
+    fun useShowHintHelp() {
+        val cost = HELP_SHOW_HINT_COST
+        val state = uiState.value
+
+        if (state.currentGems < cost || state.isShowHintUsed) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("BossViewModel", "Error: Usuario nulo al intentar usar Ver Pista.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
+        }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("BossViewModel", "✅ Petición para 'Ver Pista' enviada.")
+
+                        // Lógica para mostrar el Fun Fact
+                        val lang = languageManager.languageStateFlow.value
+                        val funFactText = if (lang == "es") {
+                            state.currentQuestion?.fun_fact_es
+                        } else {
+                            state.currentQuestion?.fun_fact_en
+                        }
+
+                        _uiState.update {
+                            it.copy(
+                                isShowHintUsed = true,
+                                currentGems = it.currentGems - cost,
+                                // Estos dos campos ya existen en GameState, los reutilizamos.
+                                showFunFactDialog = true,
+                                currentFunFact = funFactText ?: ""
+                            )
+                        }
+                    } else {
+                        Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Ver Pista'.", task.exception)
+                    }
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    // ¡Importante! No cerramos el sheet aquí. Se cerrará cuando el usuario
+                    // cierre el diálogo del Fun Fact.
                 }
             }
     }

@@ -49,7 +49,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.ui.unit.times
 
 import androidx.compose.ui.res.stringResource
@@ -620,9 +622,22 @@ fun BossScreen(
                     uiState = uiState,
                     onExtraTimeClick = { viewModel.useExtraTimeHelp() },
                     onRemoveLettersClick = { viewModel.useRemoveLettersHelp() },
-                    onRevealLetterClick = { viewModel.useRevealLetterHelp() }
+                    onRevealLetterClick = { viewModel.useRevealLetterHelp() },
+                    onShowHintClick = { viewModel.useShowHintHelp() }
                 )
             }
+        }
+        if (uiState.showFunFactDialog) {
+            AlertDialog(
+                onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
+                title = { Text(text = stringResource(R.string.fun_fact_title)) },
+                text = { Text(text = uiState.currentFunFact) },
+                confirmButton = {
+                    IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
+                    }
+                }
+            )
         }
     }
 }
@@ -838,7 +853,8 @@ private fun HelpsContent(
     uiState: BossState,
     onExtraTimeClick: () -> Unit,
     onRemoveLettersClick: () -> Unit,
-    onRevealLetterClick: () -> Unit
+    onRevealLetterClick: () -> Unit,
+    onShowHintClick: () -> Unit
 ) {
     if (uiState.isProcessingHelp) {
         Box(
@@ -891,6 +907,18 @@ private fun HelpsContent(
                 // La ayuda se considera "usada" para deshabilitarla si ya no quedan letras por revelar.
                 isUsed = uiState.revealLetterUses >= uiState.currentCorrectAnswer.count { it.isLetter() },
                 onClick = onRevealLetterClick
+            )
+            // Ayuda 4. mostrar pistas
+            Spacer(modifier = Modifier.height(12.dp))
+
+            HelpItem(
+                icon = Icons.Default.Lightbulb,
+                title = stringResource(R.string.help_item_show_hint_title),
+                description = stringResource(R.string.help_item_show_hint_description),
+                cost = BossViewModel.HELP_SHOW_HINT_COST,
+                currentGems = uiState.currentGems,
+                isUsed = uiState.isShowHintUsed,
+                onClick = onShowHintClick
             )
         }
     }
