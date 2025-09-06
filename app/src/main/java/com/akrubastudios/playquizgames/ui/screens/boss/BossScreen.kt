@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -75,7 +77,8 @@ private fun BossHeaderFixed(
     health: Float,
     mistakes: Int,
     maxMistakes: Int,
-    phase: Int
+    phase: Int,
+    currentGems: Int
 ) {
     val animatedHealth by animateFloatAsState(
         targetValue = health,
@@ -100,15 +103,22 @@ private fun BossHeaderFixed(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(12.dp)
         ) {
-            Text(
-                text = guardianName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = guardianName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                GemsBalanceIndicator(gems = currentGems)
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -518,7 +528,8 @@ fun BossScreen(
                     health = uiState.bossHealth,
                     mistakes = uiState.playerMistakes,
                     maxMistakes = uiState.maxMistakes,
-                    phase = uiState.currentPhase
+                    phase = uiState.currentPhase,
+                    currentGems = uiState.currentGems
                 )
 
                 // 2. CONTENIDO DE LA PREGUNTA
@@ -785,5 +796,31 @@ private fun formatBattleTime(timeMs: Long): String {
         "${minutes}m ${seconds}s"
     } else {
         "${seconds}s"
+    }
+}
+
+@Composable
+private fun GemsIndicator(gems: Int, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                Icons.Default.Diamond,
+                contentDescription = "Gemas",
+                tint = Color(0xFF62FFFFFF), // Un color cian translúcido para la gema
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = gems.toString(),
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }

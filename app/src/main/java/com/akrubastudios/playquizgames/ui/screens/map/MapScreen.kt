@@ -92,6 +92,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
+import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
@@ -471,38 +472,6 @@ private fun RewardRow(icon: ImageVector, text: String) {
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
-
-@Composable
-private fun GemsBalanceIndicator(
-    gems: Int,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "💎", // Icono de gema
-                fontSize = 20.sp
-            )
-            Text(
-                text = gems.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
 private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
     // Colores del océano
     val deepOcean = Color(0xFF0D4F8C)     // Azul profundo

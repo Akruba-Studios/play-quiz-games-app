@@ -20,6 +20,7 @@ import android.app.Application
 import android.util.Log
 import com.akrubastudios.playquizgames.R
 import android.content.res.Configuration
+import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import java.util.Locale
 
 // Datos de tematización del Guardián
@@ -65,6 +66,7 @@ data class BossState(
     val timeRemaining: Int = 30, // segundos restantes
     val isTimerRunning: Boolean = false,
     val dialogueIndexInPhase: Int = 0,
+    val currentGems: Int = 0
 )
 
 @HiltViewModel
@@ -72,6 +74,7 @@ class BossViewModel @Inject constructor(
     private val quizRepository: QuizRepository,
     private val application: Application,
     private val languageManager: LanguageManager,
+    private val gameDataRepository: GameDataRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -114,6 +117,7 @@ class BossViewModel @Inject constructor(
     private fun loadBossLevel() {
         viewModelScope.launch {
             levelPackage = quizRepository.getLevel(levelId)
+            val userData = gameDataRepository.getUserData()
             if (levelPackage != null) {
                 shuffledQuestions = levelPackage!!.questions.shuffled()
                 val theme = generateGuardianTheme(countryId)
@@ -125,7 +129,8 @@ class BossViewModel @Inject constructor(
                         totalQuestions = shuffledQuestions.size,
                         guardianTheme = theme,
                         currentDialogue = theme.dialogues[0].random(),
-                        battleStats = BattleStats()
+                        battleStats = BattleStats(),
+                        currentGems = userData?.gems ?: 0
                     )
                 }
                 prepareNextQuestion()
