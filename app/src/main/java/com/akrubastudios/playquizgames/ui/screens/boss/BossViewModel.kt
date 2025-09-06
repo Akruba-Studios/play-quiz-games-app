@@ -449,7 +449,7 @@ class BossViewModel @Inject constructor(
             }
 
             if (isCorrect) {
-                val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0f)
+                val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0.05f)
                 val newStreak = state.battleStats.currentStreak + 1
 
                 _uiState.update {
@@ -461,11 +461,6 @@ class BossViewModel @Inject constructor(
                             longestStreak = maxOf(it.battleStats.longestStreak, newStreak)
                         )
                     )
-                }
-
-                if (newHealth <= 0.0f) {
-                    triggerVictorySequence()
-                    return@launch
                 }
             } else {
                 val newMistakes = state.playerMistakes + 1
