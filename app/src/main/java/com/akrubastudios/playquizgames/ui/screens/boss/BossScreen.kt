@@ -879,11 +879,33 @@ private fun HelpsContent(
                 .heightIn(min = 400.dp, max = 550.dp) // Altura específica para mostrar ~3.3 items
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = stringResource(R.string.helps_menu_title),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.helps_menu_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Timer prominente en rojo
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Red.copy(alpha = 0.2f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "⏰ ${uiState.timeRemaining}s",
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(24.dp))
 
             HelpItem(
