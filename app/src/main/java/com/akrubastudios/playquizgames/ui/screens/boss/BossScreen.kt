@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.ui.unit.times
 
 import androidx.compose.ui.res.stringResource
@@ -509,6 +510,7 @@ fun BossScreen(
                 .replace("{isFromBossFight}", "true")
                 .replace("{victory}", isVictory.toString())
                 .replace("{pcGained}", "0")
+                .replace("{gemsGained}", "0")
 
             navController.navigate(route) {
                 popUpTo(Routes.MAP_SCREEN)
@@ -615,7 +617,8 @@ fun BossScreen(
             ) {
                 HelpsContent(
                     uiState = uiState,
-                    onExtraTimeClick = { viewModel.useExtraTimeHelp() }
+                    onExtraTimeClick = { viewModel.useExtraTimeHelp() },
+                    onRemoveLettersClick = { viewModel.useRemoveLettersHelp() }
                 )
             }
         }
@@ -831,7 +834,8 @@ private fun formatBattleTime(timeMs: Long): String {
 @Composable
 private fun HelpsContent(
     uiState: BossState,
-    onExtraTimeClick: () -> Unit
+    onExtraTimeClick: () -> Unit,
+    onRemoveLettersClick: () -> Unit
 ) {
     if (uiState.isProcessingHelp) {
         Box(
@@ -841,7 +845,7 @@ private fun HelpsContent(
             CircularProgressIndicator()
         }
     } else {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
             Text(
                 text = stringResource(R.string.helps_menu_title),
                 style = MaterialTheme.typography.headlineSmall,
@@ -857,6 +861,18 @@ private fun HelpsContent(
                 currentGems = uiState.currentGems,
                 isUsed = uiState.isExtraTimeUsed,
                 onClick = onExtraTimeClick
+            )
+            Spacer(modifier = Modifier.height(12.dp)) // Espacio entre items
+
+            // Ayuda 2: Eliminar Letras
+            HelpItem(
+                icon = Icons.Default.DeleteSweep,
+                title = stringResource(R.string.help_item_remove_letters_title),
+                description = stringResource(R.string.help_item_remove_letters_description),
+                cost = BossViewModel.HELP_REMOVE_LETTERS_COST,
+                currentGems = uiState.currentGems,
+                isUsed = uiState.isRemoveLettersUsed,
+                onClick = onRemoveLettersClick
             )
         }
     }

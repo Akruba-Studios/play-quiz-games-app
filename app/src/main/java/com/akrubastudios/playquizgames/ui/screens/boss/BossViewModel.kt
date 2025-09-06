@@ -73,7 +73,8 @@ data class BossState(
     val currentGems: Int = 0,
     val showHelpsSheet: Boolean = false,
     val isProcessingHelp: Boolean = false,
-    val isExtraTimeUsed: Boolean = false
+    val isExtraTimeUsed: Boolean = false,
+    val isRemoveLettersUsed: Boolean = false
 )
 
 @HiltViewModel
@@ -90,7 +91,8 @@ class BossViewModel @Inject constructor(
     companion object {
         const val HELP_EXTRA_TIME_SECONDS = 15 // Tiempo agregado al usar el cheat timer
         const val HELP_EXTRA_TIME_COST = 4 // Costo en gemas del cheat timer
-        // ... (constantes para otras ayudas irán aquí)
+        const val HELP_REMOVE_LETTERS_COST = 5 // Costo gemas del cheat remove letras
+        const val HELP_REMOVE_LETTERS_DIVISOR = 2 // Elimina la mitad (1/2) de las letras
     }
 
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -256,7 +258,8 @@ class BossViewModel @Inject constructor(
                     usedLetterIndices = emptySet(),
                     currentPhase = newPhase,
                     lettersReshuffleCounter = 0,
-                    isExtraTimeUsed = false
+                    isExtraTimeUsed = false,
+                    isRemoveLettersUsed = false
                 )
             }
 
@@ -597,5 +600,73 @@ class BossViewModel @Inject constructor(
                 closeHelpsSheet()
             }
         }
+    }
+
+    fun useRemoveLettersHelp() {
+        val cost = HELP_REMOVE_LETTERS_COST
+        val state = uiState.value
+
+        if (state.currentGems < cost || state.isRemoveLettersUsed) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("BossViewModel", "Error: Usuario nulo al intentar usar ayuda.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
+        }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("BossViewModel", "✅ Petición para 'Eliminar Letras' enviada.")
+
+                        // APLICAMOS EL EFECTO VISUAL DESPUÉS DE CONFIRMAR LA ESCRITURA
+                        val correctAnswerLetters = state.currentCorrectAnswer.uppercase().filter { it.isLetter() }.toSet()
+                        val bankLetters = state.generatedHintLetters.toMutableList()
+
+                        val decoyLettersIndices = bankLetters.withIndex()
+                            .filter { !correctAnswerLetters.contains(it.value) }
+                            .map { it.index }
+                            .shuffled()
+
+                        // Usamos la nueva constante
+                        val lettersToRemoveCount = decoyLettersIndices.size / HELP_REMOVE_LETTERS_DIVISOR
+                        val indicesToRemove = decoyLettersIndices.take(lettersToRemoveCount).toSet()
+
+                        val newBankLetters = bankLetters.withIndex()
+                            .filter { !indicesToRemove.contains(it.index) }
+                            .joinToString("") { it.value.toString() }
+
+                        _uiState.update {
+                            it.copy(
+                                isRemoveLettersUsed = true,
+                                generatedHintLetters = newBankLetters,
+                                // El saldo real se actualizará por el listener,
+                                // pero lo descontamos visualmente para feedback inmediato.
+                                currentGems = it.currentGems - cost
+                            )
+                        }
+                    } else {
+                        Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Eliminar Letras'.", task.exception)
+                        // Opcional: Mostrar un Snackbar de error al usuario
+                    }
+
+                    // Pase lo que pase, terminamos la animación y cerramos el menú.
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    closeHelpsSheet()
+                }
+            }
     }
 }
