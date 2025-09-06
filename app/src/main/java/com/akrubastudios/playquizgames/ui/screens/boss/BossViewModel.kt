@@ -541,16 +541,13 @@ class BossViewModel @Inject constructor(
 
     // --- Funciones para el Menú de Ayudas ---
     fun openHelpsSheet() {
-        timerJob?.cancel() // Pausa el tiempo
         _uiState.update { it.copy(showHelpsSheet = true) }
     }
 
-    fun closeHelpsSheet(resumeTimer: Boolean = true) {
+    fun closeHelpsSheet() {
         _uiState.update { it.copy(showHelpsSheet = false) }
-        if (resumeTimer && !isAnswerProcessing) {
-            startQuestionTimer(uiState.value.timeRemaining.toLong())
-        }
     }
+
     fun useExtraTimeHelp() {
         val cost = HELP_EXTRA_TIME_COST
         val state = uiState.value
@@ -597,7 +594,7 @@ class BossViewModel @Inject constructor(
             } finally {
                 // 4. Pase lo que pase, terminamos la animación y cerramos el menú.
                 _uiState.update { it.copy(isProcessingHelp = false) }
-                closeHelpsSheet(resumeTimer = true)
+                closeHelpsSheet()
             }
         }
     }
