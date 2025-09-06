@@ -99,7 +99,7 @@
     <string name="help_item_extra_time_description">+%1$d segundos</string> <!-- %1$d será el número -->
     <string name="help_item_used_label">(Usado en esta pregunta)</string>
     <string name="help_item_remove_letters_title">Eliminar Letras</string>
-    <string name="help_item_remove_letters_description">Elimina la mitad de las letras incorrectas</string>
+    <string name="help_item_remove_letters_description">Elimina todas las letras incorrectas</string>
     <string name="help_item_reveal_letter_title">Revelar Letra</string>
     <string name="help_item_reveal_letter_description">Muestra la siguiente letra correcta</string>
     <string name="help_item_show_hint_title">Ver Pista</string>

@@ -97,7 +97,6 @@ class BossViewModel @Inject constructor(
         const val HELP_EXTRA_TIME_SECONDS = 15 // Tiempo agregado al usar el cheat timer
         const val HELP_EXTRA_TIME_COST = 4 // Costo en gemas del cheat timer
         const val HELP_REMOVE_LETTERS_COST = 5 // Costo gemas del cheat remove letras
-        const val HELP_REMOVE_LETTERS_DIVISOR = 2 // Elimina la mitad (1/2) de las letras
         const val HELP_REVEAL_LETTER_COST_INITIAL = 2 // Costo gemas cheat revelar letras
         const val HELP_REVEAL_LETTER_COST_INCREMENT = 1 // costo gemas cheat revelar letras incremental
         const val HELP_SHOW_HINT_COST = 7 // Costo gemas cheat mostrar pista o hint
@@ -668,9 +667,8 @@ class BossViewModel @Inject constructor(
                             .map { it.index }
                             .shuffled()
 
-                        // Usamos la nueva constante
-                        val lettersToRemoveCount = decoyLettersIndices.size / HELP_REMOVE_LETTERS_DIVISOR
-                        val indicesToRemove = decoyLettersIndices.take(lettersToRemoveCount).toSet()
+                        // Eliminamos TODOS los señuelos, no solo la mitad
+                        val indicesToRemove = decoyLettersIndices.toSet()
 
                         val newBankLetters = bankLetters.withIndex()
                             .filter { !indicesToRemove.contains(it.index) }
