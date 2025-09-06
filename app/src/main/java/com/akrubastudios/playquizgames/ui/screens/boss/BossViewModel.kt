@@ -727,7 +727,7 @@ class BossViewModel @Inject constructor(
                     if (task.isSuccessful) {
                         Log.d("BossViewModel", "✅ Petición para 'Revelar Letra' enviada.")
 
-                        // --- INICIO DE LA LÓGICA DE MANEJO DE CONFLICTOS ---
+                        // --- LÓGICA SIMPLIFICADA ---
                         val correctAnswerNoSpaces = state.currentCorrectAnswer.replace(" ", "")
                         val userAnswer = state.userAnswer
                         val hintLetters = state.generatedHintLetters
@@ -735,53 +735,25 @@ class BossViewModel @Inject constructor(
                         // 1. Obtenemos la siguiente letra correcta que necesitamos
                         val nextCorrectLetter = correctAnswerNoSpaces[userAnswer.length]
 
-                        // 2. Primero buscamos una letra disponible en el banco
-                        var letterIndexInBank = hintLetters.withIndex()
+                        // 2. Buscamos una letra disponible en el banco
+                        val letterIndexInBank = hintLetters.withIndex()
                             .find { (index, char) ->
                                 char.uppercaseChar() == nextCorrectLetter.uppercaseChar() &&
                                         !state.usedLetterIndices.contains(index)
                             }?.index
 
-                        // 3. Si no encontramos letra disponible, manejamos el conflicto
-                        var finalUserAnswer = userAnswer
-                        var finalUsedIndices = state.usedLetterIndices
-
-                        if (letterIndexInBank == null) {
-                            // Buscar si la letra está mal colocada en la respuesta del usuario
-                            val correctAnswerList = correctAnswerNoSpaces.toList()
-                            val userAnswerList = finalUserAnswer.toList()
-
-                            // Encontrar posiciones donde la letra está mal colocada
-                            val conflictPosition = userAnswerList.withIndex().find { (pos, char) ->
-                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() &&
-                                        correctAnswerList.getOrNull(pos)?.uppercaseChar() != char.uppercaseChar()
-                            }?.index
-
-                            if (conflictPosition != null) {
-                                // Quitar la letra de la posición incorrecta
-                                val newUserAnswerList = userAnswerList.toMutableList()
-                                newUserAnswerList.removeAt(conflictPosition)
-                                finalUserAnswer = newUserAnswerList.joinToString("")
-
-                                // Encontrar cuál índice del banco corresponde a esa letra y liberarlo
-                                val originalBankPosition = findOriginalBankPosition(
-                                    hintLetters,
-                                    nextCorrectLetter,
-                                    state.usedLetterIndices,
-                                    conflictPosition
-                                )
-
-                                if (originalBankPosition != null) {
-                                    finalUsedIndices = state.usedLetterIndices - originalBankPosition
-                                    letterIndexInBank = originalBankPosition
-                                }
-                            }
+                        // 3. Si no encontramos letra disponible, creamos una "virtual"
+                        val finalUsedIndices = if (letterIndexInBank != null) {
+                            state.usedLetterIndices + letterIndexInBank
+                        } else {
+                            state.usedLetterIndices // No modificamos si es letra creada
                         }
+                        // --- FIN LÓGICA SIMPLIFICADA ---
 
-                        if (letterIndexInBank != null) {
-                            val newAnswer = finalUserAnswer + nextCorrectLetter
-                            val newUsedIndices = finalUsedIndices + letterIndexInBank
-                            val newRevealedPositions = state.revealedLetterPositions + finalUserAnswer.length
+                        run {
+                            val newAnswer = userAnswer + nextCorrectLetter
+                            val newUsedIndices = finalUsedIndices
+                            val newRevealedPositions = state.revealedLetterPositions + userAnswer.length
 
                             _uiState.update {
                                 it.copy(
@@ -796,10 +768,7 @@ class BossViewModel @Inject constructor(
                             if (newAnswer.length == correctAnswerNoSpaces.length) {
                                 checkAnswer() // Llama a checkAnswer si se completó la palabra
                             }
-                        } else {
-                            Log.e("BossViewModel", "No se encontró una letra '$nextCorrectLetter' disponible en el banco.")
                         }
-
                     } else {
                         Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Revelar Letra'.", task.exception)
                     }
@@ -807,19 +776,6 @@ class BossViewModel @Inject constructor(
                     closeHelpsSheet()
                 }
             }
-    }
-    private fun findOriginalBankPosition(
-        hintLetters: String,
-        targetLetter: Char,
-        usedIndices: Set<Int>,
-        excludePosition: Int? = null
-    ): Int? {
-        return hintLetters.withIndex()
-            .find { (index, char) ->
-                char.uppercaseChar() == targetLetter.uppercaseChar() &&
-                        usedIndices.contains(index) &&
-                        index != excludePosition
-            }?.index
     }
     fun onFunFactDialogDismissed() {
         _uiState.update { it.copy(showFunFactDialog = false) }
