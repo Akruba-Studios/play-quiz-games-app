@@ -100,6 +100,8 @@
     <string name="help_item_used_label">(Usado en esta pregunta)</string>
     <string name="help_item_remove_letters_title">Eliminar Letras</string>
     <string name="help_item_remove_letters_description">Elimina la mitad de las letras incorrectas</string>
+    <string name="help_item_reveal_letter_title">Revelar Letra</string>
+    <string name="help_item_reveal_letter_description">Muestra la siguiente letra correcta</string>
 
     <!-- ResultScreen -->
     <string name="result_title_boss_victory">¡Guardián Derrotado!</string>

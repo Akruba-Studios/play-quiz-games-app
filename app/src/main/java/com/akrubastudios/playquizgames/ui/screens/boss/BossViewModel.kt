@@ -74,7 +74,8 @@ data class BossState(
     val showHelpsSheet: Boolean = false,
     val isProcessingHelp: Boolean = false,
     val isExtraTimeUsed: Boolean = false,
-    val isRemoveLettersUsed: Boolean = false
+    val isRemoveLettersUsed: Boolean = false,
+    val revealLetterUses: Int = 0
 )
 
 @HiltViewModel
@@ -93,6 +94,8 @@ class BossViewModel @Inject constructor(
         const val HELP_EXTRA_TIME_COST = 4 // Costo en gemas del cheat timer
         const val HELP_REMOVE_LETTERS_COST = 5 // Costo gemas del cheat remove letras
         const val HELP_REMOVE_LETTERS_DIVISOR = 2 // Elimina la mitad (1/2) de las letras
+        const val HELP_REVEAL_LETTER_COST_INITIAL = 2 // Costo gemas cheat revelar letras
+        const val HELP_REVEAL_LETTER_COST_INCREMENT = 1 // costo gemas cheat revelar letras incremental
     }
 
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -259,7 +262,8 @@ class BossViewModel @Inject constructor(
                     currentPhase = newPhase,
                     lettersReshuffleCounter = 0,
                     isExtraTimeUsed = false,
-                    isRemoveLettersUsed = false
+                    isRemoveLettersUsed = false,
+                    revealLetterUses = 0
                 )
             }
 
@@ -555,51 +559,61 @@ class BossViewModel @Inject constructor(
         val cost = HELP_EXTRA_TIME_COST
         val state = uiState.value
 
-        // Doble chequeo por seguridad
         if (state.currentGems < cost || state.isExtraTimeUsed) {
             return
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
 
-        viewModelScope.launch {
-            try {
-                val uid = auth.currentUser?.uid ?: throw Exception("Usuario no autenticado.")
-
-                // 1. Preparamos el documento que se va a crear.
-                val spendRequest = hashMapOf(
-                    "userId" to uid,
-                    "amount" to cost,
-                    "timestamp" to System.currentTimeMillis()
-                )
-
-                // 2. Escribimos el documento en la nueva colección.
-                //    Esto disparará el trigger que acabamos de crear.
-                db.collection("gem_spend_requests").add(spendRequest).await()
-
-                Log.d("BossViewModel", "✅ Petición de gasto de gemas enviada.")
-
-                // 3. Aplicamos el efecto visual INMEDIATAMENTE en la UI.
-                //    El listener de userStateFlow se encargará de actualizar el saldo real
-                //    cuando la Cloud Function termine.
-                val newTime = state.timeRemaining + HELP_EXTRA_TIME_SECONDS
-                _uiState.update {
-                    it.copy(
-                        isExtraTimeUsed = true,
-                        timeRemaining = newTime,
-                        // Descontamos las gemas visualmente para feedback instantáneo.
-                        currentGems = it.currentGems - cost
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e("BossViewModel", "❌ Error al crear gem_spend_request: ${e.message}")
-                // Opcional: mostrar un mensaje de error al usuario.
-            } finally {
-                // 4. Pase lo que pase, terminamos la animación y cerramos el menú.
-                _uiState.update { it.copy(isProcessingHelp = false) }
-                closeHelpsSheet()
-            }
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("BossViewModel", "Error: Usuario nulo al intentar usar Tiempo Extra.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
         }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("BossViewModel", "✅ Petición para 'Tiempo Extra' enviada.")
+
+                        // --- INICIO DE LA LÓGICA CORREGIDA ---
+
+                        // 1. Calculamos el nuevo tiempo total.
+                        val newTotalTime = uiState.value.timeRemaining + HELP_EXTRA_TIME_SECONDS
+
+                        // 2. Actualizamos el estado de la UI con los cambios.
+                        _uiState.update {
+                            it.copy(
+                                isExtraTimeUsed = true,
+                                timeRemaining = newTotalTime, // Actualizamos el número visible
+                                currentGems = it.currentGems - cost
+                            )
+                        }
+
+                        // 3. ¡CRUCIAL! Cancelamos el temporizador viejo y empezamos uno nuevo
+                        //    con el tiempo actualizado.
+                        startQuestionTimer(startTime = newTotalTime.toLong())
+
+                        // --- FIN DE LA LÓGICA CORREGIDA ---
+
+                    } else {
+                        Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Tiempo Extra'.", task.exception)
+                    }
+
+                    // Pase lo que pase, cerramos el menú.
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    closeHelpsSheet()
+                }
+            }
     }
 
     fun useRemoveLettersHelp() {
@@ -664,6 +678,82 @@ class BossViewModel @Inject constructor(
                     }
 
                     // Pase lo que pase, terminamos la animación y cerramos el menú.
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    closeHelpsSheet()
+                }
+            }
+    }
+    fun useRevealLetterHelp() {
+        val state = uiState.value
+        val cost = HELP_REVEAL_LETTER_COST_INITIAL + (state.revealLetterUses * HELP_REVEAL_LETTER_COST_INCREMENT)
+        val lettersToRevealCount = state.currentCorrectAnswer.replace(" ", "").length
+
+        if (state.currentGems < cost || state.userAnswer.length >= lettersToRevealCount) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("BossViewModel", "Error: Usuario nulo al intentar usar Revelar Letra.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
+        }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("BossViewModel", "✅ Petición para 'Revelar Letra' enviada.")
+
+                        // --- INICIO DE LA LÓGICA DE BÚSQUEDA CORREGIDA ---
+                        val correctAnswerNoSpaces = state.currentCorrectAnswer.replace(" ", "")
+                        val userAnswer = state.userAnswer
+                        val hintLetters = state.generatedHintLetters
+
+                        // 1. Obtenemos la siguiente letra correcta que necesitamos.
+                        val nextCorrectLetter = correctAnswerNoSpaces[userAnswer.length]
+
+                        // 2. Buscamos el ÍNDICE de la primera letra en el banco que coincida Y que NO esté ya usada.
+                        //    Usamos 'withIndex()' para tener acceso tanto a la letra como a su índice.
+                        val letterIndexInBank = hintLetters.withIndex()
+                            .find { (index, char) ->
+                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() && !state.usedLetterIndices.contains(index)
+                            }?.index // Obtenemos solo el índice si se encontró
+
+                        // --- FIN DE LA LÓGICA DE BÚSQUEDA CORREGIDA ---
+
+                        if (letterIndexInBank != null) {
+                            val newAnswer = userAnswer + nextCorrectLetter
+                            val newUsedIndices = state.usedLetterIndices + letterIndexInBank
+
+                            _uiState.update {
+                                it.copy(
+                                    userAnswer = newAnswer.uppercase(),
+                                    usedLetterIndices = newUsedIndices,
+                                    revealLetterUses = it.revealLetterUses + 1,
+                                    currentGems = it.currentGems - cost
+                                )
+                            }
+
+                            if (newAnswer.length == correctAnswerNoSpaces.length) {
+                                checkAnswer() // Llama a checkAnswer si se completó la palabra
+                            }
+                        } else {
+                            Log.e("BossViewModel", "No se encontró una letra '$nextCorrectLetter' disponible en el banco.")
+                        }
+
+                    } else {
+                        Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Revelar Letra'.", task.exception)
+                    }
                     _uiState.update { it.copy(isProcessingHelp = false) }
                     closeHelpsSheet()
                 }

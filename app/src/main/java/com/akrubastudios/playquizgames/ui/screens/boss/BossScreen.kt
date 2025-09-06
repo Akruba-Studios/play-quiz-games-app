@@ -58,6 +58,7 @@ import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -618,7 +619,8 @@ fun BossScreen(
                 HelpsContent(
                     uiState = uiState,
                     onExtraTimeClick = { viewModel.useExtraTimeHelp() },
-                    onRemoveLettersClick = { viewModel.useRemoveLettersHelp() }
+                    onRemoveLettersClick = { viewModel.useRemoveLettersHelp() },
+                    onRevealLetterClick = { viewModel.useRevealLetterHelp() }
                 )
             }
         }
@@ -835,7 +837,8 @@ private fun formatBattleTime(timeMs: Long): String {
 private fun HelpsContent(
     uiState: BossState,
     onExtraTimeClick: () -> Unit,
-    onRemoveLettersClick: () -> Unit
+    onRemoveLettersClick: () -> Unit,
+    onRevealLetterClick: () -> Unit
 ) {
     if (uiState.isProcessingHelp) {
         Box(
@@ -873,6 +876,21 @@ private fun HelpsContent(
                 currentGems = uiState.currentGems,
                 isUsed = uiState.isRemoveLettersUsed,
                 onClick = onRemoveLettersClick
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Ayuda 3. Mostrar Letras. Calculamos el costo dinámicamente
+            val revealLetterCost = BossViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * BossViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
+
+            HelpItem(
+                icon = Icons.Default.VpnKey,
+                title = stringResource(R.string.help_item_reveal_letter_title),
+                description = stringResource(R.string.help_item_reveal_letter_description),
+                cost = revealLetterCost,
+                currentGems = uiState.currentGems,
+                // La ayuda se considera "usada" para deshabilitarla si ya no quedan letras por revelar.
+                isUsed = uiState.revealLetterUses >= uiState.currentCorrectAnswer.count { it.isLetter() },
+                onClick = onRevealLetterClick
             )
         }
     }
