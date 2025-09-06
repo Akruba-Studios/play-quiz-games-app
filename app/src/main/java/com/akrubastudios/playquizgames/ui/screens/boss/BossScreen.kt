@@ -222,6 +222,7 @@ private fun QuestionTextFixed(
 private fun AnswerSlotsFixed(
     correctAnswer: String,
     userAnswer: String,
+    revealedLetterPositions: Set<Int>,
     onClear: () -> Unit
 ) {
     val userAnswerLetters = userAnswer
@@ -246,10 +247,15 @@ private fun AnswerSlotsFixed(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
+                    val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
                     Card(
                         modifier = Modifier.size(globalSlotSize),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (charToShow == ' ') Color.Gray.copy(alpha = 0.8f) else Color.Blue
+                            containerColor = when {
+                                charToShow == ' ' -> Color.Gray.copy(alpha = 0.8f)
+                                isRevealedLetter -> Color(0xFF4CAF50) // Verde para letras reveladas
+                                else -> Color.Blue // Azul para letras normales
+                            }
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -565,6 +571,7 @@ fun BossScreen(
                     AnswerSlotsFixed(
                         correctAnswer = uiState.currentCorrectAnswer,
                         userAnswer = uiState.userAnswer,
+                        revealedLetterPositions = uiState.revealedLetterPositions,
                         onClear = { viewModel.clearUserAnswer() }
                     )
 

@@ -78,7 +78,8 @@ data class BossState(
     val revealLetterUses: Int = 0,
     val isShowHintUsed: Boolean = false,
     val showFunFactDialog: Boolean = false,
-    val currentFunFact: String = ""
+    val currentFunFact: String = "",
+    val revealedLetterPositions: Set<Int> = emptySet(),
 )
 
 @HiltViewModel
@@ -739,11 +740,13 @@ class BossViewModel @Inject constructor(
                         if (letterIndexInBank != null) {
                             val newAnswer = userAnswer + nextCorrectLetter
                             val newUsedIndices = state.usedLetterIndices + letterIndexInBank
+                            val newRevealedPositions = state.revealedLetterPositions + userAnswer.length
 
                             _uiState.update {
                                 it.copy(
                                     userAnswer = newAnswer.uppercase(),
                                     usedLetterIndices = newUsedIndices,
+                                    revealedLetterPositions = newRevealedPositions,
                                     revealLetterUses = it.revealLetterUses + 1,
                                     currentGems = it.currentGems - cost
                                 )
