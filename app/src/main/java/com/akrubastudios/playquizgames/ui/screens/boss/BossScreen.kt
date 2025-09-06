@@ -56,6 +56,12 @@ import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.vector.ImageVector
+
 // Datos para las partículas de confeti
 data class Particle(
     val x: Float,
@@ -78,7 +84,8 @@ private fun BossHeaderFixed(
     mistakes: Int,
     maxMistakes: Int,
     phase: Int,
-    currentGems: Int
+    currentGems: Int,
+    onGemsClick: () -> Unit
 ) {
     val animatedHealth by animateFloatAsState(
         targetValue = health,
@@ -117,7 +124,14 @@ private fun BossHeaderFixed(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                GemsBalanceIndicator(gems = currentGems)
+                GemsBalanceIndicator(
+                    gems = currentGems,
+                    modifier = Modifier.clickable(
+                        // Se puede hacer clic solo si el jugador tiene gemas.
+                        enabled = currentGems > 0,
+                        onClick = onGemsClick
+                    )
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -455,6 +469,7 @@ private fun DynamicBackground(
 // COMPONENTE PRINCIPAL REDISEÑADO - SIN WEIGHTS FIJOS
 // =====================================================
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BossScreen(
     navController: NavController,
@@ -529,7 +544,8 @@ fun BossScreen(
                     mistakes = uiState.playerMistakes,
                     maxMistakes = uiState.maxMistakes,
                     phase = uiState.currentPhase,
-                    currentGems = uiState.currentGems
+                    currentGems = uiState.currentGems,
+                    onGemsClick = { viewModel.openHelpsSheet() }
                 )
 
                 // 2. CONTENIDO DE LA PREGUNTA
@@ -587,6 +603,19 @@ fun BossScreen(
                 VictorySequence(
                     guardianName = uiState.guardianTheme.name,
                     battleStats = uiState.battleStats
+                )
+            }
+        }
+        val sheetState = rememberModalBottomSheetState()
+
+        if (uiState.showHelpsSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.closeHelpsSheet() },
+                sheetState = sheetState
+            ) {
+                HelpsContent(
+                    uiState = uiState,
+                    onExtraTimeClick = { viewModel.useExtraTimeHelp() }
                 )
             }
         }
@@ -800,26 +829,79 @@ private fun formatBattleTime(timeMs: Long): String {
 }
 
 @Composable
-private fun GemsIndicator(gems: Int, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+private fun HelpsContent(
+    uiState: BossState,
+    onExtraTimeClick: () -> Unit
+) {
+    if (uiState.isProcessingHelp) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(200.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Default.Diamond,
-                contentDescription = "Gemas",
-                tint = Color(0xFF62FFFFFF), // Un color cian translúcido para la gema
-                modifier = Modifier.size(20.dp)
-            )
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = gems.toString(),
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+                text = stringResource(R.string.helps_menu_title),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            HelpItem(
+                icon = Icons.Default.Timer,
+                title = stringResource(R.string.help_item_extra_time_title),
+                description = stringResource(R.string.help_item_extra_time_description, BossViewModel.HELP_EXTRA_TIME_SECONDS),
+                cost = BossViewModel.HELP_EXTRA_TIME_COST,
+                currentGems = uiState.currentGems,
+                isUsed = uiState.isExtraTimeUsed,
+                onClick = onExtraTimeClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun HelpItem(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    cost: Int,
+    currentGems: Int,
+    isUsed: Boolean,
+    onClick: () -> Unit
+) {
+    val canAfford = currentGems >= cost
+    val isEnabled = !isUsed && canAfford
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isEnabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = title, modifier = Modifier.size(40.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, fontWeight = FontWeight.Bold)
+                Text(text = description, style = MaterialTheme.typography.bodySmall)
+            }
+            Button(onClick = onClick, enabled = isEnabled) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = cost.toString())
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.Diamond, contentDescription = stringResource(R.string.cd_gems), modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+        if (isUsed) {
+            Text(
+                text = stringResource(R.string.help_item_used_label),
+                modifier = Modifier.align(Alignment.End).padding(end = 12.dp, bottom = 4.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
     }

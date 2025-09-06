@@ -278,7 +278,7 @@ fun MapScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Flight,
-                            contentDescription = "Iniciar Expedición"
+                            contentDescription = stringResource(R.string.cd_start_expedition)
                         )
                     }
                 }

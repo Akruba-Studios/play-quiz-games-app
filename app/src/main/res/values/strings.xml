@@ -42,6 +42,8 @@
     <string name="domination_reward_category"><b>Categoría Secreta:</b> Has desbloqueado una categoría de conocimiento única en el país que dominaste. ¡Búscala!</string>
     <string name="domination_reward_boost"><b>Boost de Conquista:</b> Has ganado un Boost para añadir <b>%1$d PC</b> a cualquier país.</string>
 
+    <string name="cd_start_expedition">Iniciar Expedición</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>
@@ -90,6 +92,12 @@
     <string name="boss_battle_stats_time">⏱️ Tiempo: %1$s</string>
     <string name="boss_battle_stats_accuracy">🎯 Precisión: %1$d%%</string>
     <string name="boss_battle_stats_streak">🔥 Racha máxima: %1$d</string>
+
+    <string name="helps_menu_title">Menú de Ayudas</string>
+    <string name="cd_gems">Gemas</string>
+    <string name="help_item_extra_time_title">Tiempo Extra</string>
+    <string name="help_item_extra_time_description">+%1$d segundos</string> <!-- %1$d será el número -->
+    <string name="help_item_used_label">(Usado en esta pregunta)</string>
 
     <!-- ResultScreen -->
     <string name="result_title_boss_victory">¡Guardián Derrotado!</string>

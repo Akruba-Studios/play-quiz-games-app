@@ -21,6 +21,10 @@ import android.util.Log
 import com.akrubastudios.playquizgames.R
 import android.content.res.Configuration
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
 // Datos de tematización del Guardián
@@ -66,7 +70,10 @@ data class BossState(
     val timeRemaining: Int = 30, // segundos restantes
     val isTimerRunning: Boolean = false,
     val dialogueIndexInPhase: Int = 0,
-    val currentGems: Int = 0
+    val currentGems: Int = 0,
+    val showHelpsSheet: Boolean = false,
+    val isProcessingHelp: Boolean = false,
+    val isExtraTimeUsed: Boolean = false
 )
 
 @HiltViewModel
@@ -75,8 +82,16 @@ class BossViewModel @Inject constructor(
     private val application: Application,
     private val languageManager: LanguageManager,
     private val gameDataRepository: GameDataRepository,
+    private val auth: FirebaseAuth,
+    private val db: FirebaseFirestore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    companion object {
+        const val HELP_EXTRA_TIME_SECONDS = 15 // Tiempo agregado al usar el cheat timer
+        const val HELP_EXTRA_TIME_COST = 4 // Costo en gemas del cheat timer
+        // ... (constantes para otras ayudas irán aquí)
+    }
 
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
@@ -240,7 +255,8 @@ class BossViewModel @Inject constructor(
                     generatedHintLetters = generateHintLettersByPhase(correctAnswerForUi, newPhase),
                     usedLetterIndices = emptySet(),
                     currentPhase = newPhase,
-                    lettersReshuffleCounter = 0
+                    lettersReshuffleCounter = 0,
+                    isExtraTimeUsed = false
                 )
             }
 
@@ -266,10 +282,10 @@ class BossViewModel @Inject constructor(
             }
         }
     }
-    private fun startQuestionTimer() {
+    private fun startQuestionTimer(startTime: Long? = null) {
         timerJob?.cancel()
 
-        val timeForPhase = when(uiState.value.currentPhase) {
+        val initialTime = startTime?.toInt() ?: when(uiState.value.currentPhase) {
             1 -> 30 // 30 segundos fase normal
             2 -> 25 // 25 segundos fase agitada
             3 -> 20 // 20 segundos fase desesperada
@@ -278,13 +294,13 @@ class BossViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                timeRemaining = timeForPhase,
+                timeRemaining = initialTime,
                 isTimerRunning = true
             )
         }
 
         timerJob = viewModelScope.launch {
-            for (time in timeForPhase downTo 0) {
+            for (time in initialTime downTo 0) {
                 _uiState.update { it.copy(timeRemaining = time) }
                 if (time == 0) {
                     // Tiempo agotado = respuesta incorrecta automática
@@ -521,5 +537,68 @@ class BossViewModel @Inject constructor(
 
     fun dismissPhaseTransition() {
         _uiState.update { it.copy(isPhaseTransition = false) }
+    }
+
+    // --- Funciones para el Menú de Ayudas ---
+    fun openHelpsSheet() {
+        timerJob?.cancel() // Pausa el tiempo
+        _uiState.update { it.copy(showHelpsSheet = true) }
+    }
+
+    fun closeHelpsSheet(resumeTimer: Boolean = true) {
+        _uiState.update { it.copy(showHelpsSheet = false) }
+        if (resumeTimer && !isAnswerProcessing) {
+            startQuestionTimer(uiState.value.timeRemaining.toLong())
+        }
+    }
+    fun useExtraTimeHelp() {
+        val cost = HELP_EXTRA_TIME_COST
+        val state = uiState.value
+
+        // Doble chequeo por seguridad
+        if (state.currentGems < cost || state.isExtraTimeUsed) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        viewModelScope.launch {
+            try {
+                val uid = auth.currentUser?.uid ?: throw Exception("Usuario no autenticado.")
+
+                // 1. Preparamos el documento que se va a crear.
+                val spendRequest = hashMapOf(
+                    "userId" to uid,
+                    "amount" to cost,
+                    "timestamp" to System.currentTimeMillis()
+                )
+
+                // 2. Escribimos el documento en la nueva colección.
+                //    Esto disparará el trigger que acabamos de crear.
+                db.collection("gem_spend_requests").add(spendRequest).await()
+
+                Log.d("BossViewModel", "✅ Petición de gasto de gemas enviada.")
+
+                // 3. Aplicamos el efecto visual INMEDIATAMENTE en la UI.
+                //    El listener de userStateFlow se encargará de actualizar el saldo real
+                //    cuando la Cloud Function termine.
+                val newTime = state.timeRemaining + HELP_EXTRA_TIME_SECONDS
+                _uiState.update {
+                    it.copy(
+                        isExtraTimeUsed = true,
+                        timeRemaining = newTime,
+                        // Descontamos las gemas visualmente para feedback instantáneo.
+                        currentGems = it.currentGems - cost
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("BossViewModel", "❌ Error al crear gem_spend_request: ${e.message}")
+                // Opcional: mostrar un mensaje de error al usuario.
+            } finally {
+                // 4. Pase lo que pase, terminamos la animación y cerramos el menú.
+                _uiState.update { it.copy(isProcessingHelp = false) }
+                closeHelpsSheet(resumeTimer = true)
+            }
+        }
     }
 }
