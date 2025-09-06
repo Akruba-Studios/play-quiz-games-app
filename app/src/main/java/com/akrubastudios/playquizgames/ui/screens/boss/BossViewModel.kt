@@ -269,7 +269,8 @@ class BossViewModel @Inject constructor(
                     isExtraTimeUsed = false,
                     isRemoveLettersUsed = false,
                     revealLetterUses = 0,
-                    isShowHintUsed = false
+                    isShowHintUsed = false,
+                    revealedLetterPositions = emptySet(),
                 )
             }
 
@@ -545,7 +546,13 @@ class BossViewModel @Inject constructor(
     }
 
     fun clearUserAnswer() {
-        _uiState.update { it.copy(userAnswer = "", usedLetterIndices = emptySet()) }
+        _uiState.update {
+            it.copy(
+                userAnswer = "",
+                usedLetterIndices = emptySet(),
+                revealedLetterPositions = emptySet()
+            )
+        }
     }
 
     fun dismissPhaseTransition() {
@@ -720,27 +727,61 @@ class BossViewModel @Inject constructor(
                     if (task.isSuccessful) {
                         Log.d("BossViewModel", "✅ Petición para 'Revelar Letra' enviada.")
 
-                        // --- INICIO DE LA LÓGICA DE BÚSQUEDA CORREGIDA ---
+                        // --- INICIO DE LA LÓGICA DE MANEJO DE CONFLICTOS ---
                         val correctAnswerNoSpaces = state.currentCorrectAnswer.replace(" ", "")
                         val userAnswer = state.userAnswer
                         val hintLetters = state.generatedHintLetters
 
-                        // 1. Obtenemos la siguiente letra correcta que necesitamos.
+                        // 1. Obtenemos la siguiente letra correcta que necesitamos
                         val nextCorrectLetter = correctAnswerNoSpaces[userAnswer.length]
 
-                        // 2. Buscamos el ÍNDICE de la primera letra en el banco que coincida Y que NO esté ya usada.
-                        //    Usamos 'withIndex()' para tener acceso tanto a la letra como a su índice.
-                        val letterIndexInBank = hintLetters.withIndex()
+                        // 2. Primero buscamos una letra disponible en el banco
+                        var letterIndexInBank = hintLetters.withIndex()
                             .find { (index, char) ->
-                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() && !state.usedLetterIndices.contains(index)
-                            }?.index // Obtenemos solo el índice si se encontró
+                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() &&
+                                        !state.usedLetterIndices.contains(index)
+                            }?.index
 
-                        // --- FIN DE LA LÓGICA DE BÚSQUEDA CORREGIDA ---
+                        // 3. Si no encontramos letra disponible, manejamos el conflicto
+                        var finalUserAnswer = userAnswer
+                        var finalUsedIndices = state.usedLetterIndices
+
+                        if (letterIndexInBank == null) {
+                            // Buscar si la letra está mal colocada en la respuesta del usuario
+                            val correctAnswerList = correctAnswerNoSpaces.toList()
+                            val userAnswerList = finalUserAnswer.toList()
+
+                            // Encontrar posiciones donde la letra está mal colocada
+                            val conflictPosition = userAnswerList.withIndex().find { (pos, char) ->
+                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() &&
+                                        correctAnswerList.getOrNull(pos)?.uppercaseChar() != char.uppercaseChar()
+                            }?.index
+
+                            if (conflictPosition != null) {
+                                // Quitar la letra de la posición incorrecta
+                                val newUserAnswerList = userAnswerList.toMutableList()
+                                newUserAnswerList.removeAt(conflictPosition)
+                                finalUserAnswer = newUserAnswerList.joinToString("")
+
+                                // Encontrar cuál índice del banco corresponde a esa letra y liberarlo
+                                val originalBankPosition = findOriginalBankPosition(
+                                    hintLetters,
+                                    nextCorrectLetter,
+                                    state.usedLetterIndices,
+                                    conflictPosition
+                                )
+
+                                if (originalBankPosition != null) {
+                                    finalUsedIndices = state.usedLetterIndices - originalBankPosition
+                                    letterIndexInBank = originalBankPosition
+                                }
+                            }
+                        }
 
                         if (letterIndexInBank != null) {
-                            val newAnswer = userAnswer + nextCorrectLetter
-                            val newUsedIndices = state.usedLetterIndices + letterIndexInBank
-                            val newRevealedPositions = state.revealedLetterPositions + userAnswer.length
+                            val newAnswer = finalUserAnswer + nextCorrectLetter
+                            val newUsedIndices = finalUsedIndices + letterIndexInBank
+                            val newRevealedPositions = state.revealedLetterPositions + finalUserAnswer.length
 
                             _uiState.update {
                                 it.copy(
@@ -766,6 +807,19 @@ class BossViewModel @Inject constructor(
                     closeHelpsSheet()
                 }
             }
+    }
+    private fun findOriginalBankPosition(
+        hintLetters: String,
+        targetLetter: Char,
+        usedIndices: Set<Int>,
+        excludePosition: Int? = null
+    ): Int? {
+        return hintLetters.withIndex()
+            .find { (index, char) ->
+                char.uppercaseChar() == targetLetter.uppercaseChar() &&
+                        usedIndices.contains(index) &&
+                        index != excludePosition
+            }?.index
     }
     fun onFunFactDialogDismissed() {
         _uiState.update { it.copy(showFunFactDialog = false) }
