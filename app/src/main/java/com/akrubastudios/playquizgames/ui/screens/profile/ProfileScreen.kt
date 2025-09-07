@@ -40,6 +40,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
+import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -135,10 +136,28 @@ fun ProfileScreen(
                     imageUrl = uiState.user?.photoUrl
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                PlayerLevelIndicator(
-                    levelInfo = uiState.levelInfo!!,
-                    boostCount = uiState.user?.unassignedPcBoosts ?: 0
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp), // Un padding para que no se peguen a los bordes
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Indicador de Nivel (usamos un Box con peso para que ocupe el espacio disponible)
+                    Box(modifier = Modifier.weight(1f)) {
+                        uiState.levelInfo?.let { levelInfo ->
+                            PlayerLevelIndicator(
+                                levelInfo = levelInfo,
+                                boostCount = uiState.user?.unassignedPcBoosts ?: 0
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Indicador de Gemas
+                    GemsBalanceIndicator(gems = uiState.user?.gems ?: 0)
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 

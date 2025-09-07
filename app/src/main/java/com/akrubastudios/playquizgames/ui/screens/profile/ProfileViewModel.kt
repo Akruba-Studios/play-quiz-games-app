@@ -43,7 +43,8 @@ data class ProfileState(
     val user: User? = null,
     val levelInfo: PlayerLevelManager.LevelInfo? = null,
     val nextMilestone: Milestone? = null,
-    val triggerMilestoneAnimation: Boolean = false
+    val triggerMilestoneAnimation: Boolean = false,
+    val gems: Int = 0
 )
 
 @HiltViewModel
@@ -106,7 +107,8 @@ class ProfileViewModel @Inject constructor(
                         user = currentUser,
                         levelInfo = levelInfo,
                         nextMilestone = nextMilestone,
-                        triggerMilestoneAnimation = shouldTriggerAnimation
+                        triggerMilestoneAnimation = shouldTriggerAnimation,
+                        gems = currentUser.gems
                     )
                 }
             }
