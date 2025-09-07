@@ -80,6 +80,8 @@ data class BossState(
     val showFunFactDialog: Boolean = false,
     val currentFunFact: String = "",
     val revealedLetterPositions: Set<Int> = emptySet(),
+    val showCorrectEffect: Boolean = false,
+    val showIncorrectEffect: Boolean = false,
 )
 
 @HiltViewModel
@@ -456,6 +458,7 @@ class BossViewModel @Inject constructor(
                     it.copy(
                         bossHealth = newHealth,
                         correctAnswersCount = it.correctAnswersCount + 1,
+                        showCorrectEffect = true,
                         battleStats = it.battleStats.copy(
                             currentStreak = newStreak,
                             longestStreak = maxOf(it.battleStats.longestStreak, newStreak)
@@ -467,15 +470,9 @@ class BossViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         playerMistakes = newMistakes,
-                        showShakeEffect = true,
+                        showIncorrectEffect = true,
                         battleStats = it.battleStats.copy(currentStreak = 0)
                     )
-                }
-
-                // Efecto de shake por 500ms
-                viewModelScope.launch {
-                    delay(500L)
-                    _uiState.update { it.copy(showShakeEffect = false) }
                 }
 
                 if (newMistakes >= state.maxMistakes) {
@@ -487,6 +484,16 @@ class BossViewModel @Inject constructor(
             delay(1500L)
             currentQuestionIndex++
             prepareNextQuestion()
+        }
+        // Limpiar efectos después de 0.8 segundo
+        viewModelScope.launch {
+            delay(800L)
+            _uiState.update {
+                it.copy(
+                    showCorrectEffect = false,
+                    showIncorrectEffect = false
+                )
+            }
         }
     }
 

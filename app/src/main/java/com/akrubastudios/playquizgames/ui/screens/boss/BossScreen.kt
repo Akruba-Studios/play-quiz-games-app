@@ -161,8 +161,8 @@ private fun BossHeaderFixed(
                         else
                             Icons.Default.FavoriteBorder,
                         contentDescription = stringResource(R.string.cd_life),
-                        tint = Color.Magenta,
-                        modifier = Modifier.size(20.dp)
+                        tint = Color.Red,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -211,7 +211,7 @@ private fun QuestionTextFixed(
             color = Color.White,
             fontWeight = FontWeight.Medium,
             lineHeight = 30.sp,
-            fontSize = 24.sp
+            fontSize = 20.sp
         )
     }
 }
@@ -596,6 +596,16 @@ fun BossScreen(
 
                 // Espaciado adicional para el último elemento
                 Spacer(Modifier.height(32.dp))
+            }
+            // Efecto spray para respuestas
+            AnimatedVisibility(
+                visible = uiState.showCorrectEffect || uiState.showIncorrectEffect,
+                enter = fadeIn(tween(300)),
+                exit = fadeOut(tween(500))
+            ) {
+                SprayEffectOverlay(
+                    isCorrect = uiState.showCorrectEffect
+                )
             }
 
             // Overlay de transición de fase
@@ -1045,4 +1055,45 @@ private fun AnimatedGemsIndicator(
                 onClick = onClick
             )
     )
+}
+@Composable
+private fun SprayEffectOverlay(isCorrect: Boolean) {
+    val color = if (isCorrect) Color.Green else Color.Red
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val centerX = size.width / 2f
+        val centerY = size.height / 2f
+
+        // Crear múltiples gradientes radiales para efecto spray
+        val gradients = listOf(
+            // Esquina superior izquierda
+            Pair(Offset(0f, 0f), size.width * 0.4f),
+            // Esquina superior derecha
+            Pair(Offset(size.width, 0f), size.width * 0.4f),
+            // Esquina inferior izquierda
+            Pair(Offset(0f, size.height), size.width * 0.4f),
+            // Esquina inferior derecha
+            Pair(Offset(size.width, size.height), size.width * 0.4f),
+            // Bordes centrales
+            Pair(Offset(centerX, 0f), size.width * 0.3f), // Top
+            Pair(Offset(centerX, size.height), size.width * 0.3f), // Bottom
+            Pair(Offset(0f, centerY), size.height * 0.3f), // Left
+            Pair(Offset(size.width, centerY), size.height * 0.3f) // Right
+        )
+
+        gradients.forEach { (center, radius) ->
+            val brush = Brush.radialGradient(
+                colors = listOf(
+                    color.copy(alpha = 0.6f),
+                    color.copy(alpha = 0.3f),
+                    color.copy(alpha = 0.1f),
+                    Color.Transparent
+                ),
+                center = center,
+                radius = radius
+            )
+
+            drawRect(brush = brush)
+        }
+    }
 }
