@@ -64,6 +64,8 @@ import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 
 // Datos para las partículas de confeti
@@ -128,13 +130,10 @@ private fun BossHeaderFixed(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                GemsBalanceIndicator(
+                AnimatedGemsIndicator(
                     gems = currentGems,
-                    modifier = Modifier.clickable(
-                        // Se puede hacer clic solo si el jugador tiene gemas.
-                        enabled = currentGems > 0,
-                        onClick = onGemsClick
-                    )
+                    hasGems = currentGems > 0,
+                    onClick = onGemsClick
                 )
             }
 
@@ -1005,4 +1004,45 @@ private fun HelpItem(
             )
         }
     }
+}
+@Composable
+private fun AnimatedGemsIndicator(
+    gems: Int,
+    hasGems: Boolean,
+    onClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "gemsAnimation")
+
+    // Animación de pulso (escala)
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (hasGems) 1.1f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    // Animación de brillo (alpha)
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = if (hasGems) 0.7f else 0.5f,
+        targetValue = if (hasGems) 1f else 0.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
+    GemsBalanceIndicator(
+        gems = gems,
+        modifier = Modifier
+            .scale(pulseScale)
+            .alpha(shimmerAlpha)
+            .clickable(
+                enabled = hasGems,
+                onClick = onClick
+            )
+    )
 }
