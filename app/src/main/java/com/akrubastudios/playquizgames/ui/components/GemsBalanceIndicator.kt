@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun GemsBalanceIndicator(
     gems: Int,
+    prefix: String = "",
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -45,7 +46,7 @@ fun GemsBalanceIndicator(
                 fontSize = 20.sp
             )
             Text(
-                text = gems.toString(),
+                text = "$prefix${gems}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

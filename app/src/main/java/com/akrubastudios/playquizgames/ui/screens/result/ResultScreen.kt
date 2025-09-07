@@ -21,6 +21,7 @@ import com.akrubastudios.playquizgames.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 
 @Composable
 fun ResultScreen(
@@ -65,22 +66,19 @@ fun ResultScreen(
         }
         if (gemsGained > 0) {
             Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.result_gems_won),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "+$gemsGained 💎",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = Color(0xFFD4AF37) // Dorado
-                )
-            }
+            Text(
+                text = stringResource(R.string.result_gems_won),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            // Simplemente llamamos a nuestro componente reutilizable
+            GemsBalanceIndicator(
+                gems = gemsGained,
+                prefix = "+" // <-- PASAMOS EL PREFIJO AQUÍ
+            )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = stringResource(R.string.result_questions_summary, correctAnswers, totalQuestions)
         )

@@ -44,7 +44,6 @@
 
     <string name="cd_start_expedition">Iniciar Expedición</string>
 
-    <!-- Gems Tutorial -->
     <string name="gems_tutorial_title">What are Gems?</string>
     <string name="gems_tutorial_message">These are your most valuable resource! Earn them by getting stars in levels and spend them to activate powerful Helps during battles against each country\'s Guardian.</string>
 
