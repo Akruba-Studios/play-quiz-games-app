@@ -2,10 +2,12 @@ package com.akrubastudios.playquizgames.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Paleta de Colores Primarios basada en el Logo
+val DeepNavy = Color(22, 44, 54)
+val SkyBlue = Color(54, 177, 208)
+val GoldAccent = Color(252, 185, 10)
+val CyanAccent = Color(59, 227, 231)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Colores base neutros para fondos y textos
+val PureWhite = Color(255, 255, 255)
+val LightGray = Color(240, 242, 245) // Un gris muy claro para fondos sutiles

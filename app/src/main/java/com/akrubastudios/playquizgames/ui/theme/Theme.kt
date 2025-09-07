@@ -10,33 +10,39 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// 1. Definimos el esquema de colores para el tema OSCURO
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = SkyBlue,          // El azul del logo será el color principal
+    secondary = CyanAccent,     // El cian brillante como color secundario
+    tertiary = GoldAccent,      // El dorado para acentos especiales
+    background = DeepNavy,      // El azul marino oscuro como fondo
+    surface = DeepNavy,         // Las "superficies" como tarjetas tendrán el mismo fondo
+    onPrimary = DeepNavy,       // El texto sobre un botón primario será oscuro para contraste
+    onSecondary = DeepNavy,     // El texto sobre un botón secundario será oscuro
+    onTertiary = DeepNavy,      // El texto sobre un botón terciario será oscuro
+    onBackground = PureWhite,   // El texto general sobre el fondo oscuro será blanco
+    onSurface = PureWhite       // El texto en las tarjetas será blanco
 )
 
+// 2. Definimos el esquema de colores para el tema CLARO
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = SkyBlue,          // Mantenemos el azul del logo como color principal
+    secondary = CyanAccent,
+    tertiary = GoldAccent,
+    background = LightGray,     // Usamos el gris claro para el fondo para que no sea un blanco puro
+    surface = PureWhite,        // Las tarjetas serán blancas para destacar sobre el fondo gris
+    onPrimary = PureWhite,      // El texto sobre un botón primario será blanco
+    onSecondary = DeepNavy,
+    onTertiary = DeepNavy,
+    onBackground = DeepNavy,    // El texto general sobre el fondo claro será el azul marino oscuro
+    onSurface = DeepNavy        // El texto en las tarjetas será el azul marino oscuro
 )
 
 @Composable
 fun PlayQuizGamesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // false: Forzamos a usar nuestro paleta de colores sobre el sistema
+    dynamicColor: Boolean = false, // Mantenemos en false para usar siempre nuestro tema
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -51,7 +57,7 @@ fun PlayQuizGamesTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // La tipografía que definimos en Type.kt se aplica aquí
         content = content
     )
 }
