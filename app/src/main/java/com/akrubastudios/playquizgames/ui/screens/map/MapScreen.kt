@@ -112,6 +112,8 @@ fun MapScreen(
 
     val sheetState = rememberModalBottomSheetState()
 
+    var showGemsTutorialDialog by remember { mutableStateOf(false) }
+
     val currentLanguageCode = Locale.getDefault().language
 
         // Scaffold nos da la estructura de la pantalla principal
@@ -263,7 +265,12 @@ fun MapScreen(
                             Spacer(modifier = Modifier.width(16.dp))
 
                             // Indicador de Gemas a la derecha
-                            GemsBalanceIndicator(gems = uiState.gems)
+                            GemsBalanceIndicator(
+                                gems = uiState.gems,
+                                modifier = Modifier.clickable {
+                                    showGemsTutorialDialog = true
+                                }
+                            )
                         }
                     }
                 }
@@ -402,6 +409,18 @@ fun MapScreen(
                 }
             )
         }
+    }
+    if (showGemsTutorialDialog) {
+        AlertDialog(
+            onDismissRequest = { showGemsTutorialDialog = false },
+            title = { Text(text = stringResource(R.string.gems_tutorial_title)) },
+            text = { Text(text = stringResource(R.string.gems_tutorial_message)) },
+            confirmButton = {
+                TextButton(onClick = { showGemsTutorialDialog = false }) {
+                    Text(stringResource(R.string.dialog_button_ok))
+                }
+            }
+        )
     }
 }
 
