@@ -53,7 +53,7 @@ data class BossState(
     val totalQuestions: Int = 1,
     val bossHealth: Float = 1.0f,
     val playerMistakes: Int = 0,
-    val maxMistakes: Int = 2,
+    val maxMistakes: Int = 3,
     val correctAnswersCount: Int = 0,
     val generatedHintLetters: String = "",
     val userAnswer: String = "",
@@ -511,12 +511,30 @@ class BossViewModel @Inject constructor(
     }
 
     private fun endGame(victory: Boolean) {
+
+        val correctAnswers = uiState.value.correctAnswersCount
+
+        // 1. Calculamos el puntaje de XP basado en el número de aciertos.
+        val score = if (victory) {
+            when (correctAnswers) {
+                shuffledQuestions.size -> 20000 // Todas correctas (ej. 10 de 10)
+                shuffledQuestions.size - 1 -> 15000 // Un error (ej. 9 de 10)
+                shuffledQuestions.size - 2 -> 10000 // Dos errores (ej. 8 de 10)
+                else -> 10000 // Por si acaso, un valor base para la victoria
+            }
+        } else {
+            0 // Si es derrota, el puntaje es 0
+        }
+
+        // 2. Creamos el objeto GameResult con el nuevo puntaje dinámico.
         val result = GameResult(
-            score = if (victory) 10000 else 0,
-            correctAnswers = uiState.value.correctAnswersCount,
+            score = score,
+            correctAnswers = correctAnswers,
             totalQuestions = uiState.value.totalQuestions,
+            // Las estrellas siguen siendo 3 si hay victoria, para las recompensas de dominación.
             starsEarned = if (victory) 3 else 0
         )
+
         _gameResult.value = result
     }
 

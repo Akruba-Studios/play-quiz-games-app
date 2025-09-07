@@ -502,7 +502,8 @@ fun BossScreen(
                     "starsEarned" to result.starsEarned,
                     "levelId" to viewModel.levelId,
                     "countryId" to viewModel.countryId,
-                    "timestamp" to System.currentTimeMillis()
+                    "timestamp" to System.currentTimeMillis(),
+                    "correctAnswers" to result.correctAnswers,
                 )
                 db.collection("score_requests").add(scoreRequest)
             }

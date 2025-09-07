@@ -38,7 +38,7 @@
     <string name="dialog_button_awesome">¡Genial!</string>
 
     <string name="domination_rewards_title">¡Recompensas de Dominación!</string>
-    <string name="domination_reward_xp"><b>Bono de Experiencia:</b> Recibirás <b>%1$d XP</b> cada vez que domines un nuevo país.</string>
+    <string name="domination_reward_xp"><b>Bono de Experiencia:</b> ¡Ganar a los Guardianes de cada país te otorga un bono de hasta <b>%1$d XP</b>!</string>
     <string name="domination_reward_category"><b>Categoría Secreta:</b> Has desbloqueado una categoría de conocimiento única en el país que dominaste. ¡Búscala!</string>
     <string name="domination_reward_boost"><b>Boost de Conquista:</b> Has ganado un Boost para añadir <b>%1$d PC</b> a cualquier país.</string>
 

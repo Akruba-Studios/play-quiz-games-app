@@ -38,7 +38,7 @@
     <string name="dialog_button_awesome">Awesome!</string>
 
     <string name="domination_rewards_title">Domination Rewards!</string>
-    <string name="domination_reward_xp"><b>Experience Bonus:</b> You will receive <b>%1$d XP</b> every time you dominate a new country.</string>
+    <string name="domination_reward_xp"><b>Experience Bonus:</b> Beating each country\'s Boss grants you a bonus of up to <b>%1$d XP</b>!</string>
     <string name="domination_reward_category"><b>Secret Category:</b> You have unlocked a unique, hidden knowledge category in the country you dominated. Go find it!</string>
     <string name="domination_reward_boost"><b>Conquest Boost:</b> You have earned a Boost to add <b>%1$d PC</b> to any country.</string>
 

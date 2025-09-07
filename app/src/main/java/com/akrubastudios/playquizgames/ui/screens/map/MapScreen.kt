@@ -428,7 +428,7 @@ fun MapScreen(
 @Composable
 private fun DominationRewardsContent(onDismiss: () -> Unit) {
     // Definimos los valores de recompensa (para no hardcodearlos)
-    val xpBonus = 10000
+    val xpBonus = 20000
     val pcBonus = 5000
 
     Column(
