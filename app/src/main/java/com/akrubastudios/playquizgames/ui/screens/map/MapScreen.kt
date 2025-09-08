@@ -94,6 +94,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
+import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
@@ -322,8 +323,10 @@ fun MapScreen(
     }
     // El diálogo ahora es controlado por el estado local 'showExpeditionDialog'.
     if (uiState.showExpeditionDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissExpeditionDialog() }, // Tocar fuera lo cierra
+        val buttonTextColor = getButtonTextColor()
+
+        AppAlertDialog(
+            onDismissRequest = { viewModel.dismissExpeditionDialog() },
             title = { Text(text = stringResource(R.string.expedition_dialog_title)) },
             text = {
                 Column(
@@ -336,41 +339,41 @@ fun MapScreen(
                         Button(
                             onClick = {
                                 viewModel.onExpeditionContinentSelected(continentId)
-                                // El ViewModel se encargará de ocultar el diálogo al cambiar el estado.
                             },
                             modifier = Modifier.fillMaxWidth().height(50.dp)
                         ) {
-                            Text(continentName)
+                            Text(
+                                text = continentName,
+                                color = buttonTextColor
+                            )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { viewModel.dismissExpeditionDialog() }) { // El botón "Más Tarde" también lo cierra
-                    Text(stringResource(R.string.expedition_dialog_button_later))
+                TextButton(onClick = { viewModel.dismissExpeditionDialog() }) {
+                    Text(
+                        text = stringResource(R.string.expedition_dialog_button_later),
+                        color = buttonTextColor
+                    )
                 }
-            },
-            dismissButton = null
+            }
         )
     }
     // Diálogo para el desafío de Jefe post-conquista
     uiState.pendingBossChallenge?.let { countryId ->
-        // Obtenemos el nombre del país para mostrarlo en el diálogo.
         val countryName = uiState.countries.find { it.countryId == countryId }?.name?.get("es") ?: "este país"
+        val buttonTextColor = getButtonTextColor()
 
-        AlertDialog(
-            onDismissRequest = {
-                // Si el usuario toca fuera, consideramos que es "Más Tarde".
-                viewModel.clearPendingBossChallenge()
-            },
+        AppAlertDialog(
+            onDismissRequest = { viewModel.clearPendingBossChallenge() },
             title = { Text(text = stringResource(R.string.conquest_dialog_title)) },
             text = { Text(text = stringResource(R.string.conquest_dialog_text, countryName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.clearPendingBossChallenge()
-                        // Buscamos el bossLevelId para navegar a la pantalla correcta.
                         val bossLevelId = uiState.countries.find { it.countryId == countryId }?.bossLevelId ?: ""
                         if (bossLevelId.isNotEmpty()) {
                             val route = Routes.BOSS_SCREEN
@@ -380,16 +383,18 @@ fun MapScreen(
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.conquest_dialog_button_challenge))
+                    Text(
+                        text = stringResource(R.string.conquest_dialog_button_challenge),
+                        color = buttonTextColor
+                    )
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearPendingBossChallenge()
-                    }
-                ) {
-                    Text(stringResource(R.string.expedition_dialog_button_later))
+                TextButton(onClick = { viewModel.clearPendingBossChallenge() }) {
+                    Text(
+                        text = stringResource(R.string.expedition_dialog_button_later),
+                        color = buttonTextColor
+                    )
                 }
             }
         )
