@@ -598,14 +598,22 @@ fun BossScreen(
                 Spacer(Modifier.height(32.dp))
             }
             // Efecto spray para respuestas
+            // Efecto spray verde
             AnimatedVisibility(
-                visible = uiState.showCorrectEffect || uiState.showIncorrectEffect,
+                visible = uiState.showCorrectEffect,
                 enter = fadeIn(tween(300)),
                 exit = fadeOut(tween(500))
             ) {
-                SprayEffectOverlay(
-                    isCorrect = uiState.showCorrectEffect
-                )
+                SprayEffectOverlay(isCorrect = true)
+            }
+
+            // Efecto spray rojo
+            AnimatedVisibility(
+                visible = uiState.showIncorrectEffect,
+                enter = fadeIn(tween(300)),
+                exit = fadeOut(tween(500))
+            ) {
+                SprayEffectOverlay(isCorrect = false)
             }
 
             // Overlay de transición de fase

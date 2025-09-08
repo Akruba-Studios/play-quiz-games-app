@@ -272,6 +272,8 @@ class BossViewModel @Inject constructor(
                     revealLetterUses = 0,
                     isShowHintUsed = false,
                     revealedLetterPositions = emptySet(),
+                    showCorrectEffect = false,
+                    showIncorrectEffect = false
                 )
             }
 
@@ -454,11 +456,13 @@ class BossViewModel @Inject constructor(
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0.05f)
                 val newStreak = state.battleStats.currentStreak + 1
 
+                Log.d("DEBUG_FLASH", "🟢 Poniendo showCorrectEffect = true, showIncorrectEffect = false")
                 _uiState.update {
                     it.copy(
                         bossHealth = newHealth,
                         correctAnswersCount = it.correctAnswersCount + 1,
                         showCorrectEffect = true,
+                        showIncorrectEffect = false,
                         battleStats = it.battleStats.copy(
                             currentStreak = newStreak,
                             longestStreak = maxOf(it.battleStats.longestStreak, newStreak)
@@ -467,9 +471,12 @@ class BossViewModel @Inject constructor(
                 }
             } else {
                 val newMistakes = state.playerMistakes + 1
+
+                Log.d("DEBUG_FLASH", "🔴 Poniendo showIncorrectEffect = true, showCorrectEffect = false")
                 _uiState.update {
                     it.copy(
                         playerMistakes = newMistakes,
+                        showCorrectEffect = false,
                         showIncorrectEffect = true,
                         battleStats = it.battleStats.copy(currentStreak = 0)
                     )
@@ -480,20 +487,19 @@ class BossViewModel @Inject constructor(
                     return@launch
                 }
             }
+            delay(1000L) // Mostrar el efecto por 1 segundo
 
-            delay(1500L)
-            currentQuestionIndex++
-            prepareNextQuestion()
-        }
-        // Limpiar efectos después de 0.8 segundo
-        viewModelScope.launch {
-            delay(800L)
+            Log.d("DEBUG_FLASH", "🧹 Limpiando efectos después del delay")
             _uiState.update {
                 it.copy(
                     showCorrectEffect = false,
                     showIncorrectEffect = false
                 )
             }
+
+            delay(500L) // Pausa adicional antes de continuar
+            currentQuestionIndex++
+            prepareNextQuestion()
         }
     }
 
@@ -559,6 +565,7 @@ class BossViewModel @Inject constructor(
                 )
             }
             if (uiState.value.userAnswer.length == requiredLength) {
+                timerJob?.cancel()
                 checkAnswer()
             }
         }
