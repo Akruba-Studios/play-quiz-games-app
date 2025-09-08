@@ -26,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
 
 @Composable
@@ -117,15 +118,11 @@ fun LevelSelectionScreen(
         }
     }
     if (uiState.showLevelUnlockTutorialDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { viewModel.levelUnlockTutorialShown() },
-            title = { Text(text = stringResource(R.string.level_unlock_tutorial_title)) },
-            text = { Text(text = stringResource(R.string.level_unlock_tutorial_message)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.levelUnlockTutorialShown() }) {
-                    Text(stringResource(R.string.dialog_button_ok))
-                }
-            }
+            title = stringResource(R.string.level_unlock_tutorial_title),
+            text = stringResource(R.string.level_unlock_tutorial_message),
+            confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
 }

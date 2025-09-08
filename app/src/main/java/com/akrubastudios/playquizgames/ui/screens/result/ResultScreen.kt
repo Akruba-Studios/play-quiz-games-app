@@ -21,6 +21,7 @@ import com.akrubastudios.playquizgames.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 
 @Composable
@@ -113,17 +114,11 @@ fun ResultScreen(
         }
     }
     if (uiState.showXpTutorial) {
-        AlertDialog(
-            // onDismissRequest se llama si el usuario toca fuera del diálogo
+        AppAlertDialog(
             onDismissRequest = { viewModel.xpTutorialShown() },
-            title = { Text(text = stringResource(R.string.xp_tutorial_title)) },
-            text = { Text(text = stringResource(R.string.xp_tutorial_message)) },
-            confirmButton = {
-                // El botón llama a la misma función de limpieza
-                TextButton(onClick = { viewModel.xpTutorialShown() }) {
-                    Text(stringResource(R.string.dialog_button_ok_levelup))
-                }
-            }
+            title = stringResource(R.string.xp_tutorial_title),
+            text = stringResource(R.string.xp_tutorial_message),
+            confirmButtonText = stringResource(R.string.dialog_button_ok_levelup)
         )
     }
 }

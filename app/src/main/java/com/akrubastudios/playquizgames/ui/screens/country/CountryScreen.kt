@@ -36,6 +36,7 @@ import com.akrubastudios.playquizgames.ui.screens.country.CountryStatus
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 
 @Composable
 fun CountryScreen(
@@ -164,15 +165,11 @@ fun CountryScreen(
         }
     }
     if (uiState.showConquestTutorialDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { viewModel.conquestTutorialShown() },
-            title = { Text(text = stringResource(R.string.conquest_tutorial_title)) },
-            text = { Text(text = stringResource(R.string.conquest_tutorial_message, uiState.countryName)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.conquestTutorialShown() }) {
-                    Text(stringResource(R.string.dialog_button_ok))
-                }
-            }
+            title = stringResource(R.string.conquest_tutorial_title),
+            text = stringResource(R.string.conquest_tutorial_message, uiState.countryName),
+            confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
 }

@@ -395,30 +395,22 @@ fun MapScreen(
         )
     }
     if (uiState.showWelcomeDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.welcomeDialogShown() }, // Tocar fuera también lo marca como visto
-            title = { Text(text = stringResource(R.string.welcome_dialog_title)) },
-            text = { Text(text = stringResource(R.string.welcome_dialog_message, uiState.firstCountryName)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.welcomeDialogShown() }) {
-                    Text(stringResource(R.string.dialog_button_ok))
-                }
-            }
-        )
-    }
-    if (uiState.showFreeModeUnlockedDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.freeModeTutorialShown() },
-            title = { Text(text = stringResource(R.string.free_mode_unlocked_title)) },
-            text = { Text(text = stringResource(R.string.free_mode_unlocked_message)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.freeModeTutorialShown() }) {
-                    Text(stringResource(R.string.dialog_button_awesome))
-                }
-            }
+        AppAlertDialog(
+            onDismissRequest = { viewModel.welcomeDialogShown() },
+            title = stringResource(R.string.welcome_dialog_title),
+            text = stringResource(R.string.welcome_dialog_message, uiState.firstCountryName),
+            confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
 
+    if (uiState.showFreeModeUnlockedDialog) {
+        AppAlertDialog(
+            onDismissRequest = { viewModel.freeModeTutorialShown() },
+            title = stringResource(R.string.free_mode_unlocked_title),
+            text = stringResource(R.string.free_mode_unlocked_message),
+            confirmButtonText = stringResource(R.string.dialog_button_awesome)
+        )
+    }
 
     if (uiState.showDominationRewardsSheet) {
         ModalBottomSheet(

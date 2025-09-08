@@ -75,6 +75,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalView
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 
 @Composable
 fun GameScreen(
@@ -169,17 +170,14 @@ fun GameScreen(
             )
         }
         if (uiState.showFunFactTutorialDialog) {
-            AlertDialog(
-                onDismissRequest = { viewModel.funFactTutorialShown() }, // Cerrar tocando fuera
-                title = { Text(text = stringResource(R.string.fun_fact_tutorial_title)) },
-                text = { Text(text = stringResource(R.string.fun_fact_tutorial_message)) },
-                confirmButton = {
-                    TextButton(onClick = { viewModel.funFactTutorialShown() }) {
-                        Text(stringResource(R.string.dialog_button_ok))
-                    }
-                }
+            AppAlertDialog(
+                onDismissRequest = { viewModel.funFactTutorialShown() },
+                title = stringResource(R.string.fun_fact_tutorial_title),
+                text = stringResource(R.string.fun_fact_tutorial_message),
+                confirmButtonText = stringResource(R.string.dialog_button_ok)
             )
         }
+
         // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
         if (uiState.showFunFactDialog) {
             AlertDialog(
