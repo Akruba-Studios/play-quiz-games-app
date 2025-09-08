@@ -31,7 +31,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = DeepNavy,
     surfaceVariant = LightGray, // Un color ligeramente diferente para otras superficies
     onSurfaceVariant = DeepNavy,
-    surfaceContainer = Color(54, 177, 208).copy(alpha = 0.04f), // SkyBlue aún más sutil
+    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // <-- Aumentamos la opacidad para que sea más visible
     surfaceContainerHigh = Color(54, 177, 208).copy(alpha = 0.12f), // SkyBlue un poco más notorio
     error = Color(0xFFB00020),
     onError = PureWhite,

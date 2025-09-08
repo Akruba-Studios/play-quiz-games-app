@@ -121,74 +121,94 @@ fun MapScreen(
         Scaffold(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
-                BottomAppBar {
-                    // --- Elemento 1: Ranking (sin cambios) ---
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { navController.navigate(Routes.RANKING_SCREEN) },
-                        icon = { Icon(Icons.Filled.Leaderboard, contentDescription = stringResource(R.string.bottom_nav_ranking)) },
-                        label = { Text(stringResource(R.string.bottom_nav_ranking)) }
-                    )
-
-                    // --- Elemento 2: Modo Libre (Lógica Corregida) ---
-                    val isFreeModeEnabled = (uiState.playerLevelInfo?.level ?: 0) >= 5
-
-                    NavigationBarItem(
-                        enabled = isFreeModeEnabled,
-                        selected = false,
-                        onClick = {
-                            // Este onClick solo se disparará si isFreeModeEnabled es true.
-                            navController.navigate(Routes.FREE_MODE_SCREEN)
-                        },
-                        icon = {
-                            // Si está deshabilitado, envolvemos el icono en un Box para capturar el clic.
-                            if (!isFreeModeEnabled) {
-                                Box(
-                                    modifier = Modifier.clickable(
-                                        // Recordatorio: interactionSource y indication en null para
-                                        // quitar el efecto de "ripple" al tocar.
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                        onClick = {
-                                            scope.launch {
-                                                val message = context.getString(R.string.free_mode_unlock_toast)
-                                                snackbarHostState.showSnackbar(message)
-                                            }
-                                        }
-                                    )
-                                ) {
-                                    Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode))
-                                }
-                            } else {
-                                // Si está habilitado, mostramos el icono normalmente.
-                                Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.bottom_nav_free_mode))
-                            }
-                        },
-                        label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
-                    )
-
-                    // --- Elemento 3: Perfil (sin cambios) ---
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
-                        icon = {
-                            // --- INICIO DE LA MODIFICACIÓN ---
-                            BadgedBox(
-                                badge = {
-                                    // El Badge solo se muestra si hasProfileNotification es true.
-                                    if (uiState.hasProfileNotification) {
-                                        Badge() // El punto rojo por defecto
-                                    }
-                                }
-                            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.background, // LightGray
+                    tonalElevation = 3.dp // Le damos la sombra a la envoltura
+                ) {
+                    BottomAppBar(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 0.dp
+                    ) {
+                        // --- Elemento 1: Ranking (sin cambios) ---
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { navController.navigate(Routes.RANKING_SCREEN) },
+                            icon = {
                                 Icon(
-                                    Icons.Filled.AccountCircle,
-                                    contentDescription = stringResource(R.string.bottom_nav_profile)
+                                    Icons.Filled.Leaderboard,
+                                    contentDescription = stringResource(R.string.bottom_nav_ranking)
                                 )
-                            }
-                        },
-                        label = { Text(stringResource(R.string.bottom_nav_profile)) }
-                    )
+                            },
+                            label = { Text(stringResource(R.string.bottom_nav_ranking)) }
+                        )
+
+                        // --- Elemento 2: Modo Libre (Lógica Corregida) ---
+                        val isFreeModeEnabled = (uiState.playerLevelInfo?.level ?: 0) >= 5
+
+                        NavigationBarItem(
+                            enabled = isFreeModeEnabled,
+                            selected = false,
+                            onClick = {
+                                // Este onClick solo se disparará si isFreeModeEnabled es true.
+                                navController.navigate(Routes.FREE_MODE_SCREEN)
+                            },
+                            icon = {
+                                // Si está deshabilitado, envolvemos el icono en un Box para capturar el clic.
+                                if (!isFreeModeEnabled) {
+                                    Box(
+                                        modifier = Modifier.clickable(
+                                            // Recordatorio: interactionSource y indication en null para
+                                            // quitar el efecto de "ripple" al tocar.
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                            onClick = {
+                                                scope.launch {
+                                                    val message =
+                                                        context.getString(R.string.free_mode_unlock_toast)
+                                                    snackbarHostState.showSnackbar(message)
+                                                }
+                                            }
+                                        )
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.SwapHoriz,
+                                            contentDescription = stringResource(R.string.bottom_nav_free_mode)
+                                        )
+                                    }
+                                } else {
+                                    // Si está habilitado, mostramos el icono normalmente.
+                                    Icon(
+                                        Icons.Filled.SwapHoriz,
+                                        contentDescription = stringResource(R.string.bottom_nav_free_mode)
+                                    )
+                                }
+                            },
+                            label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
+                        )
+
+                        // --- Elemento 3: Perfil (sin cambios) ---
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { navController.navigate(Routes.PROFILE_SCREEN) },
+                            icon = {
+                                // --- INICIO DE LA MODIFICACIÓN ---
+                                BadgedBox(
+                                    badge = {
+                                        // El Badge solo se muestra si hasProfileNotification es true.
+                                        if (uiState.hasProfileNotification) {
+                                            Badge() // El punto rojo por defecto
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Filled.AccountCircle,
+                                        contentDescription = stringResource(R.string.bottom_nav_profile)
+                                    )
+                                }
+                            },
+                            label = { Text(stringResource(R.string.bottom_nav_profile)) }
+                        )
+                    }
                 }
             }
         ) { innerPadding -> // El contenido principal debe usar este padding
@@ -222,55 +242,62 @@ fun MapScreen(
 
                 // CAPA 2: El título y PlayerlevelIndicator dentro un surface
                 // Usamos un Surface como el contenedor principal del panel.
-                Surface(
+
+                Surface( // <-- NUEVO SURFACE QUE ACTÚA COMO FONDO SÓLIDO
                     modifier = Modifier
-                        .align(Alignment.TopCenter) // Lo posiciona en la parte superior
+                        .align(Alignment.TopCenter)
                         .fillMaxWidth(),
-                    // Usamos el mismo color que el BottomAppBar para consistencia.
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
+                    color = MaterialTheme.colorScheme.background // <-- Color de fondo (LightGray)
                 ) {
-                    // Usamos una Columna para apilar el título y el indicador verticalmente.
-                    Column(
-                        modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter) // Lo posiciona en la parte superior
+                            .fillMaxWidth(),
+                        // Usamos el mismo color que el BottomAppBar para consistencia.
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
                     ) {
-                        // 1. El Título
-                        Text(
-                            stringResource(R.string.map_title),
-                            style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier.padding(16.dp),
-                            textAlign = TextAlign.Center
-                        )
-
-                        // Envolvemos los indicadores en una Row
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        // Usamos una Columna para apilar el título y el indicador verticalmente.
+                        Column(
+                            modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Indicador de Nivel a la izquierda
-                            Box(modifier = Modifier.weight(1f)) {
-                                uiState.playerLevelInfo?.let { levelInfo ->
-                                    PlayerLevelIndicator(
-                                        levelInfo = levelInfo,
-                                        boostCount = uiState.unassignedPcBoosts
-                                    )
-                                }
-                            }
-
-                            // Espacio entre ellos
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            // Indicador de Gemas a la derecha
-                            GemsBalanceIndicator(
-                                gems = uiState.gems,
-                                modifier = Modifier.clickable {
-                                    showGemsTutorialDialog = true
-                                }
+                            // 1. El Título
+                            Text(
+                                stringResource(R.string.map_title),
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(16.dp),
+                                textAlign = TextAlign.Center
                             )
+
+                            // Envolvemos los indicadores en una Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Indicador de Nivel a la izquierda
+                                Box(modifier = Modifier.weight(1f)) {
+                                    uiState.playerLevelInfo?.let { levelInfo ->
+                                        PlayerLevelIndicator(
+                                            levelInfo = levelInfo,
+                                            boostCount = uiState.unassignedPcBoosts
+                                        )
+                                    }
+                                }
+                                // Espacio entre ellos
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                // Indicador de Gemas a la derecha
+                                GemsBalanceIndicator(
+                                    gems = uiState.gems,
+                                    modifier = Modifier.clickable {
+                                        showGemsTutorialDialog = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
