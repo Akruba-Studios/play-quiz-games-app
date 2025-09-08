@@ -93,6 +93,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
+import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlin.math.sin
@@ -321,34 +322,31 @@ fun MapScreen(
             }
         }
     }
-    // El diálogo ahora es controlado por el estado local 'showExpeditionDialog'.
+    // SEGUNDO DIÁLOGO COMPLEJO - VERSIÓN MEJORADA CON BOTONES PERSONALIZADOS
     if (uiState.showExpeditionDialog) {
         val buttonTextColor = getButtonTextColor()
 
-        AppAlertDialog(
+        AppExpeditionAlertDialog(
             onDismissRequest = { viewModel.dismissExpeditionDialog() },
             title = { Text(text = stringResource(R.string.expedition_dialog_title)) },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = stringResource(R.string.expedition_dialog_text))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    uiState.availableExpeditions.forEach { (continentId, continentName) ->
-                        Button(
-                            onClick = {
-                                viewModel.onExpeditionContinentSelected(continentId)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(50.dp)
-                        ) {
-                            Text(
-                                text = continentName,
-                                color = buttonTextColor
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
+            text = { Text(text = stringResource(R.string.expedition_dialog_text)) },
+            expeditionButtons = { backgroundColor, textColor ->
+                uiState.availableExpeditions.forEach { (continentId, continentName) ->
+                    Button(
+                        onClick = {
+                            viewModel.onExpeditionContinentSelected(continentId)
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = backgroundColor
+                        )
+                    ) {
+                        Text(
+                            text = continentName,
+                            color = textColor
+                        )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             },
             confirmButton = {
@@ -361,6 +359,7 @@ fun MapScreen(
             }
         )
     }
+
     // Diálogo para el desafío de Jefe post-conquista
     uiState.pendingBossChallenge?.let { countryId ->
         val countryName = uiState.countries.find { it.countryId == countryId }?.name?.get("es") ?: "este país"
