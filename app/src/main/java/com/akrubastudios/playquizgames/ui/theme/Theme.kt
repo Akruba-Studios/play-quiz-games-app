@@ -23,7 +23,7 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = DeepNavy,
     tertiary = GoldAccent,
     onTertiary = PureWhite,
-    tertiaryContainer = GoldAccent.copy(alpha = 0.2f),
+    tertiaryContainer = GoldAccent.copy(alpha = 0.8f), // Fondo Avión
     onTertiaryContainer = DeepNavy,
     background = LightGray,
     onBackground = DeepNavy,
@@ -33,7 +33,7 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = LightGray,
     onSurfaceVariant = DeepNavy,
     // ROL PARA NUESTRAS TARJETAS PERSONALIZADAS: EL SKYBLUE SUTIL
-    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // <-- Aumentamos la opacidad para que sea más visible
+    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // Tarjetas en Freemode, Ranking y ProfileScreen; Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen; Fondo en Diamante
     surfaceContainerHigh = SkyBlue.copy(alpha = 0.12f), // SkyBlue un poco más notorio
     error = Color(0xFFB00020),
     onError = PureWhite,
@@ -52,7 +52,7 @@ private val DarkColorScheme = darkColorScheme(
     onSecondaryContainer = DeepNavy,
     tertiary = GoldAccent,
     onTertiary = DeepNavy,
-    tertiaryContainer = GoldAccent.copy(alpha = 0.2f),
+    tertiaryContainer = GoldAccent.copy(alpha = 0.8f),
     onTertiaryContainer = DeepNavy,
     background = DeepNavy,
     onBackground = PureWhite,
