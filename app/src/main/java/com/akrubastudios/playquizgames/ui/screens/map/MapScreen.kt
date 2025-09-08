@@ -92,6 +92,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import kotlin.math.sin
 import kotlin.math.cos
@@ -438,15 +439,11 @@ fun MapScreen(
         }
     }
     if (showGemsTutorialDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showGemsTutorialDialog = false },
-            title = { Text(text = stringResource(R.string.gems_tutorial_title)) },
-            text = { Text(text = stringResource(R.string.gems_tutorial_message)) },
-            confirmButton = {
-                TextButton(onClick = { showGemsTutorialDialog = false }) {
-                    Text(stringResource(R.string.dialog_button_ok))
-                }
-            }
+            title = stringResource(R.string.gems_tutorial_title),
+            text = stringResource(R.string.gems_tutorial_message),
+            confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
 }

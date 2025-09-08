@@ -27,12 +27,14 @@ private val LightColorScheme = lightColorScheme(
     onTertiaryContainer = DeepNavy,
     background = LightGray,
     onBackground = DeepNavy,
-    surface = Color(54, 177, 208).copy(alpha = 0.08f), // SkyBlue sutil para Cards principales
+    // ROL PARA DIÁLOGOS Y SUPERFICIES BASE: SÓLIDO Y OPACO
+    surface = Color.Blue, // PARA TESTEO
     onSurface = DeepNavy,
-    surfaceVariant = LightGray, // Un color ligeramente diferente para otras superficies
+    surfaceVariant = LightGray,
     onSurfaceVariant = DeepNavy,
+    // ROL PARA NUESTRAS TARJETAS PERSONALIZADAS: EL SKYBLUE SUTIL
     surfaceContainer = SkyBlue.copy(alpha = 0.08f), // <-- Aumentamos la opacidad para que sea más visible
-    surfaceContainerHigh = Color(54, 177, 208).copy(alpha = 0.12f), // SkyBlue un poco más notorio
+    surfaceContainerHigh = SkyBlue.copy(alpha = 0.12f), // SkyBlue un poco más notorio
     error = Color(0xFFB00020),
     onError = PureWhite,
     outline = SkyBlue.copy(alpha = 0.5f)

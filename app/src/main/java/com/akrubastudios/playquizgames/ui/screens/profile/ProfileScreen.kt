@@ -64,7 +64,7 @@ fun ProfileScreen(
     }
 
     // --- LÓGICA DE ANIMACIÓN (SIN CAMBIOS, PERO AHORA SABEMOS DÓNDE SE APLICARÁ) ---
-    val baseCardColor = MaterialTheme.colorScheme.surface
+    val baseCardColor = MaterialTheme.colorScheme.surfaceContainer
     val highlightCardColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     var animationPlayed by remember { mutableStateOf(false) }
     var cardColor by remember { mutableStateOf(baseCardColor) }
@@ -237,7 +237,7 @@ private fun ProfileHeader(name: String, imageUrl: String?) {
 private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.profile_stats_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -260,7 +260,7 @@ private fun ActionsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -315,7 +315,7 @@ private fun formatNumber(number: Long): String {
 private fun MilestoneCard(
     milestone: Milestone,
     modifier: Modifier = Modifier,
-    cardColor: Color = MaterialTheme.colorScheme.surface,
+    cardColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     scale: Float = 1f
 ) {
     Card(
