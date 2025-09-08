@@ -52,6 +52,7 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     navController: NavController
 ) {
+
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
 
@@ -63,7 +64,7 @@ fun ProfileScreen(
     }
 
     // --- LÓGICA DE ANIMACIÓN (SIN CAMBIOS, PERO AHORA SABEMOS DÓNDE SE APLICARÁ) ---
-    val baseCardColor = CardDefaults.cardColors().containerColor
+    val baseCardColor = MaterialTheme.colorScheme.surface
     val highlightCardColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     var animationPlayed by remember { mutableStateOf(false) }
     var cardColor by remember { mutableStateOf(baseCardColor) }
@@ -234,7 +235,10 @@ private fun ProfileHeader(name: String, imageUrl: String?) {
 
 @Composable
 private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.profile_stats_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
@@ -254,7 +258,10 @@ private fun ActionsCard(
     onLibraryClick: () -> Unit,
     isLibraryEnabled: Boolean
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
@@ -308,7 +315,7 @@ private fun formatNumber(number: Long): String {
 private fun MilestoneCard(
     milestone: Milestone,
     modifier: Modifier = Modifier,
-    cardColor: Color = CardDefaults.cardColors().containerColor,
+    cardColor: Color = MaterialTheme.colorScheme.surface,
     scale: Float = 1f
 ) {
     Card(

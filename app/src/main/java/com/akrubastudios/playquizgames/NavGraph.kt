@@ -16,6 +16,8 @@ import com.akrubastudios.playquizgames.ui.screens.onboarding.ContinentSelectionS
 import com.akrubastudios.playquizgames.ui.screens.onboarding.CountrySelectionScreen
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
+import android.util.Log
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalView
@@ -82,6 +84,7 @@ fun NavGraph() {
             )
         }
         composable(Routes.PROFILE_SCREEN) {
+
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
                 viewModel = viewModel,

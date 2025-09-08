@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.PlayQuizGames" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.PlayQuizGames" parent="Theme.Material3.DayNight.NoActionBar">
+        <!--
+            Aquí podrías definir colores para la barra de estado o de navegación del sistema si quisieras,
+            pero por ahora, con esto es suficiente para que Compose tome el control.
+        -->
+    </style>
 </resources>

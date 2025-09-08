@@ -8,41 +8,67 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// 1. Definimos el esquema de colores para el tema OSCURO
-private val DarkColorScheme = darkColorScheme(
-    primary = SkyBlue,          // El azul del logo será el color principal
-    secondary = CyanAccent,     // El cian brillante como color secundario
-    tertiary = GoldAccent,      // El dorado para acentos especiales
-    background = DeepNavy,      // El azul marino oscuro como fondo
-    surface = DeepNavy,         // Las "superficies" como tarjetas tendrán el mismo fondo
-    onPrimary = DeepNavy,       // El texto sobre un botón primario será oscuro para contraste
-    onSecondary = DeepNavy,     // El texto sobre un botón secundario será oscuro
-    onTertiary = DeepNavy,      // El texto sobre un botón terciario será oscuro
-    onBackground = PureWhite,   // El texto general sobre el fondo oscuro será blanco
-    onSurface = PureWhite       // El texto en las tarjetas será blanco
+// Paleta para el Tema CLARO
+private val LightColorScheme = lightColorScheme(
+    primary = SkyBlue,
+    onPrimary = PureWhite,
+    primaryContainer = SkyBlue.copy(alpha = 0.2f),
+    onPrimaryContainer = DeepNavy,
+    secondary = CyanAccent,
+    onSecondary = DeepNavy,
+    secondaryContainer = CyanAccent.copy(alpha = 0.2f),
+    onSecondaryContainer = DeepNavy,
+    tertiary = GoldAccent,
+    onTertiary = PureWhite,
+    tertiaryContainer = GoldAccent.copy(alpha = 0.2f),
+    onTertiaryContainer = DeepNavy,
+    background = LightGray,
+    onBackground = DeepNavy,
+    surface = Color(54, 177, 208).copy(alpha = 0.08f), // SkyBlue sutil para Cards principales
+    onSurface = DeepNavy,
+    surfaceVariant = LightGray, // Un color ligeramente diferente para otras superficies
+    onSurfaceVariant = DeepNavy,
+    surfaceContainer = Color(54, 177, 208).copy(alpha = 0.04f), // SkyBlue aún más sutil
+    surfaceContainerHigh = Color(54, 177, 208).copy(alpha = 0.12f), // SkyBlue un poco más notorio
+    error = Color(0xFFB00020),
+    onError = PureWhite,
+    outline = SkyBlue.copy(alpha = 0.5f)
 )
 
-// 2. Definimos el esquema de colores para el tema CLARO
-private val LightColorScheme = lightColorScheme(
-    primary = SkyBlue,          // Mantenemos el azul del logo como color principal
+// Paleta para el Tema OSCURO
+private val DarkColorScheme = darkColorScheme(
+    primary = SkyBlue,
+    onPrimary = DeepNavy,
+    primaryContainer = SkyBlue.copy(alpha = 0.2f),
+    onPrimaryContainer = PureWhite,
     secondary = CyanAccent,
-    tertiary = GoldAccent,
-    background = LightGray,     // Usamos el gris claro para el fondo para que no sea un blanco puro
-    surface = PureWhite,        // Las tarjetas serán blancas para destacar sobre el fondo gris
-    onPrimary = PureWhite,      // El texto sobre un botón primario será blanco
     onSecondary = DeepNavy,
+    secondaryContainer = CyanAccent.copy(alpha = 0.2f),
+    onSecondaryContainer = DeepNavy,
+    tertiary = GoldAccent,
     onTertiary = DeepNavy,
-    onBackground = DeepNavy,    // El texto general sobre el fondo claro será el azul marino oscuro
-    onSurface = DeepNavy        // El texto en las tarjetas será el azul marino oscuro
+    tertiaryContainer = GoldAccent.copy(alpha = 0.2f),
+    onTertiaryContainer = DeepNavy,
+    background = DeepNavy,
+    onBackground = PureWhite,
+    surface = Color(35, 65, 80), // DeepNavy más claro para Cards principales
+    onSurface = PureWhite,
+    surfaceVariant = Color(45, 75, 90), // Aún más claro para elementos diferentes
+    onSurfaceVariant = Color(200, 220, 230), // Gris claro
+    surfaceContainer = Color(28, 55, 65), // Entre DeepNavy y surface
+    surfaceContainerHigh = Color(40, 70, 85), // Entre surface y surfaceVariant
+    error = Color(0xFFCF6679),
+    onError = DeepNavy,
+    outline = SkyBlue.copy(alpha = 0.5f)
 )
 
 @Composable
 fun PlayQuizGamesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Mantenemos en false para usar siempre nuestro tema
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -50,14 +76,13 @@ fun PlayQuizGamesTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // La tipografía que definimos en Type.kt se aplica aquí
+        typography = Typography,
         content = content
     )
 }

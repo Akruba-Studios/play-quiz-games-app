@@ -35,12 +35,15 @@ class MainActivity : ComponentActivity() {
         hideSystemUI()
 
         setContent {
-            // Recolectamos el idioma desde nuestro StateFlow.
-            // Esta es la única fuente de verdad para el idioma en la app.
+            // 1. Recolectamos el idioma como antes.
             val currentLanguageCode by languageManager.languageStateFlow.collectAsState()
 
-            // Este efecto actualiza el Locale del contexto de Android cada vez que nuestro
-            // StateFlow cambia. Esto prepara el terreno para que stringResource() funcione.
+            // 2. Creamos la configuración actualizada.
+            val newLocale = Locale(currentLanguageCode)
+            val configuration = Configuration(LocalConfiguration.current)
+            configuration.setLocale(newLocale)
+
+            // Este efecto sigue siendo útil para recursos que no son de Compose.
             LaunchedEffect(currentLanguageCode) {
                 val locale = Locale(currentLanguageCode)
                 Locale.setDefault(locale)
@@ -49,25 +52,18 @@ class MainActivity : ComponentActivity() {
                 resources.updateConfiguration(config, resources.displayMetrics)
             }
 
-            // Aquí está la solución final y única.
-            // Usamos el composable 'key' y le pasamos el 'currentLanguageCode' como "identificador".
-            // Cuando 'currentLanguageCode' cambia (de "es" a "en"), Compose entiende que
-            // todo lo que está dentro de este bloque 'key' es obsoleto y necesita ser
-            // completamente recreado desde cero.
-            key(currentLanguageCode) {
-                PlayQuizGamesTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        // Al recrear la UI, CompositionLocalProvider asegura que el nuevo
-                        // árbol de Composables se construya con la configuración de idioma actualizada.
-                        // Esto fuerza a TODOS los stringResource() a leer el nuevo valor.
-                        val newLocale = Locale(currentLanguageCode)
-                        val configuration = Configuration(LocalConfiguration.current)
-                        configuration.setLocale(newLocale)
-
-                        CompositionLocalProvider(LocalConfiguration provides configuration) {
+            // 3. LA CORRECCIÓN: Primero proveemos la configuración del idioma.
+            CompositionLocalProvider(LocalConfiguration provides configuration) {
+                // 4. AHORA, DENTRO del contexto correcto, aplicamos nuestro tema.
+                // La 'key' sigue forzando la recomposición cuando el idioma cambia.
+                key(currentLanguageCode) {
+                    PlayQuizGamesTheme {
+                        // 5. El Surface ya no necesita el 'color' override.
+                        // Heredará el color 'surface' correcto de nuestro tema.
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background // <-- ESTA ES LA LÍNEA CORRECTA
+                        ) {
                             NavGraph()
                         }
                     }
