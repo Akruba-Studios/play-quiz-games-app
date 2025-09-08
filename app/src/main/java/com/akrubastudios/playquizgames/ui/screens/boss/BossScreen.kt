@@ -1,11 +1,13 @@
 package com.akrubastudios.playquizgames.ui.screens.boss
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -1034,9 +1036,9 @@ private fun AnimatedGemsIndicator(
     // Animación de pulso (escala)
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (hasGems) 1.1f else 1f,
+        targetValue = if (hasGems) 1.15f else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = EaseInOutSine),
+            animation = tween(1800, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
@@ -1044,25 +1046,51 @@ private fun AnimatedGemsIndicator(
 
     // Animación de brillo (alpha)
     val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = if (hasGems) 0.7f else 0.5f,
+        initialValue = if (hasGems) 0.6f else 0.5f,
         targetValue = if (hasGems) 1f else 0.5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = EaseInOutSine),
+            animation = tween(1200, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "shimmerAlpha"
     )
 
-    GemsBalanceIndicator(
-        gems = gems,
-        modifier = Modifier
-            .scale(pulseScale)
-            .alpha(shimmerAlpha)
-            .clickable(
+    // Usar el tema por defecto de Material3 para este componente específico
+    MaterialTheme(
+        colorScheme = lightColorScheme() // Fuerza el esquema por defecto
+    ) {
+        Card(
+            modifier = Modifier.clickable(
                 enabled = hasGems,
                 onClick = onClick
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             )
-    )
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .scale(pulseScale)
+                    .alpha(shimmerAlpha),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "💎",
+                    fontSize = 20.sp
+                )
+                Text(
+                    text = "${gems}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
 }
 @Composable
 private fun SprayEffectOverlay(isCorrect: Boolean) {

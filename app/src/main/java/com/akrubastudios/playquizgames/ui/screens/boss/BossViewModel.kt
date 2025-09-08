@@ -455,8 +455,6 @@ class BossViewModel @Inject constructor(
             if (isCorrect) {
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0.05f)
                 val newStreak = state.battleStats.currentStreak + 1
-
-                Log.d("DEBUG_FLASH", "🟢 Poniendo showCorrectEffect = true, showIncorrectEffect = false")
                 _uiState.update {
                     it.copy(
                         bossHealth = newHealth,
@@ -471,8 +469,6 @@ class BossViewModel @Inject constructor(
                 }
             } else {
                 val newMistakes = state.playerMistakes + 1
-
-                Log.d("DEBUG_FLASH", "🔴 Poniendo showIncorrectEffect = true, showCorrectEffect = false")
                 _uiState.update {
                     it.copy(
                         playerMistakes = newMistakes,
@@ -488,8 +484,6 @@ class BossViewModel @Inject constructor(
                 }
             }
             delay(1000L) // Mostrar el efecto por 1 segundo
-
-            Log.d("DEBUG_FLASH", "🧹 Limpiando efectos después del delay")
             _uiState.update {
                 it.copy(
                     showCorrectEffect = false,
