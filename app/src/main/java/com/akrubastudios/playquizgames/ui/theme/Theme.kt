@@ -33,7 +33,7 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = LightGray,
     onSurfaceVariant = DeepNavy,
     // ROL PARA NUESTRAS TARJETAS PERSONALIZADAS: EL SKYBLUE SUTIL
-    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // Tarjetas en Freemode, Ranking y ProfileScreen; Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen; Fondo en Diamante
+    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // Tarjetas en Freemode, Ranking y ProfileScreen; Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen; Fondo en Diamante, Fondo LetterBank y QuestionImage
     surfaceContainerHigh = SkyBlue.copy(alpha = 0.12f), // SkyBlue un poco más notorio
     error = Color(0xFFB00020),
     onError = PureWhite,
