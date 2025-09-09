@@ -419,19 +419,24 @@ fun MapScreen(
     if (uiState.showDominationRewardsSheet) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.dominationTutorialShown() },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background
         ) {
-            // Contenido del Bottom Sheet
-            DominationRewardsContent(
-                onDismiss = {
-                    // Podemos añadir una corrutina para cerrar el sheet con animación
-                    scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        if (!sheetState.isVisible) {
-                            viewModel.dominationTutorialShown()
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainer
+            ) {
+                // Contenido del Bottom Sheet
+                DominationRewardsContent(
+                    onDismiss = {
+                        // Podemos añadir una corrutina para cerrar el sheet con animación
+                        scope.launch { sheetState.hide() }.invokeOnCompletion {
+                            if (!sheetState.isVisible) {
+                                viewModel.dominationTutorialShown()
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
     if (showGemsTutorialDialog) {
