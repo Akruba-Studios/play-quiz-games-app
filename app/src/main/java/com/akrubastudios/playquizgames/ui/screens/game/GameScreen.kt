@@ -67,6 +67,8 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -160,14 +162,16 @@ fun GameScreen(
                 showIncorrectAnimation = uiState.showIncorrectAnimation,
                 showClearAnimation = uiState.showClearAnimation
             )
-            LetterBank(
-                hintLetters = uiState.generatedHintLetters,
-                usedIndices = uiState.usedLetterIndices,
-                difficulty = uiState.difficulty, // Borrar para habilitar letras bloqueadas en Modo Dificil
-                onLetterClick = { letter, index -> // <-- MODIFICADO
-                    viewModel.onLetterClick(letter, index)
-                }
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                LetterBank(
+                    hintLetters = uiState.generatedHintLetters,
+                    usedIndices = uiState.usedLetterIndices,
+                    difficulty = uiState.difficulty, // Borrar para habilitar letras bloqueadas en Modo Dificil
+                    onLetterClick = { letter, index -> // <-- MODIFICADO
+                        viewModel.onLetterClick(letter, index)
+                    }
+                )
+            }
         }
         if (uiState.showFunFactTutorialDialog) {
             AppAlertDialog(
@@ -255,15 +259,18 @@ fun QuestionImage(
         Box(
             modifier = Modifier
                 .size(168.dp) // Cuadrado fijo (200dp - 32dp de padding)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(12.dp),
-                    clip = false
-                )
+                // 1. FONDO con el color y la forma deseados.
                 .background(
-                    color = Color(0xFFF5F5F5), // Fondo gris muy claro
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = RoundedCornerShape(12.dp)
                 )
+                // 2. BORDE que usa el color 'outline' de nuestro tema.
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                // 3. PADDING INTERNO para que la imagen no se pegue al borde.
                 .padding(12.dp), // Padding interno para que la imagen no toque los bordes
             contentAlignment = Alignment.Center
         ) {
@@ -440,10 +447,21 @@ fun LetterBank(
     FlowRow(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp) // <-- Movemos el padding exterior aquí
+            .background( // 1. AÑADIMOS UN FONDO SUTIL
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border( // 2. AÑADIMOS EL BORDE DEL TEMA
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(8.dp) // 3. AÑADIMOS UN PADDING INTERNO
+            .verticalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.Center,
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        maxItemsInEachRow = 7 // Intentará poner 7 letras por fila
+        maxItemsInEachRow = 7
     ) {
         // Creamos un botón por cada letra de nuestras pistas
         hintLetters.forEachIndexed { index, letter ->
