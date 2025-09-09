@@ -37,7 +37,7 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = DeepNavy,
     // ROL PARA NUESTRAS TARJETAS PERSONALIZADAS: EL SKYBLUE SUTIL
         // SurfaceContainer: Tarjetas en Freemode, Ranking y ProfileScreen;
-        //  - También Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen;
+        //  - También Fondo Cuadro Titulo Mapscreen, BootomAppBar y ModalBottomSheet MapScreen;
         //  - También Fondo en Diamante, Fondo LetterBank, QuestionImage, Card Score todos en GameScreen;
         //  - También la card grande de funfactlibraryscreen
     surfaceContainer = SkyBlue.copy(alpha = 0.08f),

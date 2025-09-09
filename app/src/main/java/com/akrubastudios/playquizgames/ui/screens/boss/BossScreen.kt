@@ -70,6 +70,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -636,9 +637,11 @@ fun BossScreen(
                 )
             }
         }
+        // PENDIENTE PERSOLINAR COLORES VALIDANDO SI USARA APPALERTDIALOG
         if (uiState.showFunFactDialog) {
             AlertDialog(
                 onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
+                containerColor = LightGray,
                 title = { Text(text = stringResource(R.string.fun_fact_title)) },
                 text = { Text(text = uiState.currentFunFact) },
                 confirmButton = {
