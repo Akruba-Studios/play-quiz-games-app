@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,7 +127,10 @@ private fun LanguageSelectionDialog(
     onDismiss: () -> Unit,
     onLanguageSelected: (String) -> Unit
 ) {
-    AlertDialog(
+    // 1. IMPORTAMOS NUESTRA FUNCIÓN HELPER
+    val buttonTextColor = com.akrubastudios.playquizgames.ui.components.getButtonTextColor()
+
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = stringResource(R.string.settings_language_dialog_title)) },
         text = {
@@ -151,7 +155,9 @@ private fun LanguageSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.dialog_button_cancel))
+                Text(stringResource(R.string.dialog_button_cancel),
+                    color = buttonTextColor
+                )
             }
         }
     )
