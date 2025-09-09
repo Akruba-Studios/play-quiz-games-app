@@ -51,6 +51,7 @@ class GameViewModel @Inject constructor(
     private var levelPackage: QuizLevelPackage? = null
     private var shuffledQuestions: List<Question> = emptyList()
     private var currentQuestionIndex = 0
+        private var reshuffleJob: Job? = null
     // ---------------------------------------------
 
     init {
@@ -97,6 +98,7 @@ class GameViewModel @Inject constructor(
                     )
                 }
                 startTimer()
+                startLetterReshuffleTimer()
             } else {
                 Log.d("GameViewModel", "Error al cargar el nivel desde Firestore.")
                 _uiState.update { it.copy(isLoading = false) }
@@ -200,6 +202,7 @@ class GameViewModel @Inject constructor(
         isAnswerProcessing = true
 
         stopTimer() // Detiene el temporizador inmediatamente
+        reshuffleJob?.cancel()
         viewModelScope.launch {
             if (uiState.value.remainingTime == 0L) {
                 _uiState.update { it.copy(timerExplosion = true) }
@@ -311,6 +314,7 @@ class GameViewModel @Inject constructor(
                 }
                 isAnswerProcessing = false
                 startTimer() // Inicia el temporizador para la nueva pregunta
+                startLetterReshuffleTimer()
             }
         } else {
             Log.d("GameViewModel", "Juego Terminado. Puntaje final: ${uiState.value.score}")
@@ -409,6 +413,30 @@ class GameViewModel @Inject constructor(
 
     private fun stopTimer() {
         timerJob?.cancel()
+    }
+
+    private fun startLetterReshuffleTimer() {
+        // 1. Cancela cualquier temporizador de reordenamiento anterior para evitar duplicados.
+        reshuffleJob?.cancel()
+
+        // 2. La lógica solo se aplica si estamos en modo "dificil".
+        if (difficulty == "dificil") {
+            // 3. Lanza una nueva corutina y guarda la referencia en nuestra variable 'reshuffleJob'.
+            reshuffleJob = viewModelScope.launch {
+                delay(5000L) // Espera 5 segundos.
+
+                // 4. LA REGLA DE ORO: Después de la espera, comprueba si el usuario YA ha empezado a escribir.
+                if (_uiState.value.userAnswer.isEmpty()) {
+                    Log.d("GameViewModel_Reshuffle", "5 segundos pasaron, el usuario no ha respondido. ¡Reordenando letras!")
+
+                    // 5. Si la respuesta está vacía, vuelve a generar las letras y actualiza el estado.
+                    val newHints = generateHintLetters(_uiState.value.currentCorrectAnswer)
+                    _uiState.update { it.copy(generatedHintLetters = newHints) }
+                } else {
+                    Log.d("GameViewModel_Reshuffle", "5 segundos pasaron, pero el usuario ya empezó. No se reordena.")
+                }
+            }
+        }
     }
 
     fun levelIdForNav(): String {
