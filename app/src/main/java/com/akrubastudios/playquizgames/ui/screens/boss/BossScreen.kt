@@ -51,6 +51,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lightbulb
@@ -348,74 +349,52 @@ private fun TimerAndDialogueRow(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LetterBankFixed(
     hintLetters: String,
     usedIndices: Set<Int>,
-    difficulty: String,
+    difficulty: String, // No se usa pero lo mantenemos por consistencia
     onLetterClick: (Char, Int) -> Unit
 ) {
-    // Altura máxima disponible para el banco de letras
-    val maxAvailableHeight = 280.dp
-
-    // Calculamos columnas dinámicamente (tu lógica original)
-    val columns = when {
-        hintLetters.length <= 12 -> 4
-        hintLetters.length <= 18 -> 5
-        hintLetters.length <= 24 -> 6
-        else -> 7
-    }
-
-    // Calculamos cuántas filas necesitamos
-    val totalRows = (hintLetters.length + columns - 1) / columns
-
-    // Calculamos el tamaño exacto que necesita cada botón
-    val verticalSpacing = 6.dp
-    val totalVerticalSpacing = (totalRows - 1) * verticalSpacing
-    val contentPadding = 8.dp // 4dp arriba + 4dp abajo
-    val availableHeightForButtons = maxAvailableHeight - totalVerticalSpacing - contentPadding
-    val buttonSize = (availableHeightForButtons / totalRows).coerceAtLeast(28.dp).coerceAtMost(50.dp)
-
-    // Dividimos las letras en filas
-    val letterRows = hintLetters.chunked(columns)
-
-    Column(
+    // 1. Box como contenedor principal con altura FIJA y estilo
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .height(maxAvailableHeight)
-            .padding(horizontal = 16.dp)
-            .padding(vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(verticalSpacing),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .background(
+                color = Color.Black.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = Color(0xFF00BCD4),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(8.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        maxItemsInEachRow = 7 // Mantenemos el límite máximo
     ) {
-        letterRows.forEachIndexed { rowIndex, rowLetters ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically
+        hintLetters.forEachIndexed { index, letter ->
+            val isUsed = usedIndices.contains(index)
+            Button(
+                onClick = { if (!isUsed) onLetterClick(letter, index) },
+                modifier = Modifier.size(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isUsed) Color.Gray else Color.Blue,
+                    disabledContainerColor = Color.Gray
+                ),
+                enabled = !isUsed,
+                contentPadding = PaddingValues(2.dp)
             ) {
-                rowLetters.forEachIndexed { colIndex, letter ->
-                    val globalIndex = rowIndex * columns + colIndex
-                    val isUsed = usedIndices.contains(globalIndex)
-
-                    Button(
-                        onClick = { if (!isUsed) onLetterClick(letter, globalIndex) },
-                        modifier = Modifier.size(buttonSize),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isUsed) Color.Gray else Color.Blue,
-                            disabledContainerColor = Color.Gray
-                        ),
-                        enabled = !isUsed,
-                        contentPadding = PaddingValues(2.dp)
-                    ) {
-                        Text(
-                            text = letter.toString(),
-                            fontSize = (buttonSize.value * 0.32f).sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
+                Text(
+                    text = letter.toString(),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }
@@ -545,7 +524,6 @@ fun BossScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -585,15 +563,17 @@ fun BossScreen(
                         isRunning = uiState.isTimerRunning
                     )
 
-                    // Banco de letras - SIN SCROLL
-                    LetterBankFixed(
-                        hintLetters = uiState.generatedHintLetters,
-                        usedIndices = uiState.usedLetterIndices,
-                        difficulty = "principiante",
-                        onLetterClick = { letter, index ->
-                            viewModel.onLetterClick(letter, index)
-                        }
-                    )
+                    // Banco de letras
+                    Box(modifier = Modifier.weight(1f)) {
+                        LetterBankFixed(
+                            hintLetters = uiState.generatedHintLetters,
+                            usedIndices = uiState.usedLetterIndices,
+                            difficulty = "principiante",
+                            onLetterClick = { letter, index ->
+                                viewModel.onLetterClick(letter, index)
+                            }
+                        )
+                    }
                 }
 
                 // Espaciado adicional para el último elemento
