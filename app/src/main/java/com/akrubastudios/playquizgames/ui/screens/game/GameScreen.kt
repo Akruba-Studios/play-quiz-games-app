@@ -151,7 +151,7 @@ fun GameScreen(
                 text = uiState.questionText,
                 showTransition = uiState.questionTransition,
                 remainingTime = uiState.remainingTime,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp) // Vertical 4dp, espacio arriba y abajo de la pregunta
             )
 
             AnswerSlots(
@@ -251,14 +251,14 @@ fun QuestionImage(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .padding(16.dp),
+            .height(182.dp) // Altura caja invisible externa de la imagen
+            .padding(horizontal = 16.dp, vertical = 5.dp), // vertical 5dp, espacio arriba y abajo de la imagen
         contentAlignment = Alignment.Center
     ) {
         // Contenedor interno cuadrado con efectos
         Box(
             modifier = Modifier
-                .size(168.dp) // Cuadrado fijo (200dp - 32dp de padding)
+                .size(180.dp) // Cuadrado fijo (continene la imagen dentro)
                 // 1. FONDO con el color y la forma deseados.
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -271,7 +271,7 @@ fun QuestionImage(
                     shape = RoundedCornerShape(12.dp)
                 )
                 // 3. PADDING INTERNO para que la imagen no se pegue al borde.
-                .padding(12.dp), // Padding interno para que la imagen no toque los bordes
+                .padding(4.dp), // Padding interno para que la imagen no toque los bordes
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
@@ -372,7 +372,7 @@ fun AnswerSlots(
     // El FlowRow es el contenedor principal que permite que las palabras salten de línea.
     FlowRow(
         modifier = modifier
-            .padding(vertical = 24.dp)
+            .padding(top = 8.dp, bottom = 16.dp) //top 8 espacio entre el texto pregunta y el answerslot
             .scale(scale)
             .offset(x = if (showClearAnimation) clearOffsetX.dp else offsetX.dp)
             .alpha(if (showClearAnimation) clearAlpha else 1.0f)
@@ -447,7 +447,7 @@ fun LetterBank(
     FlowRow(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp) // <-- Movemos el padding exterior aquí
+            .padding(horizontal = 8.dp) // <-- Movemos el padding exterior aquí
             .background( // 1. AÑADIMOS UN FONDO SUTIL
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(8.dp)
