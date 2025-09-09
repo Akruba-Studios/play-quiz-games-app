@@ -28,12 +28,18 @@ private val LightColorScheme = lightColorScheme(
     background = LightGray,
     onBackground = DeepNavy,
     // ROL PARA DIÁLOGOS Y SUPERFICIES BASE: SÓLIDO Y OPACO
-    surface = Color.Blue, // PARA TESTEO
+        // Surface: Barra Begginner y Hard en FreeMode y LevelSelectionScreen
+        //  - También: Barra principal Settings y botones sound y music; y Barra Principal Knowledge
+        //  - También: Variaciones de surface en Niveles disponibles y apagados en LevelSeleccionScreen
+    surface = SkyBlue.copy(alpha = 0.10f),
     onSurface = DeepNavy,
     surfaceVariant = LightGray,
     onSurfaceVariant = DeepNavy,
     // ROL PARA NUESTRAS TARJETAS PERSONALIZADAS: EL SKYBLUE SUTIL
-    surfaceContainer = SkyBlue.copy(alpha = 0.08f), // Tarjetas en Freemode, Ranking y ProfileScreen; Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen; Fondo en Diamante, Fondo LetterBank y QuestionImage
+        // SurfaceContainer: Tarjetas en Freemode, Ranking y ProfileScreen;
+        //  - También Fondo Cuadro Titulo Mapscreen y BootomAppBar MapScreen;
+        //  - También Fondo en Diamante, Fondo LetterBank, QuestionImage, Card Score todos en GameScreen
+    surfaceContainer = SkyBlue.copy(alpha = 0.08f),
     surfaceContainerHigh = SkyBlue.copy(alpha = 0.12f), // SkyBlue un poco más notorio
     error = Color(0xFFB00020),
     onError = PureWhite,
