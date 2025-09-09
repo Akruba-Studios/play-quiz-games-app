@@ -17,7 +17,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = PureWhite,
     primaryContainer = SkyBlue.copy(alpha = 0.2f),
     onPrimaryContainer = DeepNavy,
-    secondary = CyanAccent,
+    secondary = DarkGoldAccent,
     onSecondary = DeepNavy,
     secondaryContainer = CyanAccent.copy(alpha = 0.2f),
     onSecondaryContainer = DeepNavy,

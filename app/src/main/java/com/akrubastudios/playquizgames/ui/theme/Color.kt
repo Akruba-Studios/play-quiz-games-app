@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 val DeepNavy = Color(22, 44, 54)
 val SkyBlue = Color(54, 177, 208)
 val GoldAccent = Color(252, 185, 10)
+val DarkGoldAccent = Color(200, 140, 0)
 val CyanAccent = Color(59, 227, 231)
 
 // Colores base neutros para fondos y textos

@@ -193,6 +193,7 @@ fun MasteredLevelItem(
                     text = stringResource(R.string.free_mode_beginner_max_hint, formatNumber(maxScorePrincipiante)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.End)
                 )
             }

@@ -79,7 +79,7 @@ fun PlayerLevelIndicator(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Boost de Conquista",
-                        tint = Color(0xFFFFD700) // Color dorado para la estrella
+                        tint = MaterialTheme.colorScheme.secondary // Color dorado para la estrella
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
