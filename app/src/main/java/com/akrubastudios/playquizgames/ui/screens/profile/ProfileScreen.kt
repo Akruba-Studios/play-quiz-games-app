@@ -40,7 +40,9 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
+import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
+import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -196,21 +198,23 @@ fun ProfileScreen(
 
     // Diálogo de confirmación para cerrar sesión
     if (showSignOutDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showSignOutDialog = false },
             title = { Text(stringResource(R.string.profile_sign_out_dialog_title)) },
             text = { Text(stringResource(R.string.profile_sign_out_dialog_text)) },
             confirmButton = {
+                val buttonColor = getButtonTextColor()
                 TextButton(onClick = {
                     viewModel.signOut()
                     showSignOutDialog = false
                 }) {
-                    Text(stringResource(R.string.dialog_button_confirm))
+                    Text(stringResource(R.string.dialog_button_confirm), color = buttonColor)
                 }
             },
             dismissButton = {
+                val buttonColor = getButtonTextColor()
                 TextButton(onClick = { showSignOutDialog = false }) {
-                    Text(stringResource(R.string.dialog_button_cancel))
+                    Text(stringResource(R.string.dialog_button_cancel), color = buttonColor)
                 }
             }
         )
