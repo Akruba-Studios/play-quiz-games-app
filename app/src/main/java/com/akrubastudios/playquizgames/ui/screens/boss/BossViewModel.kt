@@ -858,11 +858,13 @@ class BossViewModel @Inject constructor(
                             it.copy(
                                 isShowHintUsed = true,
                                 currentGems = it.currentGems - cost,
-                                // Estos dos campos ya existen en GameState, los reutilizamos.
-                                showFunFactDialog = true,
+                                showHelpsSheet = false,
                                 currentFunFact = funFactText ?: ""
                             )
                         }
+                        delay(300L) // Pausa para que la animación del BottomSheet se complete
+                        _uiState.update { it.copy(showFunFactDialog = true) }
+
                     } else {
                         Log.e("BossViewModel", "❌ Error al crear gem_spend_request para 'Ver Pista'.", task.exception)
                     }
