@@ -12,12 +12,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun LoginScreen(
@@ -58,10 +61,20 @@ fun LoginScreen(
     }
     val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
 
-    Box(
+    Column(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.Center, // Centramos verticalmente
+        horizontalAlignment = Alignment.CenterHorizontally // Centramos horizontalmente
     ) {
+        // 1. AÑADIMOS NUESTRO LOGO
+        Image(
+            painter = painterResource(id = R.drawable.logo_splash), // Usa el mismo recurso
+            contentDescription = "Logo de Play Quiz Games",
+            modifier = Modifier.fillMaxWidth(0.7f) // Ocupa el 70% del ancho
+        )
+
+        Spacer(modifier = Modifier.height(64.dp)) // Espacio entre logo y botón
+
         if (uiState.isLoading) {
             CircularProgressIndicator()
         } else {
