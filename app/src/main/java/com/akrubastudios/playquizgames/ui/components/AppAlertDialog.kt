@@ -14,20 +14,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.akrubastudios.playquizgames.ui.theme.CyanAccent
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
+import com.akrubastudios.playquizgames.ui.theme.LightGray
+import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 
 // Función helper para obtener el color del botón
 @Composable
 fun getButtonTextColor(): Color {
-    return if (isSystemInDarkTheme()) Color.Yellow else Color.Black
+    return if (isSystemInDarkTheme()) DarkGoldAccent else CyanAccent
 }
 
 // Función helper para obtener colores de botones internos en el Dialog de Expedition
 @Composable
 fun getInternalButtonColors(): Pair<Color, Color> { // Pair<backgroundColor, textColor>
     return if (isSystemInDarkTheme()) {
-        Pair(Color(0xFF2E7D32), Color.White) // Verde oscuro con texto blanco para modo noche
+        Pair(DarkGoldAccent, Color.White) // Para modo noche
     } else {
-        Pair(Color(0xFF4CAF50), Color.Black) // Verde claro con texto negro para modo día
+        Pair(LightGray, SkyBlue) // Para modo día
     }
 }
 
@@ -66,9 +71,9 @@ fun AppAlertDialog(
     val contentColor = Color.White
 
     if (isSystemInDarkTheme()) {
-        backgroundColor = Color(0xFF075E54)
+        backgroundColor = DeepNavy
     } else {
-        backgroundColor = Color.Red
+        backgroundColor = DarkGoldAccent.copy(alpha = 0.90f)
     }
 
     AlertDialog(
@@ -97,9 +102,9 @@ fun AppExpeditionAlertDialog(
     val (internalButtonBg, internalButtonText) = getInternalButtonColors()
 
     if (isSystemInDarkTheme()) {
-        backgroundColor = Color(0xFF075E54)
+        backgroundColor = DeepNavy
     } else {
-        backgroundColor = Color.Red
+        backgroundColor = DarkGoldAccent.copy(alpha = 0.90f)
     }
 
     AlertDialog(
