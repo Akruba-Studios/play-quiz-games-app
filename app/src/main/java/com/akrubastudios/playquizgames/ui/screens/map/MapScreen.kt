@@ -94,6 +94,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
+import com.akrubastudios.playquizgames.ui.components.DialogButtonText
+import com.akrubastudios.playquizgames.ui.components.DialogText
+import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlin.math.sin
@@ -328,8 +331,8 @@ fun MapScreen(
 
         AppExpeditionAlertDialog(
             onDismissRequest = { viewModel.dismissExpeditionDialog() },
-            title = { Text(text = stringResource(R.string.expedition_dialog_title)) },
-            text = { Text(text = stringResource(R.string.expedition_dialog_text)) },
+            title = { DialogTitle(text = stringResource(R.string.expedition_dialog_title)) },
+            text = { DialogText(text = stringResource(R.string.expedition_dialog_text)) },
             expeditionButtons = { backgroundColor, textColor ->
                 uiState.availableExpeditions.forEach { (continentId, continentName) ->
                     Button(
@@ -343,7 +346,8 @@ fun MapScreen(
                     ) {
                         Text(
                             text = continentName,
-                            color = textColor
+                            color = textColor,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -351,10 +355,7 @@ fun MapScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.dismissExpeditionDialog() }) {
-                    Text(
-                        text = stringResource(R.string.expedition_dialog_button_later),
-                        color = buttonTextColor
-                    )
+                    DialogButtonText(text = stringResource(R.string.expedition_dialog_button_later))
                 }
             }
         )
@@ -367,8 +368,8 @@ fun MapScreen(
 
         AppAlertDialog(
             onDismissRequest = { viewModel.clearPendingBossChallenge() },
-            title = { Text(text = stringResource(R.string.conquest_dialog_title)) },
-            text = { Text(text = stringResource(R.string.conquest_dialog_text, countryName)) },
+            title = { DialogTitle(text = stringResource(R.string.conquest_dialog_title)) },
+            text = { DialogText(text = stringResource(R.string.conquest_dialog_text, countryName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -382,18 +383,12 @@ fun MapScreen(
                         }
                     }
                 ) {
-                    Text(
-                        text = stringResource(R.string.conquest_dialog_button_challenge),
-                        color = buttonTextColor
-                    )
+                    DialogButtonText(text = stringResource(R.string.conquest_dialog_button_challenge))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.clearPendingBossChallenge() }) {
-                    Text(
-                        text = stringResource(R.string.expedition_dialog_button_later),
-                        color = buttonTextColor
-                    )
+                    DialogButtonText(text = stringResource(R.string.expedition_dialog_button_later))
                 }
             }
         )

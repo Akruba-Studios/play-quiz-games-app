@@ -41,6 +41,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
+import com.akrubastudios.playquizgames.ui.components.DialogButtonText
+import com.akrubastudios.playquizgames.ui.components.DialogText
+import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlinx.coroutines.Dispatchers
@@ -200,21 +203,19 @@ fun ProfileScreen(
     if (showSignOutDialog) {
         AppAlertDialog(
             onDismissRequest = { showSignOutDialog = false },
-            title = { Text(stringResource(R.string.profile_sign_out_dialog_title)) },
-            text = { Text(stringResource(R.string.profile_sign_out_dialog_text)) },
+            title = { DialogTitle(text = stringResource(R.string.profile_sign_out_dialog_title)) },
+            text = { DialogText(text = stringResource(R.string.profile_sign_out_dialog_text)) },
             confirmButton = {
-                val buttonColor = getButtonTextColor()
                 TextButton(onClick = {
                     viewModel.signOut()
                     showSignOutDialog = false
                 }) {
-                    Text(stringResource(R.string.dialog_button_confirm), color = buttonColor)
+                    DialogButtonText(text = stringResource(R.string.dialog_button_confirm))
                 }
             },
             dismissButton = {
-                val buttonColor = getButtonTextColor()
                 TextButton(onClick = { showSignOutDialog = false }) {
-                    Text(stringResource(R.string.dialog_button_cancel), color = buttonColor)
+                    DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
                 }
             }
         )

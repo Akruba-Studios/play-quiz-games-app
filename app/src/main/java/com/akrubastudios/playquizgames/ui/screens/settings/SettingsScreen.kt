@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
+import com.akrubastudios.playquizgames.ui.components.DialogButtonText
+import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +134,7 @@ private fun LanguageSelectionDialog(
 
     AppAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.settings_language_dialog_title)) },
+        title = { DialogTitle(text = stringResource(R.string.settings_language_dialog_title)) },
         text = {
             Column {
                 // Opción para Español
@@ -155,9 +157,7 @@ private fun LanguageSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.dialog_button_cancel),
-                    color = buttonTextColor
-                )
+                DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
             }
         }
     )

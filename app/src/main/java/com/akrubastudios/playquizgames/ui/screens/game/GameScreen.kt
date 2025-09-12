@@ -79,6 +79,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalView
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
+import com.akrubastudios.playquizgames.ui.components.DialogText
+import com.akrubastudios.playquizgames.ui.components.DialogTitle
+import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 
 @Composable
 fun GameScreen(
@@ -185,13 +188,19 @@ fun GameScreen(
 
         // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
         if (uiState.showFunFactDialog) {
-            AlertDialog(
+            AppAlertDialog(
                 onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
-                title = { Text(text = stringResource(R.string.fun_fact_title)) },
-                text = { Text(text = uiState.currentFunFact) },
+                title = { DialogTitle(text = stringResource(R.string.fun_fact_title)) },
+                text = { DialogText(text = uiState.currentFunFact) },
                 confirmButton = {
+                    val buttonIconColor = getButtonTextColor()
                     IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cd_close),
+                            // Aplicamos el color al 'tint' del icono
+                            tint = buttonIconColor
+                        )
                     }
                 }
             )
