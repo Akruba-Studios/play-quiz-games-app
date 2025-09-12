@@ -82,6 +82,7 @@ data class BossState(
     val revealedLetterPositions: Set<Int> = emptySet(),
     val showCorrectEffect: Boolean = false,
     val showIncorrectEffect: Boolean = false,
+    val showClearAnimation: Boolean = false
 )
 
 @HiltViewModel
@@ -566,12 +567,25 @@ class BossViewModel @Inject constructor(
     }
 
     fun clearUserAnswer() {
-        _uiState.update {
-            it.copy(
-                userAnswer = "",
-                usedLetterIndices = emptySet(),
-                revealedLetterPositions = emptySet()
-            )
+        // No hacer nada si ya se está borrando o la respuesta está vacía.
+        if (_uiState.value.showClearAnimation || _uiState.value.userAnswer.isEmpty()) return
+
+        viewModelScope.launch {
+            // 1. Activa la animación.
+            _uiState.update { it.copy(showClearAnimation = true) }
+
+            // 2. Espera un breve momento para que la animación se vea.
+            delay(300L)
+
+            // 3. Borra los datos y desactiva la animación.
+            _uiState.update {
+                it.copy(
+                    userAnswer = "",
+                    usedLetterIndices = emptySet(),
+                    revealedLetterPositions = emptySet(),
+                    showClearAnimation = false
+                )
+            }
         }
     }
 

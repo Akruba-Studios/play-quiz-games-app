@@ -382,7 +382,7 @@ fun AnswerSlots(
     // El FlowRow es el contenedor principal que permite que las palabras salten de línea.
     FlowRow(
         modifier = modifier
-            .padding(top = 8.dp, bottom = 16.dp) //top 8 espacio entre el texto pregunta y el answerslot
+            .padding(top = 12.dp, bottom = 20.dp) //top 12 espacio entre el texto pregunta y el answerslot; 20 dp, el espacio del answetslots hacia abajo
             .scale(scale)
             .offset(x = if (showClearAnimation) clearOffsetX.dp else offsetX.dp)
             .alpha(if (showClearAnimation) clearAlpha else 1.0f)

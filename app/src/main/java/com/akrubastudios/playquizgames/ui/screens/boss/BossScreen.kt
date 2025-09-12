@@ -70,7 +70,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.GoldAccent
 import com.akrubastudios.playquizgames.ui.theme.LightGray
+import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -202,6 +205,8 @@ private fun QuestionTextFixed(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), // <-- 1. Quitamos la sombra
+        border = BorderStroke(1.dp, DarkGoldAccent), // <-- 2. Añadimos el borde dorado
         colors = CardDefaults.cardColors(
             containerColor = Color.Black.copy(alpha = 0.7f)
         ),
@@ -226,15 +231,31 @@ private fun AnswerSlotsFixed(
     correctAnswer: String,
     userAnswer: String,
     revealedLetterPositions: Set<Int>,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    showClearAnimation: Boolean
 ) {
+    val clearOffsetX by animateFloatAsState(
+        targetValue = if (showClearAnimation) {
+            if ((System.currentTimeMillis() / 80) % 2 == 0L) -8f else 8f
+        } else 0f,
+        animationSpec = tween(80),
+        label = "boss_clear_shake"
+    )
+    val clearAlpha by animateFloatAsState(
+        targetValue = if (showClearAnimation) 0.3f else 1.0f,
+        animationSpec = tween(200),
+        label = "boss_clear_fade"
+    )
+
     val userAnswerLetters = userAnswer
     var letterIndex = 0
 
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .offset(x = clearOffsetX.dp)
+            .alpha(clearAlpha)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
             .clickable { onClear() },
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // 18.dp Espacio entre palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -253,11 +274,13 @@ private fun AnswerSlotsFixed(
                     val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
                     Card(
                         modifier = Modifier.size(globalSlotSize),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        border = if (charToShow == ' ') BorderStroke(1.dp, GoldAccent) else null,
                         colors = CardDefaults.cardColors(
                             containerColor = when {
-                                charToShow == ' ' -> Color.Gray.copy(alpha = 0.8f)
+                                charToShow == ' ' -> LightGray
                                 isRevealedLetter -> Color(0xFF4CAF50) // Verde para letras reveladas
-                                else -> Color.Blue // Azul para letras normales
+                                else -> SkyBlue // Letras Normales
                             }
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -268,7 +291,7 @@ private fun AnswerSlotsFixed(
                         ) {
                             Text(
                                 text = charToShow.toString().uppercase(),
-                                color = Color.White,
+                                color = if (charToShow == ' ') Color.Transparent else Color.White,
                                 fontSize = if (globalSlotSize < 35.dp) 14.sp else 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -364,12 +387,12 @@ private fun LetterBankFixed(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .background(
-                color = Color.Black.copy(alpha = 0.5f),
+                color = Color.Black.copy(alpha = 0.7f),
                 shape = RoundedCornerShape(8.dp)
             )
             .border(
                 width = 1.dp,
-                color = Color(0xFF00BCD4),
+                color = com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(8.dp)
@@ -384,7 +407,7 @@ private fun LetterBankFixed(
                 onClick = { if (!isUsed) onLetterClick(letter, index) },
                 modifier = Modifier.size(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isUsed) Color.Gray else Color.Blue,
+                    containerColor = if (isUsed) Color.Gray else SkyBlue,
                     disabledContainerColor = Color.Gray
                 ),
                 enabled = !isUsed,
@@ -553,7 +576,8 @@ fun BossScreen(
                         correctAnswer = uiState.currentCorrectAnswer,
                         userAnswer = uiState.userAnswer,
                         revealedLetterPositions = uiState.revealedLetterPositions,
-                        onClear = { viewModel.clearUserAnswer() }
+                        onClear = { viewModel.clearUserAnswer() },
+                        showClearAnimation = uiState.showClearAnimation
                     )
 
                     // Timer y diálogo en fila
