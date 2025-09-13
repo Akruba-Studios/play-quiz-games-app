@@ -666,13 +666,31 @@ fun BossScreen(
         // PENDIENTE PERSOLINAR COLORES VALIDANDO SI USARA APPALERTDIALOG
         if (uiState.showFunFactDialog) {
             AlertDialog(
-                onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
-                containerColor = LightGray,
-                title = { Text(text = stringResource(R.string.fun_fact_title)) },
-                text = { Text(text = uiState.currentFunFact) },
+                onDismissRequest = { viewModel.onFunFactDialogDismissed() },
+                containerColor = Color.Black.copy(alpha = 0.8f),
+                title = {
+                    Text(
+                        text = stringResource(R.string.fun_fact_title),
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                text = {
+                    Text(
+                        text = uiState.currentFunFact,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
                 confirmButton = {
                     IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.cd_close),
+                            tint = Color.White
+                        )
                     }
                 }
             )
