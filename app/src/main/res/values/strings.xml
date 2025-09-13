@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">Play Quiz Games</string>
 
+    <!-- SplashScreen -->
+    <string name="splash_edition_founders">Edición Fundadores</string>
+
     <!-- LoginScreen -->
     <string name="login_button">Iniciar Sesión con Google</string>
     <string name="login_failed">El inicio de sesión con Google falló.</string>

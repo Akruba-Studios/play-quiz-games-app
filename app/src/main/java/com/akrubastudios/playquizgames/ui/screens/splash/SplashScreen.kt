@@ -18,6 +18,14 @@ import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.Routes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 @Composable
@@ -48,11 +56,23 @@ fun SplashScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_splash),
-                contentDescription = "Logo de Play Quiz Games",
-                modifier = Modifier.fillMaxWidth(0.7f)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_splash),
+                    contentDescription = "Logo de Play Quiz Games",
+                    modifier = Modifier.fillMaxWidth(0.7f)
+                )
+                // Espacio entre el logo y el texto
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = stringResource(id = R.string.splash_edition_founders),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

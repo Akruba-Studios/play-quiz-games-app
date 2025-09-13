@@ -20,6 +20,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -73,7 +75,18 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(0.7f) // Ocupa el 70% del ancho
         )
 
-        Spacer(modifier = Modifier.height(64.dp)) // Espacio entre logo y botón
+        // Espacio entre el logo y el nuevo texto
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // AÑADIMOS EL TEXTO DE LA EDICIÓN
+        Text(
+            text = stringResource(id = R.string.splash_edition_founders),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        // Mantenemos o ajustamos el espacio antes del botón
+        Spacer(modifier = Modifier.height(48.dp))
 
         if (uiState.isLoading) {
             CircularProgressIndicator()
