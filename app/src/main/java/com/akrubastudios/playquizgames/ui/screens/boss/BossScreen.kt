@@ -1102,6 +1102,20 @@ private fun AnimatedGemsIndicator(
         label = "shimmerAlpha"
     )
 
+    // NUEVA ANIMACIÓN: Cambio de color cada 2 segundos
+    val colorPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing), // Tiempo animacion total = 4 Segundos
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "colorPhase"
+    )
+
+    // Determinar si debe ser rojo (últimos 1000ms de cada ciclo de 3000ms)
+    val isRedPhase = colorPhase > 0.75f // 75% del tiempo cambio de color (3 de 4 segundos)
+
     // Usar el tema por defecto de Material3 para este componente específico
     MaterialTheme(
         colorScheme = lightColorScheme() // Fuerza el esquema por defecto
@@ -1126,9 +1140,11 @@ private fun AnimatedGemsIndicator(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = "💎",
-                    fontSize = 20.sp
+                Icon(
+                    imageVector = Icons.Default.Diamond,
+                    contentDescription = "Gems",
+                    modifier = Modifier.size(28.dp), // Tamaño del Icono
+                    tint = if (isRedPhase) DarkGoldAccent else Color(0xFF00BCD4) // Cyan del emoji diamante
                 )
                 Text(
                     text = "${gems}",
