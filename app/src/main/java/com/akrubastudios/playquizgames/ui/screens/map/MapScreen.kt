@@ -99,6 +99,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
+import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
@@ -512,67 +513,161 @@ private fun RewardRow(icon: ImageVector, text: String) {
     }
 }
 private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
-    // Colores del océano
-    val deepOcean = Color(0xFF0D4F8C)     // Azul profundo
-    val midOcean = Color(0xFF1E88E5)      // Azul medio
-    val shallowOcean = Color(0xFF42A5F5)  // Azul claro
+    // Colores realistas del océano visto desde arriba
+    val deepOcean = Color(0xFF0A2342)      // Azul muy profundo - océano abierto
+    val mediumOcean = Color(0xFF1E3A5F)    // Azul medio - aguas intermedias
+    val shallowOcean = Color(0xFF2E5C8A)   // Azul menos profundo - cerca de costas
+    val surfaceShine = Color(0xFF4A90B8)   // Brillo superficial del agua
 
-    // Fondo base del océano
+    // CAPA 1: Fondo base con gradiente de profundidad
     drawRect(color = deepOcean, size = canvasSize)
 
-    // Generar ondas concéntricas desde múltiples puntos
-    val waveOrigins = listOf(
-        Offset(canvasSize.width * 0.2f, canvasSize.height * 0.3f),
-        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.6f),
-        Offset(canvasSize.width * 0.5f, canvasSize.height * 0.8f),
-        Offset(canvasSize.width * 0.1f, canvasSize.height * 0.7f),
-        Offset(canvasSize.width * 0.9f, canvasSize.height * 0.2f)
-    )
+    // CAPA 2: Variaciones de profundidad procedurales
+    val noiseScale = 0.002f
+    val depthVariationIntensity = 0.3f
 
-    // Dibujar ondas concéntricas
-    waveOrigins.forEachIndexed { index, origin ->
-        val timeOffset = index * PI.toFloat() / 3f
-        val animatedTime = waveTime + timeOffset
+    // Generar variaciones de profundidad usando funciones matemáticas
+    for (x in 0 until canvasSize.width.toInt() step 8) {
+        for (y in 0 until canvasSize.height.toInt() step 8) {
+            // Simular Perlin noise con funciones trigonométricas
+            val nx = x * noiseScale
+            val ny = y * noiseScale
 
-        for (ring in 1..8) {
-            val radius = ring * 80f + sin(animatedTime * 0.8f + ring * 0.5f) * 20f
-            val alpha = (0.15f / ring) * (1f + sin(animatedTime * 1.2f) * 0.3f)
+            val noise1 = sin(nx * 3.7f + waveTime * 0.2f) * cos(ny * 2.1f + waveTime * 0.15f)
+            val noise2 = sin(nx * 7.3f + waveTime * 0.1f) * cos(ny * 5.9f + waveTime * 0.25f)
+            val noise3 = sin(nx * 1.4f + waveTime * 0.3f) * cos(ny * 1.8f + waveTime * 0.08f)
 
-            if (radius > 0) {
-                drawCircle(
-                    color = midOcean.copy(alpha = alpha.coerceIn(0f, 0.3f)),
-                    radius = radius,
-                    center = origin
+            val combinedNoise = (noise1 * 0.5f + noise2 * 0.3f + noise3 * 0.2f)
+            val normalizedNoise = (combinedNoise + 1f) / 2f // 0 a 1
+
+            // Calcular color basado en la "profundidad simulada"
+            val depthFactor = normalizedNoise * depthVariationIntensity
+            val currentColor = when {
+                depthFactor < 0.1f -> deepOcean
+                depthFactor < 0.15f -> mediumOcean.copy(alpha = 0.7f)
+                else -> shallowOcean.copy(alpha = 0.4f)
+            }
+
+            if (depthFactor > 0.05f) {
+                drawRect(
+                    color = currentColor,
+                    topLeft = Offset(x.toFloat(), y.toFloat()),
+                    size = androidx.compose.ui.geometry.Size(8f, 8f)
                 )
             }
         }
     }
 
-    // Efecto shimmer global
-    val shimmerIntensity = (sin(waveTime * 1.5f) + 1f) / 2f * 0.1f
-    drawRect(
-        color = shallowOcean.copy(alpha = shimmerIntensity),
-        size = canvasSize
-    )
+    // CAPA 3: Corrientes marinas direccionales
+    val currentDirection1 = waveTime * 0.5f
+    val currentDirection2 = waveTime * -0.3f + PI.toFloat()
 
-    // Ondas direccionales sutiles
-    val path = androidx.compose.ui.graphics.Path()
-    for (y in 0..canvasSize.height.toInt() step 40) {
-        path.reset()
+    // Corriente principal (horizontal)
+    for (y in 0 until canvasSize.height.toInt() step 25) {
+        val amplitude = 15f + sin(y * 0.01f + waveTime * 0.4f) * 8f
+        val frequency = 0.008f + sin(y * 0.005f) * 0.002f
+
+        val path = androidx.compose.ui.graphics.Path()
         path.moveTo(0f, y.toFloat())
 
-        for (x in 0..canvasSize.width.toInt() step 10) {
-            val waveY = y + sin(x * 0.01f + waveTime * 2f) * 8f
+        for (x in 0..canvasSize.width.toInt() step 4) {
+            val waveY = y + sin(x * frequency + currentDirection1) * amplitude
             path.lineTo(x.toFloat(), waveY)
         }
 
-        val alpha = abs(sin(waveTime * 0.5f + y * 0.01f)) * 0.1f
+        val alpha = abs(sin(waveTime * 0.3f + y * 0.008f)) * 0.12f
+        drawPath(
+            path = path,
+            color = mediumOcean.copy(alpha = alpha),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
+        )
+    }
+
+    // Corriente secundaria (diagonal)
+    for (line in 0..20) {
+        val startX = line * canvasSize.width / 20f - canvasSize.width * 0.2f
+        val angle = 0.3f + sin(waveTime * 0.2f) * 0.1f
+
+        val path = androidx.compose.ui.graphics.Path()
+        path.moveTo(startX, 0f)
+
+        for (step in 0..50) {
+            val progress = step / 50f
+            val x = startX + progress * canvasSize.width * 1.4f
+            val y = progress * canvasSize.height + sin(progress * 4f + currentDirection2) * 30f
+
+            if (step == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+
+        val alpha = abs(sin(waveTime * 0.4f + line * 0.3f)) * 0.08f
         drawPath(
             path = path,
             color = shallowOcean.copy(alpha = alpha),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1f)
         )
     }
+
+    // CAPA 4: Reflexiones especulares sutiles
+    val specularCenters = listOf(
+        Offset(canvasSize.width * 0.3f, canvasSize.height * 0.2f),
+        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.5f),
+        Offset(canvasSize.width * 0.2f, canvasSize.height * 0.8f),
+        Offset(canvasSize.width * 0.8f, canvasSize.height * 0.3f)
+    )
+
+    specularCenters.forEachIndexed { index, center ->
+        val timeOffset = index * PI.toFloat() / 2f
+        val animatedTime = waveTime * 0.6f + timeOffset
+
+        // Reflexión principal
+        val mainRadius = 40f + sin(animatedTime) * 15f
+        val mainAlpha = (0.15f + sin(animatedTime * 1.5f) * 0.08f).coerceIn(0f, 0.25f)
+
+        drawCircle(
+            color = surfaceShine.copy(alpha = mainAlpha),
+            radius = mainRadius,
+            center = center
+        )
+
+        // Reflexión secundaria más pequeña
+        val secondaryRadius = mainRadius * 0.4f
+        val secondaryAlpha = mainAlpha * 0.6f
+
+        drawCircle(
+            color = surfaceShine.copy(alpha = secondaryAlpha),
+            radius = secondaryRadius,
+            center = center + Offset(
+                sin(animatedTime * 2f) * 20f,
+                cos(animatedTime * 1.8f) * 15f
+            )
+        )
+    }
+
+    // CAPA 5: Shimmer atmosférico global mejorado
+    val atmosphereIntensity = (sin(waveTime * 0.8f) + 1f) / 2f * 0.06f
+    drawRect(
+        color = surfaceShine.copy(alpha = atmosphereIntensity),
+        size = canvasSize
+    )
+
+    // CAPA 6: Efecto de profundidad con gradiente radial desde el centro
+    val centerPoint = Offset(canvasSize.width * 0.5f, canvasSize.height * 0.5f)
+    val maxDistance = kotlin.math.sqrt(
+        (canvasSize.width * canvasSize.width + canvasSize.height * canvasSize.height).toDouble()
+    ).toFloat() * 0.5f
+
+    drawCircle(
+        brush = androidx.compose.ui.graphics.Brush.radialGradient(
+            colors = listOf(
+                Color.Transparent,
+                deepOcean.copy(alpha = 0.2f)
+            ),
+            center = centerPoint,
+            radius = maxDistance
+        ),
+        radius = maxDistance,
+        center = centerPoint
+    )
 }
 
 @Composable
@@ -690,17 +785,11 @@ fun InteractiveWorldMap(
 
     // Animación del océano
     LaunchedEffect(Unit) {
-        val animationSpec = infiniteRepeatable<Float>(
-            animation = tween(8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-
-        animate(
-            initialValue = 0f,
-            targetValue = 2f * PI.toFloat(),
-            animationSpec = animationSpec
-        ) { value, _ ->
-            waveTime = value
+        while(true) {
+            waveTime += 0.016f  // Incremento suave ~60fps
+            delay(16)
+            // Opcional: reset muy ocasional para evitar overflow
+            if (waveTime > 1000f) waveTime -= 1000f
         }
     }
 
