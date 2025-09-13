@@ -71,6 +71,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
@@ -650,7 +651,8 @@ fun BossScreen(
         if (uiState.showHelpsSheet) {
             ModalBottomSheet(
                 onDismissRequest = { viewModel.closeHelpsSheet() },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = Color.Black.copy(alpha = 0.8f)
             ) {
                 HelpsContent(
                     uiState = uiState,
@@ -914,7 +916,8 @@ private fun HelpsContent(
                 Text(
                     text = stringResource(R.string.helps_menu_title),
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    color = Color.White
                 )
 
                 // Timer prominente en rojo
@@ -1001,20 +1004,39 @@ private fun HelpItem(
     val canAfford = currentGems >= cost
     val isEnabled = !isUsed && canAfford
 
+    val cardBackgroundColor = if (isEnabled) {
+        DeepNavy // Azul oscuro para tarjetas activas
+    } else {
+        Color.DarkGray.copy(alpha = 0.5f) // Gris oscuro translúcido para inactivas
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isEnabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+            containerColor = cardBackgroundColor
         )
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = title, modifier = Modifier.size(40.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(40.dp),
+                tint = Color(0xFF00BCD4)
+            )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontWeight = FontWeight.Bold)
-                Text(text = description, style = MaterialTheme.typography.bodySmall)
+                Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = description, style = MaterialTheme.typography.bodySmall, color = Color.White)
             }
-            Button(onClick = onClick, enabled = isEnabled) {
+            Button(
+                onClick = onClick,
+                enabled = isEnabled,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DarkGoldAccent,
+                    contentColor = Color.White,
+                    disabledContainerColor = DarkGoldAccent.copy(alpha = 0.5f)
+                )
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = cost.toString())
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1027,7 +1049,7 @@ private fun HelpItem(
                 text = stringResource(R.string.help_item_used_label),
                 modifier = Modifier.align(Alignment.End).padding(end = 12.dp, bottom = 4.dp),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                color = Color.White.copy(alpha = 0.7f)
             )
         }
     }
