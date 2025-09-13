@@ -70,6 +70,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.akrubastudios.playquizgames.ui.components.GemIcon
+import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
@@ -1141,10 +1143,10 @@ private fun AnimatedGemsIndicator(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Diamond,
+                    imageVector = if (isRedPhase) GemIconDarkGold else GemIcon,
                     contentDescription = "Gems",
                     modifier = Modifier.size(28.dp), // Tamaño del Icono
-                    tint = if (isRedPhase) DarkGoldAccent else Color(0xFF00BCD4) // Cyan del emoji diamante
+                    tint = Color.Unspecified
                 )
                 Text(
                     text = "${gems}",
