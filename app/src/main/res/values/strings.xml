@@ -48,7 +48,7 @@
     <string name="cd_start_expedition">Iniciar Expedición</string>
 
     <string name="gems_tutorial_title">¿Qué son las Gemas?</string>
-    <string name="gems_tutorial_message">¡Son tu recurso más valioso! Gánalas consiguiendo estrellas en los niveles y úsalas para activar poderosas Ayudas durante las batallas contra los Guardianes de cada país.</string>
+    <string name="gems_tutorial_message">¡Son tu recurso más valioso! Gánalas consiguiendo estrellas y desata poderosas ayudas cuando te encuentres atascado en una pregunta.</string>
 
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>

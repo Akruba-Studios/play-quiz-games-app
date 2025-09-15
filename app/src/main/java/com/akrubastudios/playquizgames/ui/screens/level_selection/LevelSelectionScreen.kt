@@ -26,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
 
@@ -164,7 +165,11 @@ fun LevelItem(
                 MaterialTheme.colorScheme.primary
             }
 
-            Text(text = level.levelName, color = contentColor)
+            Text(
+                text = level.levelName,
+                color = contentColor,
+                fontWeight = if (level.isLocked) FontWeight.Normal else FontWeight.Bold
+            )
             Spacer(Modifier.weight(1f))
 
             if (level.isLocked) {
