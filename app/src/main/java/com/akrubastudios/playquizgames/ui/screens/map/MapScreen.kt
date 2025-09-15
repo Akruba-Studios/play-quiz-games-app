@@ -99,6 +99,9 @@ import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
+import com.akrubastudios.playquizgames.ui.theme.CyanAccent
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.math.cos
@@ -706,9 +709,9 @@ fun InteractiveWorldMap(
     val density = LocalDensity.current
 
     // Definir colores
-    val dominatedColor = Color(0xFF8B1538).toArgb() // Borgoña mas elegante
-    val conqueredColor = Color(0xFFBF8C3A).toArgb() // Dorado más terroso
-    val availableColor = Color(0xFF10B981).toArgb() // Verde Esmeralda
+    val dominatedColor = DarkGoldAccent.toArgb() // PAÍSES DOMINADOS
+    val conqueredColor = CyanAccent.toArgb() // PAÍSES CONQUISTADOS
+    val availableColor = LightGray.toArgb() // PAÍSES DISPONIBLES
     val defaultColor = Color(0xFF6B7280).toArgb() // Gris neutro
 
     // Función para extraer coordenadas de paths del SVG
