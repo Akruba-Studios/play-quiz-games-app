@@ -3,6 +3,7 @@ package com.akrubastudios.playquizgames.ui.screens.game
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
@@ -74,6 +75,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
@@ -81,6 +83,9 @@ import androidx.compose.ui.platform.LocalView
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
+import com.akrubastudios.playquizgames.ui.components.GemIcon
+import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
+import androidx.compose.foundation.Image
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 
 @Composable
@@ -146,7 +151,8 @@ fun GameScreen(
                 questionResults = uiState.questionResults,
                 timerExplosion = uiState.timerExplosion,
                 isFunFactButtonEnabled = !uiState.isFunFactUsedInRound || uiState.areFunFactsUnlockedForLevel,
-                onFunFactClick = { viewModel.onFunFactClicked() }
+                onFunFactClick = { viewModel.onFunFactClicked() },
+                currentGems = uiState.currentGems
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -219,6 +225,7 @@ fun TopBar(
     timerExplosion: Boolean = false,
     isFunFactButtonEnabled: Boolean,
     onFunFactClick: () -> Unit,
+    currentGems: Int,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
@@ -235,7 +242,8 @@ fun TopBar(
             questionResults = questionResults,
             totalQuestions = totalQuestions,
             isFunFactButtonEnabled = isFunFactButtonEnabled,
-            onFunFactClick = onFunFactClick
+            onFunFactClick = onFunFactClick,
+            currentGems = currentGems
         )
 
         // Centro - Timer
@@ -584,6 +592,7 @@ fun QuestionProgressCircles(
     totalQuestions: Int = 10,
     isFunFactButtonEnabled: Boolean,
     onFunFactClick: () -> Unit,
+    currentGems: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -647,58 +656,71 @@ fun QuestionProgressCircles(
                 }
             }
         }
-        // 1. Animación de escala para el pulso.
-        // Creamos una transición infinita para que el efecto sea constante.
-        val infiniteTransition = rememberInfiniteTransition(label = "FunFactPulse")
-        val animatedScale by infiniteTransition.animateFloat(
-            initialValue = 1.0f,
-            targetValue = 1.2f, // La escala máxima del pulso
-            animationSpec = infiniteRepeatable(
-                animation = tween(800, easing = LinearEasing), // Duración de un ciclo de pulso
-                repeatMode = RepeatMode.Reverse // Hace que vuelva a su tamaño original
-            ),
-            label = "FunFactScale"
-        )
 
-        // Determinamos la escala final: si está habilitado, usa la escala animada; si no, usa 1.0f.
-        val finalScale = if (isFunFactButtonEnabled) animatedScale else 1.0f
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        val context = LocalContext.current
-
-        IconButton(
-            onClick = {
-                if (isFunFactButtonEnabled) {
-                    onFunFactClick()
-                } else {
-                    // Toast personalizado con fondo negro translúcido y texto blanco
-                    val inflater = LayoutInflater.from(context)
-                    val layout = inflater.inflate(
-                        android.R.layout.simple_list_item_1,
-                        null
-                    )
-                    val textView = layout.findViewById<TextView>(android.R.id.text1)
-                    textView.text = context.getString(R.string.toast_no_more_fun_facts)
-                    textView.setTextColor(android.graphics.Color.WHITE) // Texto blanco
-                    textView.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")) // Negro translúcido
-                    textView.setPadding(24, 16, 24, 16)
-
-                    val toast = Toast(context)
-                    toast.duration = Toast.LENGTH_SHORT
-                    toast.view = layout
-                    toast.show()
-                }
-            },
-            enabled = true,
-            modifier = Modifier
-                .size(24.dp)
-                .scale(finalScale)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Lightbulb,
-                contentDescription = stringResource(R.string.cd_fun_fact_button),
-                tint = if (isFunFactButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            // 1. Animación de escala para el pulso.
+            // Creamos una transición infinita para que el efecto sea constante.
+            val infiniteTransition = rememberInfiniteTransition(label = "FunFactPulse")
+            val animatedScale by infiniteTransition.animateFloat(
+                initialValue = 1.0f,
+                targetValue = 1.2f, // La escala máxima del pulso
+                animationSpec = infiniteRepeatable(
+                    animation = tween(800, easing = LinearEasing), // Duración de un ciclo de pulso
+                    repeatMode = RepeatMode.Reverse // Hace que vuelva a su tamaño original
+                ),
+                label = "FunFactScale"
+            )
+
+            // Determinamos la escala final: si está habilitado, usa la escala animada; si no, usa 1.0f.
+            val finalScale = if (isFunFactButtonEnabled) animatedScale else 1.0f
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val context = LocalContext.current
+
+            IconButton(
+                onClick = {
+                    if (isFunFactButtonEnabled) {
+                        onFunFactClick()
+                    } else {
+                        // Toast personalizado con fondo negro translúcido y texto blanco
+                        val inflater = LayoutInflater.from(context)
+                        val layout = inflater.inflate(
+                            android.R.layout.simple_list_item_1,
+                            null
+                        )
+                        val textView = layout.findViewById<TextView>(android.R.id.text1)
+                        textView.text = context.getString(R.string.toast_no_more_fun_facts)
+                        textView.setTextColor(android.graphics.Color.WHITE) // Texto blanco
+                        textView.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")) // Negro translúcido
+                        textView.setPadding(24, 16, 24, 16)
+
+                        val toast = Toast(context)
+                        toast.duration = Toast.LENGTH_SHORT
+                        toast.view = layout
+                        toast.show()
+                    }
+                },
+                enabled = true,
+                modifier = Modifier
+                    .size(24.dp)
+                    .scale(finalScale)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lightbulb,
+                    contentDescription = stringResource(R.string.cd_fun_fact_button),
+                    tint = if (isFunFactButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                        alpha = 0.38f
+                    )
+                )
+            }
+            AnimatedGemsIndicator(
+                gems = currentGems,
+                hasGems = currentGems > 0,
+                onClick = { /* TODO: Lógica para abrir menú de ayudas */ }
             )
         }
     }
@@ -801,6 +823,85 @@ fun ScoreAndDifficultyCard(
                     style = MaterialTheme.typography.labelMedium
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedGemsIndicator(
+    gems: Int,
+    hasGems: Boolean,
+    onClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "gemsAnimation")
+
+    // Animación de pulso (escala)
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (hasGems) 1.15f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    // Animación de brillo (alpha)
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = if (hasGems) 0.6f else 0.5f,
+        targetValue = if (hasGems) 1f else 0.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
+    // NUEVA ANIMACIÓN: Cambio de color cada 2 segundos
+    val colorPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = LinearEasing), // Tiempo animacion total = 4 Segundos
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "colorPhase"
+    )
+
+    // Determinar si debe ser rojo (últimos 1000ms de cada ciclo de 3000ms)
+    val isRedPhase = colorPhase > 0.75f // 75% del tiempo cambio de color (3 de 4 segundos)
+
+    Card(
+        modifier = Modifier.clickable(
+            enabled = hasGems,
+            onClick = onClick
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+                .scale(pulseScale)
+                .alpha(shimmerAlpha),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Image(
+                imageVector = if (isRedPhase) GemIconDarkGold else GemIcon,
+                contentDescription = "Gems",
+                modifier = Modifier.size(22.dp), // Tamaño del Icono
+            )
+            Text(
+                text = "$gems",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

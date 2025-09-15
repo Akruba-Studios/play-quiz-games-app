@@ -27,5 +27,6 @@ data class GameState(
     val showFunFactDialog: Boolean = false,         // ¿Debe mostrarse el diálogo ahora mismo?
     val currentFunFact: String = "",                 // El texto del fun fact a mostrar
     val hasSeenFunFactTutorial: Boolean = true,
-    val showFunFactTutorialDialog: Boolean = false
+    val showFunFactTutorialDialog: Boolean = false,
+    val currentGems: Int = 0
 )

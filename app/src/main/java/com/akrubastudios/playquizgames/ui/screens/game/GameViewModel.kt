@@ -94,7 +94,8 @@ class GameViewModel @Inject constructor(
                         difficulty = difficulty,
                         questionResults = List(loadedLevel.questions.size) { null }, // Crear lista del tamaño correcto
                         areFunFactsUnlockedForLevel = areFactsUnlocked,
-                        hasSeenFunFactTutorial = userData?.hasSeenFunFactTutorial ?: true
+                        hasSeenFunFactTutorial = userData?.hasSeenFunFactTutorial ?: true,
+                        currentGems = userData?.gems ?: 0
                     )
                 }
                 startTimer()
