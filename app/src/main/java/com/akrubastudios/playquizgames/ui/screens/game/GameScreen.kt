@@ -86,8 +86,20 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.GoldAccent
+import com.akrubastudios.playquizgames.ui.theme.PureWhite
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -152,7 +164,8 @@ fun GameScreen(
                 timerExplosion = uiState.timerExplosion,
                 isFunFactButtonEnabled = !uiState.isFunFactUsedInRound || uiState.areFunFactsUnlockedForLevel,
                 onFunFactClick = { viewModel.onFunFactClicked() },
-                currentGems = uiState.currentGems
+                currentGems = uiState.currentGems,
+                onGemsClick = { viewModel.openHelpsSheet() }
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
@@ -170,7 +183,8 @@ fun GameScreen(
                 onClear = { viewModel.clearUserAnswer() },
                 showCorrectAnimation = uiState.showCorrectAnimation,
                 showIncorrectAnimation = uiState.showIncorrectAnimation,
-                showClearAnimation = uiState.showClearAnimation
+                showClearAnimation = uiState.showClearAnimation,
+                revealedLetterPositions = uiState.revealedLetterPositions
             )
             Box(modifier = Modifier.weight(1f)) {
                 LetterBank(
@@ -181,6 +195,48 @@ fun GameScreen(
                         viewModel.onLetterClick(letter, index)
                     }
                 )
+            }
+        }
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        if (uiState.showHelpsSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.closeHelpsSheet() },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.background
+            ) {
+                // Contenido provisional para las ayudas
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido
+                ) {
+                    // 1. AÑADIMOS EL TÍTULO
+                    Text(
+                        text = stringResource(R.string.helps_menu_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    if (uiState.isProcessingHelp) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        val revealLetterCost = GameViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * GameViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
+                        HelpItem(
+                            icon = Icons.Default.VpnKey,
+                            title = stringResource(R.string.help_item_reveal_letter_title),
+                            description = stringResource(R.string.help_item_reveal_letter_description),
+                            cost = revealLetterCost,
+                            currentGems = uiState.currentGems,
+                            isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
+                            onClick = { viewModel.useRevealLetterHelp() }
+                        )
+                        // Aquí irá la segunda ayuda
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
         if (uiState.showFunFactTutorialDialog) {
@@ -226,6 +282,7 @@ fun TopBar(
     isFunFactButtonEnabled: Boolean,
     onFunFactClick: () -> Unit,
     currentGems: Int,
+    onGemsClick: () -> Unit,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
     // Row apila los elementos horizontalmente.
@@ -243,7 +300,8 @@ fun TopBar(
             totalQuestions = totalQuestions,
             isFunFactButtonEnabled = isFunFactButtonEnabled,
             onFunFactClick = onFunFactClick,
-            currentGems = currentGems
+            currentGems = currentGems,
+            onGemsClick = onGemsClick
         )
 
         // Centro - Timer
@@ -351,6 +409,7 @@ fun AnswerSlots(
     showCorrectAnimation: Boolean = false,
     showIncorrectAnimation: Boolean = false,
     showClearAnimation: Boolean = false,
+    revealedLetterPositions: Set<Int> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     // Animaciones
@@ -412,11 +471,13 @@ fun AnswerSlots(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
+                    val isRevealed = revealedLetterPositions.contains(letterIndex)
                     AnswerSlot(
                         char = charToShow,
                         size = globalSlotSize,
                         showCorrectAnimation = showCorrectAnimation,
-                        showIncorrectAnimation = showIncorrectAnimation
+                        showIncorrectAnimation = showIncorrectAnimation,
+                        isRevealed = isRevealed
                     )
                     letterIndex++
                 }
@@ -430,11 +491,13 @@ fun AnswerSlot(
     char: Char,
     size: Dp = 40.dp,
     showCorrectAnimation: Boolean = false,
-    showIncorrectAnimation: Boolean = false
+    showIncorrectAnimation: Boolean = false,
+    isRevealed: Boolean = false
 ) {
     val borderColor = when {
         showCorrectAnimation -> Color(0xFF4CAF50) // Verde
         showIncorrectAnimation -> Color(0xFFF44336) // Rojo
+        isRevealed -> GoldAccent
         else -> MaterialTheme.colorScheme.outline
     }
 
@@ -593,6 +656,7 @@ fun QuestionProgressCircles(
     isFunFactButtonEnabled: Boolean,
     onFunFactClick: () -> Unit,
     currentGems: Int,
+    onGemsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -720,7 +784,7 @@ fun QuestionProgressCircles(
             AnimatedGemsIndicator(
                 gems = currentGems,
                 hasGems = currentGems > 0,
-                onClick = { /* TODO: Lógica para abrir menú de ayudas */ }
+                onClick = onGemsClick
             )
         }
     }
@@ -901,6 +965,64 @@ private fun AnimatedGemsIndicator(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun HelpItem( // COPIADO Y ADAPTADO
+    icon: ImageVector,
+    title: String,
+    description: String,
+    cost: Int,
+    currentGems: Int,
+    isUsed: Boolean,
+    onClick: () -> Unit
+) {
+    val canAfford = currentGems >= cost
+    val isEnabled = !isUsed && canAfford
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isEnabled) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary // Usamos el color del tema
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, fontWeight = FontWeight.Bold) // El color se hereda
+                Text(text = description, style = MaterialTheme.typography.bodySmall)
+            }
+            Button(
+                onClick = onClick,
+                enabled = isEnabled,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DarkGoldAccent, // Mantenemos el dorado
+                    contentColor = PureWhite,
+                    disabledContainerColor = DarkGoldAccent.copy(alpha = 0.5f),
+                    disabledContentColor = PureWhite.copy(alpha = 0.5f)
+                )
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = cost.toString())
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(Icons.Default.Diamond, contentDescription = stringResource(R.string.cd_gems), modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+        if (isUsed) {
+            Text(
+                text = stringResource(R.string.help_item_used_label),
+                modifier = Modifier.align(Alignment.End).padding(end = 12.dp, bottom = 4.dp),
+                style = MaterialTheme.typography.labelSmall
             )
         }
     }

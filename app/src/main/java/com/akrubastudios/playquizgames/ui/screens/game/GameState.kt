@@ -28,5 +28,9 @@ data class GameState(
     val currentFunFact: String = "",                 // El texto del fun fact a mostrar
     val hasSeenFunFactTutorial: Boolean = true,
     val showFunFactTutorialDialog: Boolean = false,
-    val currentGems: Int = 0
+    val currentGems: Int = 0,
+    val showHelpsSheet: Boolean = false,
+    val isProcessingHelp: Boolean = false, // Para mostrar un loader
+    val revealLetterUses: Int = 0, // Contador de usos por pregunta
+    val revealedLetterPositions: Set<Int> = emptySet() // Letras reveladas
 )

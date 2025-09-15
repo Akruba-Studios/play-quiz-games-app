@@ -40,6 +40,8 @@ class GameViewModel @Inject constructor(
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
         private const val FUN_FACT_TIME_PENALTY_SECONDS = 4L // Segundo de penalización al usar un Fun fact
+        const val HELP_REVEAL_LETTER_COST_INITIAL = 2
+        const val HELP_REVEAL_LETTER_COST_INCREMENT = 1
     }
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
@@ -311,6 +313,8 @@ class GameViewModel @Inject constructor(
                         timerExplosion = false,
                         showClearAnimation = false,
                         questionTransition = false,
+                        revealLetterUses = 0,
+                        revealedLetterPositions = emptySet()
                     )
                 }
                 isAnswerProcessing = false
@@ -575,6 +579,88 @@ class GameViewModel @Inject constructor(
                 Log.e("GameViewModel", "Error al actualizar hasSeenFunFactTutorial", e)
             }
         }
+    }
+
+    fun openHelpsSheet() {
+        _uiState.update { it.copy(showHelpsSheet = true) }
+    }
+
+    fun closeHelpsSheet() {
+        _uiState.update { it.copy(showHelpsSheet = false) }
+    }
+
+    fun useRevealLetterHelp() {
+        val state = _uiState.value
+        val cost = HELP_REVEAL_LETTER_COST_INITIAL + (state.revealLetterUses * HELP_REVEAL_LETTER_COST_INCREMENT)
+        val lettersToRevealCount = state.currentCorrectAnswer.replace(" ", "").length
+
+        if (state.currentGems < cost || state.userAnswer.length >= lettersToRevealCount) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("GameViewModel", "Error: Usuario nulo al usar Revelar Letra.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
+        }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("GameViewModel", "✅ Petición para 'Revelar Letra' enviada.")
+
+                        val correctAnswerNoSpaces = state.currentCorrectAnswer.replace(" ", "")
+                        val userAnswer = state.userAnswer
+                        val hintLetters = state.generatedHintLetters
+                        val nextCorrectLetter = correctAnswerNoSpaces[userAnswer.length]
+
+                        val letterIndexInBank = hintLetters.withIndex()
+                            .find { (index, char) ->
+                                char.uppercaseChar() == nextCorrectLetter.uppercaseChar() &&
+                                        !state.usedLetterIndices.contains(index)
+                            }?.index
+
+                        val finalUsedIndices = if (letterIndexInBank != null) {
+                            state.usedLetterIndices + letterIndexInBank
+                        } else {
+                            state.usedLetterIndices
+                        }
+
+                        val newAnswer = userAnswer + nextCorrectLetter
+                        val newRevealedPositions = state.revealedLetterPositions + userAnswer.length
+
+                        _uiState.update {
+                            it.copy(
+                                userAnswer = newAnswer,
+                                usedLetterIndices = finalUsedIndices,
+                                revealedLetterPositions = newRevealedPositions,
+                                revealLetterUses = it.revealLetterUses + 1,
+                                currentGems = it.currentGems - cost
+                            )
+                        }
+
+                        if (newAnswer.length == correctAnswerNoSpaces.length) {
+                            checkAnswer()
+                        }
+
+                    } else {
+                        Log.e("GameViewModel", "❌ Error al crear gem_spend_request.", task.exception)
+                    }
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    closeHelpsSheet()
+                }
+            }
     }
 
     /**
