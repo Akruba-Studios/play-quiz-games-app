@@ -87,6 +87,7 @@ import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -233,7 +234,17 @@ fun GameScreen(
                             isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
                             onClick = { viewModel.useRevealLetterHelp() }
                         )
-                        // Aquí irá la segunda ayuda
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        HelpItem(
+                            icon = Icons.Default.Timer,
+                            title = stringResource(R.string.help_item_extra_time_title),
+                            description = stringResource(R.string.help_item_extra_time_description, GameViewModel.HELP_EXTRA_TIME_SECONDS),
+                            cost = GameViewModel.HELP_EXTRA_TIME_COST,
+                            currentGems = uiState.currentGems,
+                            isUsed = uiState.isExtraTimeUsed,
+                            onClick = { viewModel.useExtraTimeHelp() }
+                        )
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                 }

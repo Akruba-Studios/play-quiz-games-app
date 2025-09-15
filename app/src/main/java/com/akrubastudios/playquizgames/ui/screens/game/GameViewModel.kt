@@ -42,6 +42,8 @@ class GameViewModel @Inject constructor(
         private const val FUN_FACT_TIME_PENALTY_SECONDS = 4L // Segundo de penalización al usar un Fun fact
         const val HELP_REVEAL_LETTER_COST_INITIAL = 2
         const val HELP_REVEAL_LETTER_COST_INCREMENT = 1
+        const val HELP_EXTRA_TIME_SECONDS = 15
+        const val HELP_EXTRA_TIME_COST = 4
     }
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
@@ -314,7 +316,8 @@ class GameViewModel @Inject constructor(
                         showClearAnimation = false,
                         questionTransition = false,
                         revealLetterUses = 0,
-                        revealedLetterPositions = emptySet()
+                        revealedLetterPositions = emptySet(),
+                        isExtraTimeUsed = false
                     )
                 }
                 isAnswerProcessing = false
@@ -657,6 +660,58 @@ class GameViewModel @Inject constructor(
                     } else {
                         Log.e("GameViewModel", "❌ Error al crear gem_spend_request.", task.exception)
                     }
+                    _uiState.update { it.copy(isProcessingHelp = false) }
+                    closeHelpsSheet()
+                }
+            }
+    }
+
+    fun useExtraTimeHelp() {
+        val cost = HELP_EXTRA_TIME_COST
+        val state = _uiState.value
+
+        if (state.currentGems < cost || state.isExtraTimeUsed) {
+            return
+        }
+
+        _uiState.update { it.copy(isProcessingHelp = true) }
+
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("GameViewModel", "Error: Usuario nulo al usar Tiempo Extra.")
+            _uiState.update { it.copy(isProcessingHelp = false) }
+            closeHelpsSheet()
+            return
+        }
+
+        val spendRequest = hashMapOf(
+            "userId" to uid,
+            "amount" to cost,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("gem_spend_requests").add(spendRequest)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (task.isSuccessful) {
+                        Log.d("GameViewModel", "✅ Petición para 'Tiempo Extra' enviada.")
+
+                        val newTotalTime = _uiState.value.remainingTime + HELP_EXTRA_TIME_SECONDS
+
+                        _uiState.update {
+                            it.copy(
+                                isExtraTimeUsed = true,
+                                currentGems = it.currentGems - cost
+                            )
+                        }
+
+                        // Reinicia el temporizador principal con el nuevo tiempo
+                        startTimer(startTime = newTotalTime)
+
+                    } else {
+                        Log.e("GameViewModel", "❌ Error al crear gem_spend_request.", task.exception)
+                    }
+
                     _uiState.update { it.copy(isProcessingHelp = false) }
                     closeHelpsSheet()
                 }

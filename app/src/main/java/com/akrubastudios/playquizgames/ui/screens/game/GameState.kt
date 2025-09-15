@@ -32,5 +32,6 @@ data class GameState(
     val showHelpsSheet: Boolean = false,
     val isProcessingHelp: Boolean = false, // Para mostrar un loader
     val revealLetterUses: Int = 0, // Contador de usos por pregunta
-    val revealedLetterPositions: Set<Int> = emptySet() // Letras reveladas
+    val revealedLetterPositions: Set<Int> = emptySet(), // Letras reveladas
+    val isExtraTimeUsed: Boolean = false
 )
