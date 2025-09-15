@@ -43,9 +43,11 @@ fun GemsBalanceIndicator(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = "💎", // Usamos el emoji directamente para consistencia
-                fontSize = 20.sp
+            Icon(
+                imageVector = GemIcon,
+                contentDescription = "Gems",
+                modifier = Modifier.size(28.dp), // Tamaño del Icono
+                tint = Color.Unspecified
             )
             Text(
                 text = "$prefix${gems}",
