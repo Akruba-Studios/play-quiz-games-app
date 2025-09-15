@@ -20,9 +20,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
+import com.akrubastudios.playquizgames.ui.theme.LightGray
+import com.akrubastudios.playquizgames.ui.theme.PureWhite
 
 @Composable
 fun LoginScreen(
@@ -63,36 +68,47 @@ fun LoginScreen(
     }
     val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
 
-    Column(
+    Surface(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center, // Centramos verticalmente
-        horizontalAlignment = Alignment.CenterHorizontally // Centramos horizontalmente
+        color = LightGray // <-- FORZAMOS EL COLOR AQUÍ
     ) {
-        // 1. AÑADIMOS NUESTRO LOGO
-        Image(
-            painter = painterResource(id = R.drawable.logo_splash), // Usa el mismo recurso
-            contentDescription = "Logo de Play Quiz Games",
-            modifier = Modifier.fillMaxWidth(0.7f) // Ocupa el 70% del ancho
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center, // Centramos verticalmente
+            horizontalAlignment = Alignment.CenterHorizontally // Centramos horizontalmente
+        ) {
+            // 1. AÑADIMOS NUESTRO LOGO
+            Image(
+                painter = painterResource(id = R.drawable.logo_splash), // Usa el mismo recurso
+                contentDescription = "Logo de Play Quiz Games",
+                modifier = Modifier.fillMaxWidth(0.7f) // Ocupa el 70% del ancho
+            )
 
-        // Espacio entre el logo y el nuevo texto
-        Spacer(modifier = Modifier.height(24.dp))
+            // Espacio entre el logo y el nuevo texto
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // AÑADIMOS EL TEXTO DE LA EDICIÓN
-        Text(
-            text = stringResource(id = R.string.splash_edition_founders),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
+            // AÑADIMOS EL TEXTO DE LA EDICIÓN
+            Text(
+                text = stringResource(id = R.string.splash_edition_founders),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = DeepNavy
+            )
 
-        // Mantenemos o ajustamos el espacio antes del botón
-        Spacer(modifier = Modifier.height(48.dp))
+            // Mantenemos o ajustamos el espacio antes del botón
+            Spacer(modifier = Modifier.height(48.dp))
 
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            Button(onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) }) {
-                Text(text = stringResource(R.string.login_button))
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) },
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = PureWhite // <-- FORZAMOS EL COLOR DEL TEXTO A BLANCO
+                    )
+                ) {
+                    Text(text = stringResource(R.string.login_button))
+                }
             }
         }
     }

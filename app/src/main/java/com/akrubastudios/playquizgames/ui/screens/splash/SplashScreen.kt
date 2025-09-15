@@ -26,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.delay
 
 @Composable
@@ -51,7 +53,10 @@ fun SplashScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = LightGray // <-- FORZAMOS EL COLOR AQUÍ
+    ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -70,7 +75,9 @@ fun SplashScreen(
                 Text(
                     text = stringResource(id = R.string.splash_edition_founders),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = DeepNavy
+
                 )
             }
         }
