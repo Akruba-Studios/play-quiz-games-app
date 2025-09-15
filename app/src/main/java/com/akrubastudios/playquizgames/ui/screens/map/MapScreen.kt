@@ -513,11 +513,11 @@ private fun RewardRow(icon: ImageVector, text: String) {
     }
 }
 private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
-    // Colores realistas del océano visto desde arriba
-    val deepOcean = Color(0xFF0A2342)      // Azul muy profundo - océano abierto
-    val mediumOcean = Color(0xFF1E3A5F)    // Azul medio - aguas intermedias
-    val shallowOcean = Color(0xFF2E5C8A)   // Azul menos profundo - cerca de costas
-    val surfaceShine = Color(0xFF4A90B8)   // Brillo superficial del agua
+    // OPCION 3: Colores oceánicos claros - estilo tropical/mediterráneo
+    val deepOcean = Color(0xFF1B4F72)      // Azul profundo más claro
+    val mediumOcean = Color(0xFF2874A6)    // Azul medio vibrante
+    val shallowOcean = Color(0xFF3498DB)   // Azul claro brillante
+    val surfaceShine = Color(0xFF85C1E9)   // Brillo superficial luminoso
 
     // CAPA 1: Fondo base con gradiente de profundidad
     drawRect(color = deepOcean, size = canvasSize)
