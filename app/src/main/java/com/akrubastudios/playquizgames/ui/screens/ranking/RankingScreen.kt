@@ -16,8 +16,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.akrubastudios.playquizgames.domain.RankedUser
+import com.akrubastudios.playquizgames.ui.screens.ranking.RankedUserUiItem
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.R
 
 @Composable
@@ -51,7 +52,7 @@ fun RankingScreen(
 }
 
 @Composable
-fun RankedUserItem(user: RankedUser) {
+fun RankedUserItem(user: RankedUserUiItem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,7 +78,17 @@ fun RankedUserItem(user: RankedUser) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = user.displayName, style = MaterialTheme.typography.bodyLarge)
-                Text(text = "${user.totalXp} XP", style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.player_level, user.level),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold // Hacemos el nivel negrita
+                    )
+                    Text(
+                        text = " - ${user.totalXp} XP",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
