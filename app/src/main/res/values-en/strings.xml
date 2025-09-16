@@ -184,6 +184,8 @@
 
     <!-- RankingScreen -->
     <string name="ranking_title">Global Ranking</string>
+    <string name="ranking_your_position">Your Position</string>
+    <string name="ranking_xp_to_next">XP to Next Position</string>
     <string name="cd_profile_picture_of">Profile picture of %1$s</string>
 
     <!-- PlayerLevelIndicator -->

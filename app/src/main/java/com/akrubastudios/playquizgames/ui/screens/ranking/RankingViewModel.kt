@@ -18,8 +18,14 @@ data class RankedUserUiItem(
     val photoUrl: String?,
     val level: Int // <-- El nuevo dato
 )
+data class CurrentUserRankData(
+    val rank: Int,
+    val totalXp: Long,
+    val xpToNext: Long? // null si es el #1
+)
 data class RankingState(
     val rankingList: List<RankedUserUiItem> = emptyList(),
+    val currentUserRank: CurrentUserRankData? = null, // Puede ser null si falla
     val isLoading: Boolean = true
 )
 
@@ -37,12 +43,12 @@ class RankingViewModel @Inject constructor(
 
     private fun fetchRanking() {
         viewModelScope.launch {
-            // 3. Obtenemos los datos del repositorio como antes
-            val rankingData = gameDataRepository.getRanking()
+            // 3. PEDIMOS AMBAS COSAS A LA VEZ
+            val top20Result = gameDataRepository.getRanking() // Pide el Top 20
+            val userRankResult = gameDataRepository.getUserRank() // Pide el rango del usuario
 
-            // 4. TRANSFORMAMOS los datos del dominio a datos para la UI
-            val rankingForUi = rankingData.map { rankedUser ->
-                // Calculamos el nivel para cada usuario
+            // Procesamos el Top 20
+            val rankingForUi = top20Result.map { rankedUser ->
                 val levelInfo = PlayerLevelManager.calculateLevelInfo(rankedUser.totalXp)
                 RankedUserUiItem(
                     rank = rankedUser.rank,
@@ -53,8 +59,24 @@ class RankingViewModel @Inject constructor(
                 )
             }
 
-            // 5. Actualizamos el estado con la nueva lista transformada
-            _uiState.value = RankingState(rankingList = rankingForUi, isLoading = false)
+            // Procesamos el resultado del rango del usuario
+            var currentUserData: CurrentUserRankData? = null
+            userRankResult.onSuccess { response ->
+                currentUserData = CurrentUserRankData(
+                    rank = response.rank,
+                    totalXp = response.totalXp,
+                    xpToNext = response.nextPlayerXp?.let { it - response.totalXp }
+                )
+            }.onFailure {
+                // Si falla, lo dejamos en null, la UI sabrá qué hacer
+            }
+
+            // 4. ACTUALIZAMOS EL ESTADO CON TODA LA INFORMACIÓN
+            _uiState.value = RankingState(
+                rankingList = rankingForUi,
+                currentUserRank = currentUserData,
+                isLoading = false
+            )
         }
     }
 }

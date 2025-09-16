@@ -19,8 +19,21 @@ import kotlinx.coroutines.flow.callbackFlow
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+
+data class UserRankRequest(
+    val userId: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class UserRankResponse(
+    val rank: Int = 0,
+    val totalXp: Long = 0,
+    val nextPlayerXp: Long? = null,
+    val error: String? = null
+)
 
 class GameDataRepository @Inject constructor(
     private val db: FirebaseFirestore,
@@ -142,6 +155,50 @@ class GameDataRepository @Inject constructor(
         currentCountryId = null
         _userCountryProgressStateFlow.value = null
         Log.d("GameDataRepository", "⏹️ Escucha de progreso de país detenida.")
+    }
+
+    suspend fun getUserRank(): Result<UserRankResponse> {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            return Result.failure(Exception("Usuario no autenticado."))
+        }
+
+        // Usamos suspendCancellableCoroutine para manejar el listener de forma segura
+        return try {
+            suspendCancellableCoroutine { continuation ->
+                val request = UserRankRequest(userId = uid)
+                val requestRef = db.collection("user_rank_requests").document()
+
+                val listener = requestRef.addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        continuation.resume(Result.failure(error)) { /* No action on cancel */ }
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        val response = snapshot.toObject(UserRankResponse::class.java)
+                        // Esperamos a que la función complete el documento
+                        if (snapshot.contains("completedAt")) {
+                            if (response?.error != null) {
+                                continuation.resume(Result.failure(Exception(response.error))) { }
+                            } else if (response != null) {
+                                continuation.resume(Result.success(response)) { }
+                            }
+                        }
+                    }
+                }
+
+                // Si la corutina se cancela, removemos el listener
+                continuation.invokeOnCancellation {
+                    listener.remove()
+                }
+
+                // Enviamos la petición después de establecer el listener
+                requestRef.set(request)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     // Esta función obtiene TODOS los documentos de la colección 'countries'

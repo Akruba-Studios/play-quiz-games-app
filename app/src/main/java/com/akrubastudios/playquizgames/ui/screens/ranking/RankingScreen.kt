@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -20,6 +21,9 @@ import com.akrubastudios.playquizgames.ui.screens.ranking.RankedUserUiItem
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.domain.PlayerLevelManager
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun RankingScreen(
@@ -27,24 +31,38 @@ fun RankingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.ranking_title),
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(16.dp)
-        )
-
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    // Usamos Scaffold para tener una ranura para el bottomBar
+    Scaffold(
+        // La fila del jugador actual va en el bottomBar
+        bottomBar = {
+            if (!uiState.isLoading && uiState.currentUserRank != null) {
+                CurrentUserRankRow(rankData = uiState.currentUserRank!!)
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                items(uiState.rankingList) { user ->
-                    RankedUserItem(user = user)
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // <-- Usamos el padding del Scaffold
+        ) {
+            Text(
+                text = stringResource(R.string.ranking_title),
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                ) {
+                    items(uiState.rankingList) { user ->
+                        RankedUserItem(user = user)
+                    }
                 }
             }
         }
@@ -89,6 +107,69 @@ fun RankedUserItem(user: RankedUserUiItem) {
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+            }
+        }
+    }
+}
+@Composable
+private fun CurrentUserRankRow(
+    rankData: CurrentUserRankData,
+    modifier: Modifier = Modifier
+) {
+    val levelInfo = PlayerLevelManager.calculateLevelInfo(rankData.totalXp)
+    // Esta lógica asume que el "progreso" es cuánto has avanzado en tu nivel actual.
+    // No es perfecto, pero es visualmente funcional.
+    val progressToNext = if (rankData.xpToNext != null && rankData.xpToNext > 0) {
+        val xpInLevel = (rankData.totalXp - levelInfo.currentLevelThresholdXp).toFloat()
+        val totalXpForLevel = (levelInfo.nextLevelThresholdXp - levelInfo.currentLevelThresholdXp).toFloat()
+        if (totalXpForLevel > 0) (xpInLevel / totalXpForLevel).coerceIn(0f, 1f) else 0f
+    } else {
+        1f // El jugador es el #1
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        tonalElevation = 4.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.ranking_your_position),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "#${rankData.rank}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.player_level, levelInfo.level),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${NumberFormat.getNumberInstance(Locale.getDefault()).format(rankData.totalXp)} XP",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            if (rankData.xpToNext != null && rankData.xpToNext > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { progressToNext },
+                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    strokeCap = StrokeCap.Round
+                )
+                Text(
+                    text = "${NumberFormat.getNumberInstance(Locale.getDefault()).format(rankData.xpToNext)} ${stringResource(R.string.ranking_xp_to_next)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.align(Alignment.End)
+                )
             }
         }
     }
