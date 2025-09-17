@@ -22,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Question
 
@@ -32,6 +33,7 @@ class GameViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val languageManager: LanguageManager,
     private val gameDataRepository: GameDataRepository,
+    val musicManager: MusicManager,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!

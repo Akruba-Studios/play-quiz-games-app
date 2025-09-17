@@ -93,8 +93,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
@@ -106,6 +108,15 @@ fun GameScreen(
     viewModel: GameViewModel,
     navController: NavController
 ) {
+    DisposableEffect(Unit) {
+        // Esta parte se ejecuta cuando la pantalla APARECE
+        viewModel.musicManager.play(MusicTrack.GAME)
+
+        // La cláusula onDispose se ejecuta cuando la pantalla DESAPARECE
+        onDispose {
+            viewModel.musicManager.stop() // <-- Detenemos la música por completo
+        }
+    }
     KeepScreenOn()
 
     val uiState by viewModel.uiState.collectAsState()
