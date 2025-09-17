@@ -76,6 +76,8 @@
 
     <string name="level_unlock_toast">You need 1 ⭐ on the previous level to unlock this one!</string>
 
+    <string name="level_selection_back_to_country">Back to Country</string>
+
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Question: %1$d / %2$d</string> <!-- %1$d = current, %2$d = total -->
     <string name="game_top_bar_score">Score: %1$d</string> <!-- %1$d = score -->
@@ -127,6 +129,8 @@
     <string name="result_conquest_points">Conquest Points</string>
 
     <string name="result_gems_won">Gems Won</string>
+
+    <string name="result_button_back_to_levels">Back to Category</string>
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Free Mode</string>

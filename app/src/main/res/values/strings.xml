@@ -76,6 +76,8 @@
 
     <string name="level_unlock_toast">¡Necesitas 1 ⭐ en el nivel anterior para desbloquear este!</string>
 
+    <string name="level_selection_back_to_country">Volver al País</string>
+
     <!-- GameScreen & BossScreen -->
     <string name="game_top_bar_question">Pregunta: %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
     <string name="game_top_bar_score">Puntaje: %1$d</string> <!-- %1$d = puntaje -->
@@ -127,6 +129,8 @@
     <string name="result_conquest_points">Puntos de Conquista</string>
 
     <string name="result_gems_won">Gemas Ganadas</string>
+
+    <string name="result_button_back_to_levels">Volver Categoría</string>
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Modo Libre</string>

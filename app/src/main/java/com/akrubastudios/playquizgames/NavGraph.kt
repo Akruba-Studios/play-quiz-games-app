@@ -39,7 +39,7 @@ import com.google.firebase.auth.FirebaseAuth
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val SPLASH_SCREEN = "splash"
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}/{categoryId}/{continentId}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
@@ -263,7 +263,9 @@ fun NavGraph() {
                 navArgument("isFromBossFight") { type = NavType.BoolType },
                 navArgument("victory") { type = NavType.BoolType },
                 navArgument("pcGained") { type = NavType.IntType },
-                navArgument("gemsGained") { type = NavType.IntType }
+                navArgument("gemsGained") { type = NavType.IntType },
+                navArgument("categoryId") { type = NavType.StringType },
+                navArgument("continentId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -280,6 +282,8 @@ fun NavGraph() {
             val victory = backStackEntry.arguments?.getBoolean("victory") ?: false
             val pcGained = backStackEntry.arguments?.getInt("pcGained") ?: 0
             val gemsGained = backStackEntry.arguments?.getInt("gemsGained") ?: 0
+            val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
+            val continentId = backStackEntry.arguments?.getString("continentId") ?: ""
 
             val title = if (isFromBossFight) {
                 if (victory) stringResource(R.string.result_title_boss_victory) else stringResource(R.string.result_title_boss_defeat)
@@ -341,6 +345,12 @@ fun NavGraph() {
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }
                     // -------------------------
+                },
+                onBackToLevels = {
+                    navController.popBackStack(
+                        route = Routes.LEVEL_SELECTION_SCREEN,
+                        inclusive = false
+                    )
                 }
             )
         }

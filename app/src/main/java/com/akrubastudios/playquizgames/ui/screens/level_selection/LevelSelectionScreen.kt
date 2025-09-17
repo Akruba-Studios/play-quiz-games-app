@@ -43,6 +43,10 @@ fun LevelSelectionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(Unit) {
+        viewModel.loadLevels()
+    }
+
     Scaffold( // <-- ENVUELVE EL COLUMN CON SCAFFOLD
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
@@ -113,6 +117,15 @@ fun LevelSelectionScreen(
                             }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(24.dp)) // Un poco de espacio
+                        Button(
+                            onClick = onBackClick, // ¡Simplemente llama a la función que ya existe!
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.level_selection_back_to_country))
+                        }
                     }
                 }
             }

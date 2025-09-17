@@ -52,7 +52,7 @@ class LevelSelectionViewModel @Inject constructor(
         loadLevels()
     }
 
-    private fun loadLevels() {
+    fun loadLevels() {
         viewModelScope.launch {
             // 1. Obtenemos TODOS los niveles de la base de datos
             val allLevels = gameDataRepository.getAllLevels()

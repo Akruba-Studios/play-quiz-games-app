@@ -36,7 +36,9 @@ class GameViewModel @Inject constructor(
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
-    private val difficulty: String = savedStateHandle.get<String>("difficulty")!!
+    val difficulty: String = savedStateHandle.get<String>("difficulty")!!
+    private val categoryId: String by lazy { levelId.split('_').getOrNull(1) ?: "" }
+    private val continentId: String by lazy { levelId.split('_').getOrNull(0) ?: "" }
     companion object {
         private const val QUESTION_TIME_LIMIT_SECONDS = 15L // Tiempo del temporizador
         private const val FUN_FACT_TIME_PENALTY_SECONDS = 4L // Segundo de penalización al usar un Fun fact
@@ -453,6 +455,13 @@ class GameViewModel @Inject constructor(
 
     fun difficultyForNav(): String {
         return difficulty
+    }
+    fun categoryIdForNav(): String {
+        return categoryId
+    }
+
+    fun continentIdForNav(): String {
+        return continentId
     }
     // CUIDADO: Esta lógica duplica el cálculo de PC de la Cloud Function 'processScoreRequest'.
     // Si se cambia la regla de negocio, actualizar en AMBOS sitios.

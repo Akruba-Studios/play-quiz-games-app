@@ -39,6 +39,7 @@ fun ResultScreen(
     backButtonText: String,
     onPlayAgain: () -> Unit,
     onBackToMenu: () -> Unit,
+    onBackToLevels: () -> Unit,
     viewModel: ResultViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -106,6 +107,12 @@ fun ResultScreen(
         if (showPlayAgainButton) {
             Button(onClick = onPlayAgain) {
                 Text(text = playAgainText)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        if (!isFromBossFight) {
+            Button(onClick = onBackToLevels) {
+                Text(text = stringResource(R.string.result_button_back_to_levels))
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

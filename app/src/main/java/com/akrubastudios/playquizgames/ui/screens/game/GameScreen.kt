@@ -132,6 +132,8 @@ fun GameScreen(
                 .replace("{victory}", "false") // Irrelevante en partidas normales
                 .replace("{pcGained}", result.pcGained.toString())
                 .replace("{gemsGained}", result.gemsGained.toString())
+                .replace("{categoryId}", viewModel.categoryIdForNav())
+                .replace("{continentId}", viewModel.continentIdForNav())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }
