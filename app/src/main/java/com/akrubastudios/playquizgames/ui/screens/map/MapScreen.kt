@@ -92,6 +92,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.sp
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -114,6 +115,10 @@ fun MapScreen(
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings

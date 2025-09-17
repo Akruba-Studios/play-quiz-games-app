@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import com.akrubastudios.playquizgames.ui.screens.ranking.RankedUserUiItem
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import java.text.NumberFormat
 import java.util.Locale
@@ -29,6 +31,10 @@ import java.util.Locale
 fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
 
     // Usamos Scaffold para tener una ranura para el bottomBar

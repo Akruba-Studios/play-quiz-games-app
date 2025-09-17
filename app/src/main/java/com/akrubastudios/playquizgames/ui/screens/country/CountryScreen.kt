@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +37,7 @@ import com.akrubastudios.playquizgames.ui.screens.country.CountryStatus
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 
 @Composable
@@ -47,6 +49,10 @@ fun CountryScreen(
     onApplyBoostClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
 
     if (uiState.isScreenLoading) {

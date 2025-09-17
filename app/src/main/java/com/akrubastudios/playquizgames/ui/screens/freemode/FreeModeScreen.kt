@@ -24,6 +24,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,6 +39,7 @@ import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 
 @Composable
 fun FreeModeScreen(
@@ -45,6 +47,10 @@ fun FreeModeScreen(
     // Pasamos una función lambda para manejar la navegación hacia el juego.
     onNavigateToGame: (levelId: String, countryId: String, difficulty: String) -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
 

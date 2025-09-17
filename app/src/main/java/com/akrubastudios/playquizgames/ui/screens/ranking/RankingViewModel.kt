@@ -2,6 +2,7 @@ package com.akrubastudios.playquizgames.ui.screens.ranking
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.akrubastudios.playquizgames.domain.RankedUser
@@ -31,7 +32,8 @@ data class RankingState(
 
 @HiltViewModel
 class RankingViewModel @Inject constructor(
-    private val gameDataRepository: GameDataRepository
+    private val gameDataRepository: GameDataRepository,
+    val musicManager: MusicManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RankingState())

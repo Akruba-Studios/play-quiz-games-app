@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
@@ -54,6 +55,7 @@ class ProfileViewModel @Inject constructor(
     private val application: Application,
     private val languageManager: LanguageManager,
     private val db: FirebaseFirestore,
+    val musicManager: MusicManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileState())

@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Category
 import com.akrubastudios.playquizgames.domain.Country
@@ -54,7 +55,8 @@ class CountryViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    val musicManager: MusicManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CountryState())

@@ -40,6 +40,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogText
@@ -57,6 +58,9 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     navController: NavController
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
 
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }

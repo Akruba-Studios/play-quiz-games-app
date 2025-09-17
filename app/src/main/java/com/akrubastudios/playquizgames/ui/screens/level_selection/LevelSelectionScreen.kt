@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
 
@@ -36,6 +37,10 @@ fun LevelSelectionScreen(
     onLevelClick: (levelId: String, difficulty: String) -> Unit,
     onBackClick: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.musicManager.play(MusicTrack.MAP)
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
 

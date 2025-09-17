@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
@@ -52,7 +53,8 @@ class MapViewModel @Inject constructor(
     private val db: FirebaseFirestore,
     private val application: Application,
     private val languageManager: LanguageManager,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    val musicManager: MusicManager
 ) : ViewModel() {
 
     val currentUser = authRepository.currentUser

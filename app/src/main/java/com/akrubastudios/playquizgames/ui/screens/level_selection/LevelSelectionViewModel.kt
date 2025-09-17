@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -28,6 +29,7 @@ class LevelSelectionViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
+    val musicManager: MusicManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

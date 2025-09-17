@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -35,7 +36,8 @@ data class FreeModeState(
 @HiltViewModel
 class FreeModeViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    val musicManager: MusicManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FreeModeState())
