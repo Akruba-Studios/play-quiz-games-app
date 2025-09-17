@@ -10,6 +10,8 @@ import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +34,7 @@ class MusicManager @Inject constructor(
     private var currentTrack: MusicTrack = MusicTrack.NONE
     private var isMusicEnabled = true // <-- Guardaremos aquí la preferencia del usuario
     private val scope = CoroutineScope(Dispatchers.Main)
+    private var fadeJob: Job? = null
 
     init {
         // Al iniciar, leemos la preferencia del usuario desde DataStore
@@ -56,30 +59,40 @@ class MusicManager @Inject constructor(
      * Si hay otra sonando, la detiene y reproduce la nueva.
      */
     fun play(track: MusicTrack) {
-        // Si la música está desactivada por el usuario o si la pista que se pide es la que ya suena, no hacemos nada.
         if (!isMusicEnabled || currentTrack == track) return
 
-        // Liberamos recursos del reproductor anterior, si existía.
-        mediaPlayer?.release()
-        mediaPlayer = null
-
-        if (track == MusicTrack.NONE) {
-            currentTrack = MusicTrack.NONE
-            return
+        fadeJob?.cancel() // <-- Cancelamos cualquier fundido anterior
+        fadeJob = scope.launch {
+            if (mediaPlayer?.isPlaying == true) {
+                fadeOut() // <-- Primero, bajamos el volumen de la pista actual
+            }
+            // Si la nueva pista no es NINGUNA, simplemente nos detenemos.
+            if (track == MusicTrack.NONE) {
+                currentTrack = MusicTrack.NONE
+            } else {
+                startNewTrack(track) // <-- Luego, iniciamos la nueva pista con fade in
+            }
         }
-
-        // Creamos un nuevo MediaPlayer con la pista solicitada.
-        mediaPlayer = MediaPlayer.create(context, track.resourceId).apply {
-            isLooping = true // Queremos que la música se repita
-            start() // ¡La iniciamos!
-        }
-        // Guardamos la referencia de la pista que está sonando ahora.
-        currentTrack = track
     }
+
+    private fun startNewTrack(track: MusicTrack) {
+        mediaPlayer = MediaPlayer.create(context, track.resourceId).apply {
+            isLooping = true
+            setVolume(0f, 0f) // <-- Empezamos con volumen 0
+            start()
+        }
+        currentTrack = track
+        fadeIn() // <-- Subimos el volumen gradualmente
+    }
+
     fun stop() {
-        mediaPlayer?.release()
-        mediaPlayer = null
-        currentTrack = MusicTrack.NONE
+        // Ahora, stop también usará el fundido para ser suave
+        if (currentTrack == MusicTrack.NONE) return
+        fadeJob?.cancel()
+        fadeJob = scope.launch {
+            fadeOut()
+            currentTrack = MusicTrack.NONE
+        }
     }
 
     private fun pause() {
@@ -89,11 +102,11 @@ class MusicManager @Inject constructor(
     }
 
     private fun resume() {
-        // Solo reanudamos si había una pista sonando y no está ya en play
         if (mediaPlayer?.isPlaying == false && currentTrack != MusicTrack.NONE) {
             mediaPlayer?.start()
         }
     }
+
     fun setMusicEnabled(enabled: Boolean) {
         isMusicEnabled = enabled
         scope.launch {
@@ -104,5 +117,32 @@ class MusicManager @Inject constructor(
         } else {
             pause()
         }
+    }
+
+    // --- INICIO DE LAS NUEVAS FUNCIONES DE FUNDIDO ---
+    private fun fadeIn() {
+        scope.launch {
+            for (i in 0..100 step 10) { // Pasos de 10 para un fundido más rápido
+                val volume = i / 100f
+                mediaPlayer?.setVolume(volume, volume)
+                delay(50) // 50ms entre cada paso
+            }
+        }
+    }
+
+    private suspend fun fadeOut() {
+        if (mediaPlayer == null) return
+        for (i in 100 downTo 0 step 10) {
+            val volume = i / 100f
+            try {
+                mediaPlayer?.setVolume(volume, volume)
+            } catch (e: IllegalStateException) {
+                // Ignorar error si el mediaplayer ya fue liberado
+            }
+            delay(50)
+        }
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 }
