@@ -2,12 +2,14 @@ package com.akrubastudios.playquizgames.ui.screens.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -103,12 +105,24 @@ fun SettingsScreen(
                 // 2. Usamos la variable de texto que ya hemos obtenido.
                 onCheckedChange = { isEnabled -> viewModel.onMusicToggle(isEnabled) }
             )
-            Slider(
-                value = uiState.musicVolume,
-                onValueChange = { newVolume -> viewModel.onVolumeChange(newVolume) },
-                enabled = uiState.isMusicEnabled,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Slider(
+                    value = uiState.musicVolume,
+                    onValueChange = { newVolume -> viewModel.onVolumeChange(newVolume) },
+                    enabled = uiState.isMusicEnabled,
+                    modifier = Modifier.weight(1f) // El Slider ocupa el espacio restante
+                )
+                // Texto que muestra el porcentaje
+                Text(
+                    text = "${(uiState.musicVolume * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.width(40.dp) // Ancho fijo para evitar que el layout "salte"
+                )
+            }
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
             SettingRow(
@@ -116,12 +130,23 @@ fun SettingsScreen(
                 checked = uiState.areSfxEnabled,
                 onCheckedChange = { isEnabled -> viewModel.onSfxToggle(isEnabled) }
             )
-            Slider(
-                value = uiState.sfxVolume,
-                onValueChange = { newVolume -> viewModel.onSfxVolumeChange(newVolume) },
-                enabled = uiState.areSfxEnabled,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Slider(
+                    value = uiState.sfxVolume,
+                    onValueChange = { newVolume -> viewModel.onSfxVolumeChange(newVolume) },
+                    enabled = uiState.areSfxEnabled,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "${(uiState.sfxVolume * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.width(40.dp)
+                )
+            }
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
