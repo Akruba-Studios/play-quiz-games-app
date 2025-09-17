@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +28,7 @@ class SettingsRepository @Inject constructor(
         val LANGUAGE_KEY = stringPreferencesKey("user_language")
         val DISMISSED_EXPEDITION_KEY = intPreferencesKey("dismissed_expedition_level")
         val MUSIC_ENABLED_KEY = booleanPreferencesKey("music_enabled")
+        val MUSIC_VOLUME_KEY = floatPreferencesKey("music_volume")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -55,6 +57,22 @@ class SettingsRepository @Inject constructor(
     suspend fun saveMusicPreference(isEnabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[MUSIC_ENABLED_KEY] = isEnabled
+        }
+    }
+
+    val musicVolumeFlow: Flow<Float> = dataStore.data
+        .map { preferences ->
+            // Por defecto, el volumen estará al máximo (1.0f)
+            preferences[MUSIC_VOLUME_KEY] ?: 1.0f
+        }
+
+    // ... (funciones de guardado existentes)
+
+    // V AÑADE ESTA NUEVA FUNCIÓN COMPLETA V
+    suspend fun saveMusicVolume(volume: Float) {
+        dataStore.edit { preferences ->
+            // Aseguramos que el valor esté siempre entre 0.0 y 1.0
+            preferences[MUSIC_VOLUME_KEY] = volume.coerceIn(0f, 1f)
         }
     }
 

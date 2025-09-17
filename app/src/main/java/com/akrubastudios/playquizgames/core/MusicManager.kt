@@ -33,6 +33,7 @@ class MusicManager @Inject constructor(
     private var mediaPlayer: MediaPlayer? = null
     private var currentTrack: MusicTrack = MusicTrack.NONE
     private var isMusicEnabled = true // <-- Guardaremos aquí la preferencia del usuario
+    private var currentVolume = 1.0f
     private val scope = CoroutineScope(Dispatchers.Main)
     private var fadeJob: Job? = null
 
@@ -40,6 +41,7 @@ class MusicManager @Inject constructor(
         // Al iniciar, leemos la preferencia del usuario desde DataStore
         scope.launch {
             isMusicEnabled = settingsRepository.musicPreferenceFlow.first()
+            currentVolume = settingsRepository.musicVolumeFlow.first()
         }
         lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
             // Se llama cuando la app pasa a primer plano
@@ -119,11 +121,19 @@ class MusicManager @Inject constructor(
         }
     }
 
+    fun setVolume(volume: Float) {
+        currentVolume = volume.coerceIn(0f, 1f)
+        mediaPlayer?.setVolume(currentVolume, currentVolume)
+        scope.launch {
+            settingsRepository.saveMusicVolume(currentVolume)
+        }
+    }
+
     // --- INICIO DE LAS NUEVAS FUNCIONES DE FUNDIDO ---
     private fun fadeIn() {
         scope.launch {
             for (i in 0..100 step 10) { // Pasos de 10 para un fundido más rápido
-                val volume = i / 100f
+                val volume = (i / 100f) * currentVolume
                 mediaPlayer?.setVolume(volume, volume)
                 delay(50) // 50ms entre cada paso
             }
@@ -132,12 +142,23 @@ class MusicManager @Inject constructor(
 
     private suspend fun fadeOut() {
         if (mediaPlayer == null) return
+        // El fade out empieza desde el volumen actual
+        val startVolume = mediaPlayer?.let { mp ->
+            try {
+                val audioAttributes = mp.javaClass.getDeclaredField("mVolume")
+                audioAttributes.isAccessible = true
+                audioAttributes.getFloat(mp)
+            } catch (e: Exception) {
+                currentVolume
+            }
+        } ?: currentVolume
+
         for (i in 100 downTo 0 step 10) {
-            val volume = i / 100f
+            val volume = (i / 100f) * startVolume
             try {
                 mediaPlayer?.setVolume(volume, volume)
             } catch (e: IllegalStateException) {
-                // Ignorar error si el mediaplayer ya fue liberado
+                // Ignorar
             }
             delay(50)
         }

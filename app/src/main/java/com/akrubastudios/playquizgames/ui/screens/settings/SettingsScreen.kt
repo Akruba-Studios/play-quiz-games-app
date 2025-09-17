@@ -41,6 +41,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.material3.Slider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,6 +102,12 @@ fun SettingsScreen(
                 checked = uiState.isMusicEnabled,
                 // 2. Usamos la variable de texto que ya hemos obtenido.
                 onCheckedChange = { isEnabled -> viewModel.onMusicToggle(isEnabled) }
+            )
+            Slider(
+                value = uiState.musicVolume,
+                onValueChange = { newVolume -> viewModel.onVolumeChange(newVolume) },
+                enabled = uiState.isMusicEnabled,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))

@@ -22,7 +22,8 @@ import javax.inject.Inject
 data class SettingsState(
     val isMusicEnabled: Boolean = true,
     val areSfxEnabled: Boolean = true,
-    val currentLanguageCode: String = "es" // Añadimos el idioma actual
+    val currentLanguageCode: String = "es", // Añadimos el idioma actual
+    val musicVolume: Float = 1.0f
 )
 
 @HiltViewModel
@@ -56,6 +57,11 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(isMusicEnabled = isEnabled) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.musicVolumeFlow.collect { volume ->
+                _uiState.update { it.copy(musicVolume = volume) }
+            }
+        }
     }
 
     /**
@@ -76,6 +82,16 @@ class SettingsViewModel @Inject constructor(
         if (isEnabled) {
             musicManager.play(MusicTrack.MAP)
         }
+    }
+    /**
+     * Se llama cada vez que el usuario desliza la barra de volumen.
+     * Pasa el nuevo valor al MusicManager para aplicarlo en tiempo real.
+     */
+    fun onVolumeChange(volume: Float) {
+        // Actualizamos el estado de la UI inmediatamente para una respuesta fluida del slider.
+        _uiState.update { it.copy(musicVolume = volume) }
+        // Le decimos al MusicManager que aplique el nuevo volumen.
+        musicManager.setVolume(volume)
     }
 
     // El resto de funciones para música, etc., irían aquí en el futuro.
