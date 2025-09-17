@@ -1,11 +1,14 @@
 package com.akrubastudios.playquizgames.ui.screens.country
 
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Category
 import com.akrubastudios.playquizgames.domain.Country
@@ -57,14 +60,17 @@ class CountryViewModel @Inject constructor(
     private val db: FirebaseFirestore,
     private val savedStateHandle: SavedStateHandle,
     val musicManager: MusicManager
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(CountryState())
     val uiState = _uiState.asStateFlow()
 
     private val countryId: String = savedStateHandle.get<String>("countryId")!!
 
-    // --- INICIO DE LA MODIFICACIÓN ---
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        musicManager.play(MusicTrack.MAP)
+    }
 
     init {
         gameDataRepository.startCountryProgressListener(countryId)

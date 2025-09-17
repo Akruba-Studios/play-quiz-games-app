@@ -1,6 +1,8 @@
 package com.akrubastudios.playquizgames.ui.screens.level_selection
 
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -31,7 +34,7 @@ class LevelSelectionViewModel @Inject constructor(
     private val db: FirebaseFirestore,
     val musicManager: MusicManager,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(LevelSelectionState())
     val uiState = _uiState.asStateFlow()
@@ -40,6 +43,11 @@ class LevelSelectionViewModel @Inject constructor(
     private val _selectedDifficulty = MutableStateFlow("principiante")
     val selectedDifficulty = _selectedDifficulty.asStateFlow()
 
+    override fun onResume(owner: LifecycleOwner) {
+        // Se llama cada vez que la UI asociada a este ViewModel se vuelve activa
+        super.onResume(owner)
+        musicManager.play(MusicTrack.MAP)
+    }
     /**
      * Se llama desde la UI cuando el usuario cambia la selección de dificultad.
      */

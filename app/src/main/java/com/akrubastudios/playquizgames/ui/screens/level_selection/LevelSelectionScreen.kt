@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalLifecycleOwner
 
 @Composable
 fun LevelSelectionScreen(
@@ -37,8 +38,12 @@ fun LevelSelectionScreen(
     onLevelClick: (levelId: String, difficulty: String) -> Unit,
     onBackClick: () -> Unit
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.musicManager.play(MusicTrack.MAP)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(viewModel)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
+        }
     }
 
     val uiState by viewModel.uiState.collectAsState()
