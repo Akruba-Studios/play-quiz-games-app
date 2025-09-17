@@ -21,7 +21,8 @@ import javax.inject.Singleton
 enum class SoundEffect(val resourceId: Int) {
     CORRECT_ANSWER(R.raw.sfx_correct_answer),
     INCORRECT_ANSWER(R.raw.sfx_incorrect_answer),
-    LETTER_CLICK(R.raw.sfx_letter_click)
+    LETTER_CLICK(R.raw.sfx_letter_click),
+    CLEAR_ANSWER(R.raw.sfx_clear_answer)
     // Aquí añadiremos más sonidos en el futuro (ej. BUTTON_CLICK)
 }
 

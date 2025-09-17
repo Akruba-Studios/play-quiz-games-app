@@ -575,6 +575,9 @@ class BossViewModel @Inject constructor(
     }
 
     fun clearUserAnswer() {
+        if (uiState.value.userAnswer.isNotEmpty()) {
+            soundManager.playSound(SoundEffect.CLEAR_ANSWER)
+        }
         // No hacer nada si ya se está borrando o la respuesta está vacía.
         if (_uiState.value.showClearAnimation || _uiState.value.userAnswer.isEmpty()) return
 

@@ -191,6 +191,9 @@ class GameViewModel @Inject constructor(
     }
 
     fun clearUserAnswer() {
+        if (uiState.value.userAnswer.isNotEmpty()) {
+            soundManager.playSound(SoundEffect.CLEAR_ANSWER)
+        }
         viewModelScope.launch {
             // Activar animación de clear
             _uiState.update { it.copy(showClearAnimation = true) }
