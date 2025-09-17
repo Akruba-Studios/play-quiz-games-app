@@ -23,6 +23,8 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.SoundEffect
+import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Question
 
@@ -34,6 +36,7 @@ class GameViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val gameDataRepository: GameDataRepository,
     val musicManager: MusicManager,
+    private val soundManager: SoundManager,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
@@ -246,6 +249,7 @@ class GameViewModel @Inject constructor(
             // -----------------------------------------
 
             if (isCorrect) {
+                soundManager.playSound(SoundEffect.CORRECT_ANSWER)
                 Log.d("GameViewModel_Debug", "✅ ¡Respuesta Correcta! Calculando puntos...")
 
                 // Activar animación correcta
@@ -271,6 +275,7 @@ class GameViewModel @Inject constructor(
 
                 Log.d("GameViewModel_Debug", "Puntos ganados: $pointsWon. Nuevo puntaje: ${uiState.value.score}")
             } else {
+                soundManager.playSound(SoundEffect.INCORRECT_ANSWER)
                 Log.d("GameViewModel_Debug", "❌ Respuesta Incorrecta.")
 
                 // Activar animación incorrecta

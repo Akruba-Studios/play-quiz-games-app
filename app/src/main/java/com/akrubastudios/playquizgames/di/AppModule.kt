@@ -28,6 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.akrubastudios.playquizgames.core.SoundManager
 
 // Definimos la instancia de DataStore aquí, de forma centralizada.
 private const val USER_PREFERENCES_NAME = "user_settings"
@@ -117,6 +118,18 @@ object AppModule {
     ): MusicManager {
         // Pasa el nuevo parámetro al constructor
         return MusicManager(context, settingsRepository, lifecycleOwner)
+    }
+    /**
+     * Proveedor para el SoundManager.
+     * Hilt usará esta función para crear la única instancia de SoundManager.
+     */
+    @Provides
+    @Singleton
+    fun provideSoundManager(
+        @ApplicationContext context: Context,
+        settingsRepository: SettingsRepository
+    ): SoundManager {
+        return SoundManager(context, settingsRepository)
     }
     /**
      * Proveedor para el LifecycleOwner del proceso completo de la app.

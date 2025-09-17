@@ -114,7 +114,13 @@ fun SettingsScreen(
             SettingRow(
                 title = stringResource(R.string.settings_sfx),
                 checked = uiState.areSfxEnabled,
-                onCheckedChange = { Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show() }
+                onCheckedChange = { isEnabled -> viewModel.onSfxToggle(isEnabled) }
+            )
+            Slider(
+                value = uiState.sfxVolume,
+                onValueChange = { newVolume -> viewModel.onSfxVolumeChange(newVolume) },
+                enabled = uiState.areSfxEnabled,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))

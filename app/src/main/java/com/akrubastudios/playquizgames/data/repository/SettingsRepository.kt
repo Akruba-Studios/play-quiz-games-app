@@ -29,6 +29,8 @@ class SettingsRepository @Inject constructor(
         val DISMISSED_EXPEDITION_KEY = intPreferencesKey("dismissed_expedition_level")
         val MUSIC_ENABLED_KEY = booleanPreferencesKey("music_enabled")
         val MUSIC_VOLUME_KEY = floatPreferencesKey("music_volume")
+        val SFX_ENABLED_KEY = booleanPreferencesKey("sfx_enabled")
+        val SFX_VOLUME_KEY = floatPreferencesKey("sfx_volume")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -63,7 +65,19 @@ class SettingsRepository @Inject constructor(
     val musicVolumeFlow: Flow<Float> = dataStore.data
         .map { preferences ->
             // Por defecto, el volumen estará al máximo (1.0f)
-            preferences[MUSIC_VOLUME_KEY] ?: 1.0f
+            preferences[MUSIC_VOLUME_KEY] ?: 0.8f
+        }
+
+    val sfxEnabledFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            // Los SFX también estarán activados por defecto
+            preferences[SFX_ENABLED_KEY] ?: true
+        }
+
+    val sfxVolumeFlow: Flow<Float> = dataStore.data
+        .map { preferences ->
+            // El volumen de SFX también estará al máximo por defecto
+            preferences[SFX_VOLUME_KEY] ?: 1.0f
         }
 
     // ... (funciones de guardado existentes)
@@ -73,6 +87,18 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { preferences ->
             // Aseguramos que el valor esté siempre entre 0.0 y 1.0
             preferences[MUSIC_VOLUME_KEY] = volume.coerceIn(0f, 1f)
+        }
+    }
+
+    suspend fun saveSfxEnabled(isEnabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SFX_ENABLED_KEY] = isEnabled
+        }
+    }
+
+    suspend fun saveSfxVolume(volume: Float) {
+        dataStore.edit { preferences ->
+            preferences[SFX_VOLUME_KEY] = volume.coerceIn(0f, 1f)
         }
     }
 

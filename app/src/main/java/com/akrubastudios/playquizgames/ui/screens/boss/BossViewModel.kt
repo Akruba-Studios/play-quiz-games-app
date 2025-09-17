@@ -21,6 +21,8 @@ import android.util.Log
 import com.akrubastudios.playquizgames.R
 import android.content.res.Configuration
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.SoundEffect
+import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -95,6 +97,7 @@ class BossViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     val musicManager: MusicManager,
+    private val soundManager: SoundManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -456,6 +459,7 @@ class BossViewModel @Inject constructor(
             }
 
             if (isCorrect) {
+                soundManager.playSound(SoundEffect.CORRECT_ANSWER)
                 val newHealth = (state.bossHealth - (1.0f / state.totalQuestions)).coerceAtLeast(0.05f)
                 val newStreak = state.battleStats.currentStreak + 1
                 _uiState.update {
@@ -471,6 +475,7 @@ class BossViewModel @Inject constructor(
                     )
                 }
             } else {
+                soundManager.playSound(SoundEffect.INCORRECT_ANSWER)
                 val newMistakes = state.playerMistakes + 1
                 _uiState.update {
                     it.copy(

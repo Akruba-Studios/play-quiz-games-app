@@ -8,13 +8,16 @@ import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
+import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 
 /**
  * Estado de la UI para la pantalla de Ajustes.
@@ -22,6 +25,7 @@ import javax.inject.Inject
 data class SettingsState(
     val isMusicEnabled: Boolean = true,
     val areSfxEnabled: Boolean = true,
+    val sfxVolume: Float = 1.0f,
     val currentLanguageCode: String = "es", // Añadimos el idioma actual
     val musicVolume: Float = 1.0f
 )
@@ -31,7 +35,8 @@ class SettingsViewModel @Inject constructor(
     // 1. Inyectamos nuestro LanguageManager. Hilt se encarga de todo.
     private val languageManager: LanguageManager,
     val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
-    private val settingsRepository: SettingsRepository // <-- INYECTAR REPOSITORY
+    private val settingsRepository: SettingsRepository, // <-- INYECTAR REPOSITORY
+    private val soundManager: SoundManager
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -44,23 +49,27 @@ class SettingsViewModel @Inject constructor(
     }
 
     init {
-        // 2. Nos suscribimos al StateFlow del LanguageManager.
+        // Combinamos todos los flows de configuración en uno solo.
+        // El bloque se ejecutará cada vez que CUALQUIERA de los valores cambie.
         viewModelScope.launch {
-            languageManager.languageStateFlow.collect { langCode ->
-                // Cada vez que el idioma cambie, actualizamos el estado de nuestra UI.
-                _uiState.update { it.copy(currentLanguageCode = langCode) }
-            }
-        }
-        // Observamos la preferencia de música guardada para que el Switch siempre esté actualizado.
-        viewModelScope.launch {
-            settingsRepository.musicPreferenceFlow.collect { isEnabled ->
-                _uiState.update { it.copy(isMusicEnabled = isEnabled) }
-            }
-        }
-        viewModelScope.launch {
-            settingsRepository.musicVolumeFlow.collect { volume ->
-                _uiState.update { it.copy(musicVolume = volume) }
-            }
+            combine(
+                languageManager.languageStateFlow,
+                settingsRepository.musicPreferenceFlow,
+                settingsRepository.musicVolumeFlow,
+                settingsRepository.sfxEnabledFlow,
+                settingsRepository.sfxVolumeFlow
+            ) { lang, musicOn, musicVol, sfxOn, sfxVol ->
+                // Creamos un estado actualizado con todos los valores a la vez.
+                _uiState.update {
+                    it.copy(
+                        currentLanguageCode = lang,
+                        isMusicEnabled = musicOn,
+                        musicVolume = musicVol,
+                        areSfxEnabled = sfxOn,
+                        sfxVolume = sfxVol
+                    )
+                }
+            }.collect() // Iniciamos la recolección
         }
     }
 
@@ -92,6 +101,15 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(musicVolume = volume) }
         // Le decimos al MusicManager que aplique el nuevo volumen.
         musicManager.setVolume(volume)
+    }
+    fun onSfxToggle(isEnabled: Boolean) {
+        soundManager.setSfxEnabled(isEnabled)
+    }
+
+    fun onSfxVolumeChange(volume: Float) {
+        // Actualizamos la UI inmediatamente para que el slider sea fluido
+        _uiState.update { it.copy(sfxVolume = volume) }
+        soundManager.setSfxVolume(volume)
     }
 
     // El resto de funciones para música, etc., irían aquí en el futuro.
