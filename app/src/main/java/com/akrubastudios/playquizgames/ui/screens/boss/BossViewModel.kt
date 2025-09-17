@@ -555,6 +555,7 @@ class BossViewModel @Inject constructor(
 
     // --- Funciones de UI ---
     fun onLetterClick(letter: Char, index: Int) {
+        soundManager.playSound(SoundEffect.LETTER_CLICK)
         if (uiState.value.usedLetterIndices.contains(index)) return
 
         val requiredLength = uiState.value.currentCorrectAnswer.count { it.isLetter() }

@@ -158,6 +158,7 @@ class GameViewModel @Inject constructor(
     }
 
     fun onLetterClick(letter: Char, index: Int) {
+        soundManager.playSound(SoundEffect.LETTER_CLICK)
         if (difficulty == "principiante" && uiState.value.usedLetterIndices.contains(index)) {
             return
         }
