@@ -86,5 +86,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation("com.caverock:androidsvg-aar:1.4")
     implementation("androidx.datastore:datastore-preferences:1.1.3") // O la última versión estable
+    implementation("androidx.lifecycle:lifecycle-process:2.8.2")
     implementation("com.google.android.material:material:1.11.0")
 }

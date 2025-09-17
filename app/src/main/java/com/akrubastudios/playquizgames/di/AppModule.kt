@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore // <-- NUEVA IMPORTACIÓN
 import androidx.datastore.preferences.core.Preferences // <-- NUEVA IMPORTACIÓN
 import androidx.datastore.preferences.preferencesDataStore // <-- NUEVA IMPORTACIÓN
+import androidx.lifecycle.LifecycleOwner
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
@@ -25,6 +27,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import androidx.lifecycle.ProcessLifecycleOwner
 
 // Definimos la instancia de DataStore aquí, de forma centralizada.
 private const val USER_PREFERENCES_NAME = "user_settings"
@@ -99,5 +102,30 @@ object AppModule {
     @Singleton
     fun provideLanguageManager(settingsRepository: SettingsRepository): LanguageManager {
         return LanguageManager(settingsRepository)
+    }
+
+    /**
+     * Proveedor para el MusicManager.
+     * Hilt usará esta función para crear la única instancia de MusicManager.
+     */
+    @Provides
+    @Singleton
+    fun provideMusicManager(
+        @ApplicationContext context: Context,
+        settingsRepository: SettingsRepository,
+        lifecycleOwner: LifecycleOwner  // <-- Añade este parámetro
+    ): MusicManager {
+        // Pasa el nuevo parámetro al constructor
+        return MusicManager(context, settingsRepository, lifecycleOwner)
+    }
+    /**
+     * Proveedor para el LifecycleOwner del proceso completo de la app.
+     * Es necesario para que los Singletons (como MusicManager) puedan
+     * observar el estado de la aplicación (primer/segundo plano).
+     */
+    @Provides
+    @Singleton
+    fun provideProcessLifecycleOwner(): LifecycleOwner { // <-- Cambia el tipo de retorno a LifecycleOwner
+        return ProcessLifecycleOwner.get()
     }
 }

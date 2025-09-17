@@ -90,7 +90,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_music),
                 checked = uiState.isMusicEnabled,
                 // 2. Usamos la variable de texto que ya hemos obtenido.
-                onCheckedChange = { Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show() }
+                onCheckedChange = { isEnabled -> viewModel.onMusicToggle(isEnabled) }
             )
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
@@ -216,7 +216,7 @@ private fun SettingRow(title: String, checked: Boolean, onCheckedChange: (Boolea
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            enabled = false // Deshabilitado por ahora
+            enabled = true
         )
     }
 }

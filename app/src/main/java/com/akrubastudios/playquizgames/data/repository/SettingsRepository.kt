@@ -3,6 +3,7 @@ package com.akrubastudios.playquizgames.data.repository
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -25,6 +26,7 @@ class SettingsRepository @Inject constructor(
     private companion object {
         val LANGUAGE_KEY = stringPreferencesKey("user_language")
         val DISMISSED_EXPEDITION_KEY = intPreferencesKey("dismissed_expedition_level")
+        val MUSIC_ENABLED_KEY = booleanPreferencesKey("music_enabled")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -39,10 +41,22 @@ class SettingsRepository @Inject constructor(
             preferences[LANGUAGE_KEY] ?: Locale.getDefault().language
         }
 
+    val musicPreferenceFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            // Por defecto, la música estará activada la primera vez que se use la app
+            preferences[MUSIC_ENABLED_KEY] ?: true
+        }
+
     val dismissedExpeditionLevelFlow: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[DISMISSED_EXPEDITION_KEY] ?: 0
         }
+
+    suspend fun saveMusicPreference(isEnabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[MUSIC_ENABLED_KEY] = isEnabled
+        }
+    }
 
     // Nueva función para guardar el nivel de expedición que se ignora.
     suspend fun saveDismissedExpeditionLevel(level: Int) {
