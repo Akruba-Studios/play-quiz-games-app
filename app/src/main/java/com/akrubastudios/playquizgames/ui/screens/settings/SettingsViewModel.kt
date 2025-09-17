@@ -29,7 +29,7 @@ data class SettingsState(
 class SettingsViewModel @Inject constructor(
     // 1. Inyectamos nuestro LanguageManager. Hilt se encarga de todo.
     private val languageManager: LanguageManager,
-    private val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
+    val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
     private val settingsRepository: SettingsRepository // <-- INYECTAR REPOSITORY
 ) : ViewModel(), DefaultLifecycleObserver {
 
@@ -67,8 +67,15 @@ class SettingsViewModel @Inject constructor(
         languageManager.setLanguage(languageCode)
     }
     fun onMusicToggle(isEnabled: Boolean) {
-        // Le decimos al MusicManager que actualice el estado y guarde la preferencia.
+        // Primero, le decimos al manager el nuevo estado general
         musicManager.setMusicEnabled(isEnabled)
+
+        // AÑADIMOS ESTA LÓGICA:
+        // Si el usuario acaba de ACTIVAR la música, le ordenamos explícitamente
+        // que empiece a sonar la pista del mapa, ya que estamos en ese contexto.
+        if (isEnabled) {
+            musicManager.play(MusicTrack.MAP)
+        }
     }
 
     // El resto de funciones para música, etc., irían aquí en el futuro.
