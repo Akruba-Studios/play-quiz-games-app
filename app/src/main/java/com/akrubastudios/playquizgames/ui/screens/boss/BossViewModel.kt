@@ -20,6 +20,7 @@ import android.app.Application
 import android.util.Log
 import com.akrubastudios.playquizgames.R
 import android.content.res.Configuration
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -93,6 +94,7 @@ class BossViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
+    val musicManager: MusicManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

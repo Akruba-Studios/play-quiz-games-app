@@ -70,6 +70,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
@@ -492,6 +493,15 @@ fun BossScreen(
     navController: NavController,
     viewModel: BossViewModel = hiltViewModel()
 ) {
+    DisposableEffect(Unit) {
+        // Se ejecuta cuando la pantalla APARECE
+        viewModel.musicManager.play(MusicTrack.BOSS)
+
+        // Se ejecuta cuando la pantalla DESAPARECE
+        onDispose {
+            viewModel.musicManager.stop()
+        }
+    }
     KeepScreenOn()
     val uiState by viewModel.uiState.collectAsState()
     val gameResult by viewModel.gameResult.collectAsState()
