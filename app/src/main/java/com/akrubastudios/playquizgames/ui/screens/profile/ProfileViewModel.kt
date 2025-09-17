@@ -3,6 +3,8 @@ package com.akrubastudios.playquizgames.ui.screens.profile
 import android.app.Application
 import android.content.res.Configuration
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
@@ -19,6 +21,7 @@ import javax.inject.Inject
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
@@ -56,7 +59,7 @@ class ProfileViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val db: FirebaseFirestore,
     val musicManager: MusicManager,
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(ProfileState())
     val uiState = _uiState.asStateFlow()
@@ -64,7 +67,10 @@ class ProfileViewModel @Inject constructor(
     private val _signOutEvent = Channel<Unit>()
     val signOutEvent = _signOutEvent.receiveAsFlow()
 
-    // --- INICIO DE LA MODIFICACIÓN ---
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        musicManager.play(MusicTrack.MAP)
+    }
 
     init {
         // Nos suscribimos al flujo de datos del usuario.

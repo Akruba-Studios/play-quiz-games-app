@@ -3,11 +3,14 @@ package com.akrubastudios.playquizgames.ui.screens.map
 import android.app.Application
 import android.content.res.Configuration
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
@@ -55,12 +58,17 @@ class MapViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
     val musicManager: MusicManager
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     val currentUser = authRepository.currentUser
 
     private val _uiState = MutableStateFlow(MapState())
     val uiState: StateFlow<MapState> = _uiState.asStateFlow()
+
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        musicManager.play(MusicTrack.MAP)
+    }
 
     private fun getLocalizedResources(): android.content.res.Resources {
         val appLanguage = languageManager.languageStateFlow.value

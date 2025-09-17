@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -66,9 +67,11 @@ fun ProfileScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
 
     // Escucha el evento de cierre de sesión del ViewModel
-    LaunchedEffect(Unit) {
-        viewModel.signOutEvent.collect {
-            onSignOut()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(viewModel)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
         }
     }
 

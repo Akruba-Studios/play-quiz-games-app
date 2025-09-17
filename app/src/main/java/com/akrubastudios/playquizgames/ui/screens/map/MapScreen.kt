@@ -91,6 +91,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
@@ -115,8 +116,12 @@ fun MapScreen(
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.musicManager.play(MusicTrack.MAP)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(viewModel)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
+        }
     }
 
     val uiState by viewModel.uiState.collectAsState()

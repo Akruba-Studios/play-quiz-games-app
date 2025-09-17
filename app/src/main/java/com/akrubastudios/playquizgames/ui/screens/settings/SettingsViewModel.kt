@@ -1,10 +1,13 @@
 package com.akrubastudios.playquizgames.ui.screens.settings
 
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +31,16 @@ class SettingsViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
     private val settingsRepository: SettingsRepository // <-- INYECTAR REPOSITORY
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
+
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        // Aseguramos que la música del mapa suene aquí también
+        musicManager.play(MusicTrack.MAP)
+    }
 
     init {
         // 2. Nos suscribimos al StateFlow del LanguageManager.

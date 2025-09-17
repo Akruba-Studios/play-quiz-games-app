@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.freemode
 
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
+import com.akrubastudios.playquizgames.core.MusicTrack
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -38,7 +41,7 @@ class FreeModeViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val languageManager: LanguageManager,
     val musicManager: MusicManager
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(FreeModeState())
     val uiState = _uiState.asStateFlow()
@@ -46,6 +49,11 @@ class FreeModeViewModel @Inject constructor(
     // Estado para guardar la dificultad seleccionada.
     private val _selectedDifficulty = MutableStateFlow("principiante")
     val selectedDifficulty = _selectedDifficulty.asStateFlow()
+
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        musicManager.play(MusicTrack.MAP)
+    }
 
     /**
      * Se llama desde la UI cuando el usuario cambia la selección de dificultad.
