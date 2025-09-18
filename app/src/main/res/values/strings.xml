@@ -123,14 +123,14 @@
     <string name="result_button_retry_challenge">Reintentar Desafío</string>
     <string name="result_button_celebrate">Celebrar Victoria</string>
     <string name="result_button_retreat">Retirada</string>
-    <string name="result_button_back_to_menu">Volver al Menú</string>
+    <string name="result_button_back_to_menu">Volver al Mapa</string>
     <string name="cd_star_number">Estrella %1$d</string>
 
     <string name="result_conquest_points">Puntos de Conquista</string>
 
     <string name="result_gems_won">Gemas Ganadas</string>
 
-    <string name="result_button_back_to_levels">Volver Categoría</string>
+    <string name="result_button_back_to_levels">Volver al Menú</string>
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Modo Libre</string>

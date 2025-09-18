@@ -123,14 +123,14 @@
     <string name="result_button_retry_challenge">Retry Challenge</string>
     <string name="result_button_celebrate">Celebrate Victory</string>
     <string name="result_button_retreat">Retreat</string>
-    <string name="result_button_back_to_menu">Back to Menu</string>
+    <string name="result_button_back_to_menu">Back to Map</string>
     <string name="cd_star_number">Star %1$d</string>
 
     <string name="result_conquest_points">Conquest Points</string>
 
     <string name="result_gems_won">Gems Won</string>
 
-    <string name="result_button_back_to_levels">Back to Category</string>
+    <string name="result_button_back_to_levels">Back to Menu</string>
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Free Mode</string>

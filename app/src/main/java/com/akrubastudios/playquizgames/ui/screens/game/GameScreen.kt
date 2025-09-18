@@ -145,6 +145,7 @@ fun GameScreen(
                 .replace("{gemsGained}", result.gemsGained.toString())
                 .replace("{categoryId}", viewModel.categoryIdForNav())
                 .replace("{continentId}", viewModel.continentIdForNav())
+                .replace("{origin}", viewModel.originForNav())
 
             navController.navigate(route) {
                 popUpTo(Routes.GAME_SCREEN) { inclusive = true }

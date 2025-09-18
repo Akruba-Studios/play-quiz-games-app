@@ -39,8 +39,8 @@ import com.google.firebase.auth.FirebaseAuth
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera
     const val SPLASH_SCREEN = "splash"
-    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}/{categoryId}/{continentId}"
-    const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}"
+    const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}/{categoryId}/{continentId}/{origin}"
+    const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}/{origin}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
     const val LOGIN_SCREEN = "login"
     const val COUNTRY_SCREEN = "country/{countryId}"
@@ -79,6 +79,7 @@ fun NavGraph() {
                         .replace("{countryId}", countryId) // Usará "freemode"
                         .replace("{levelId}", levelId)
                         .replace("{difficulty}", difficulty)
+                        .replace("{origin}", "freemode")
                     navController.navigate(route)
                 },
                 navController = navController
@@ -179,6 +180,7 @@ fun NavGraph() {
                         .replace("{countryId}", countryId)
                         .replace("{levelId}", levelId)
                         .replace("{difficulty}", difficulty) // <-- NUEVA LÍNEA
+                        .replace("{origin}", "levels")
                     navController.navigate(route)
                 },
                 onBackClick = {
@@ -266,7 +268,8 @@ fun NavGraph() {
                 navArgument("pcGained") { type = NavType.IntType },
                 navArgument("gemsGained") { type = NavType.IntType },
                 navArgument("categoryId") { type = NavType.StringType },
-                navArgument("continentId") { type = NavType.StringType }
+                navArgument("continentId") { type = NavType.StringType },
+                navArgument("origin") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
@@ -285,6 +288,7 @@ fun NavGraph() {
             val gemsGained = backStackEntry.arguments?.getInt("gemsGained") ?: 0
             val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
             val continentId = backStackEntry.arguments?.getString("continentId") ?: ""
+            val origin = backStackEntry.arguments?.getString("origin") ?: "levels"
 
             val title = if (isFromBossFight) {
                 if (victory) stringResource(R.string.result_title_boss_victory) else stringResource(R.string.result_title_boss_defeat)
@@ -348,10 +352,18 @@ fun NavGraph() {
                     // -------------------------
                 },
                 onBackToLevels = {
-                    navController.popBackStack(
-                        route = Routes.LEVEL_SELECTION_SCREEN,
-                        inclusive = false
-                    )
+                    if (origin == "freemode") {
+                        // Si venimos de modo libre, volvemos a la pantalla de modo libre
+                        navController.navigate(Routes.FREE_MODE_SCREEN) {
+                            popUpTo(Routes.MAP_SCREEN) // Limpiamos hasta el mapa
+                        }
+                    } else {
+                        // Si no, usamos la lógica original
+                        navController.popBackStack(
+                            route = Routes.LEVEL_SELECTION_SCREEN,
+                            inclusive = false
+                        )
+                    }
                 }
             )
         }

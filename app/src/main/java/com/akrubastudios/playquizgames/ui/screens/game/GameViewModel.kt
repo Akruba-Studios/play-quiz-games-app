@@ -42,6 +42,7 @@ class GameViewModel @Inject constructor(
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
     val difficulty: String = savedStateHandle.get<String>("difficulty")!!
+    val origin: String = savedStateHandle.get<String>("origin")!!
     private val categoryId: String by lazy { levelId.split('_').getOrNull(1) ?: "" }
     private val continentId: String by lazy { levelId.split('_').getOrNull(0) ?: "" }
     companion object {
@@ -473,6 +474,10 @@ class GameViewModel @Inject constructor(
 
     fun continentIdForNav(): String {
         return continentId
+    }
+
+    fun originForNav(): String {
+        return origin
     }
     // CUIDADO: Esta lógica duplica el cálculo de PC de la Cloud Function 'processScoreRequest'.
     // Si se cambia la regla de negocio, actualizar en AMBOS sitios.
