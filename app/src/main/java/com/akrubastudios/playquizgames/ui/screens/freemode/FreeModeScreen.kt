@@ -16,13 +16,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -39,15 +47,17 @@ import com.akrubastudios.playquizgames.domain.UserLevelCompletion
 import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicTrack
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FreeModeScreen(
     viewModel: FreeModeViewModel = hiltViewModel(),
     // Pasamos una función lambda para manejar la navegación hacia el juego.
-    onNavigateToGame: (levelId: String, countryId: String, difficulty: String) -> Unit
+    onNavigateToGame: (levelId: String, countryId: String, difficulty: String) -> Unit,
+    navController: NavController
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -60,81 +70,104 @@ fun FreeModeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            stringResource(R.string.free_mode_title),
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(16.dp)
-        )
-        Text(
-            stringResource(R.string.free_mode_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 1. Usamos una lista de IDs para la lógica.
-        val difficultyIds = listOf("principiante", "dificil")
-        // 2. El índice se calcula correctamente.
-        val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
-
-        TabRow(
-            selectedTabIndex = selectedIndex,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // 3. Iteramos sobre los IDs.
-            difficultyIds.forEachIndexed { index, id ->
-                Tab(
-                    selected = selectedIndex == index,
-                    onClick = { viewModel.onDifficultyChange(id) },
-                    // 4. Obtenemos el texto traducido DENTRO del Tab.
-                    text = {
-                        val textRes = if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                        Text(text = stringResource(textRes))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.cd_back)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
-                )
-            }
+                }
+            )
         }
-        Text(
-            text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(R.string.difficulty_beginner_tip),
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        )
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // Aplica el padding
+        ) {
+            Text(
+                stringResource(R.string.free_mode_title),
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(16.dp)
+            )
+            Text(
+                stringResource(R.string.free_mode_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 1. Usamos una lista de IDs para la lógica.
+            val difficultyIds = listOf("principiante", "dificil")
+            // 2. El índice se calcula correctamente.
+            val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
+
+            TabRow(
+                selectedTabIndex = selectedIndex,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.masteredLevels.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    stringResource(R.string.free_mode_no_levels),
-                    modifier = Modifier.padding(32.dp)
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.masteredLevels) { level ->
-                    MasteredLevelItem(
-                        level = level,
-                        selectedDifficulty = selectedDifficulty,
-                        onPlayClick = {
-                            // Usamos un countryId genérico o vacío, ya que en este modo
-                            // no afecta la recompensa de PC.
-                            onNavigateToGame(level.levelId, "freemode", selectedDifficulty)
+                // 3. Iteramos sobre los IDs.
+                difficultyIds.forEachIndexed { index, id ->
+                    Tab(
+                        selected = selectedIndex == index,
+                        onClick = { viewModel.onDifficultyChange(id) },
+                        // 4. Obtenemos el texto traducido DENTRO del Tab.
+                        text = {
+                            val textRes =
+                                if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                            Text(text = stringResource(textRes))
                         }
                     )
+                }
+            }
+            Text(
+                text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
+                    R.string.difficulty_beginner_tip
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            )
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.masteredLevels.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.free_mode_no_levels),
+                        modifier = Modifier.padding(32.dp)
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(uiState.masteredLevels) { level ->
+                        MasteredLevelItem(
+                            level = level,
+                            selectedDifficulty = selectedDifficulty,
+                            onPlayClick = {
+                                // Usamos un countryId genérico o vacío, ya que en este modo
+                                // no afecta la recompensa de PC.
+                                onNavigateToGame(level.levelId, "freemode", selectedDifficulty)
+                            }
+                        )
+                    }
                 }
             }
         }

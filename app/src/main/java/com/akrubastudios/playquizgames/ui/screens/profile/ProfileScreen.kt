@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavController
@@ -51,7 +53,7 @@ import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -129,79 +131,109 @@ fun ProfileScreen(
         }
     }
 
-    if (uiState.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else if (uiState.user == null || uiState.levelInfo == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.profile_error_loading))
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                ProfileHeader(
-                    name = uiState.user?.displayName ?: stringResource(R.string.default_player_name),
-                    imageUrl = uiState.user?.photoUrl
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp), // Un padding para que no se peguen a los bordes
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Indicador de Nivel (usamos un Box con peso para que ocupe el espacio disponible)
-                    Box(modifier = Modifier.weight(1f)) {
-                        uiState.levelInfo?.let { levelInfo ->
-                            PlayerLevelIndicator(
-                                levelInfo = levelInfo,
-                                boostCount = uiState.user?.unassignedPcBoosts ?: 0
-                            )
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.profile_title)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Indicador de Gemas
-                    GemsBalanceIndicator(gems = uiState.user?.gems ?: 0)
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+            )
+        }
+    ) { innerPadding ->
 
-            item {
-                StatisticsCard(
-                    totalXp = uiState.user?.totalXp ?: 0,
-                    conquered = uiState.user?.conqueredCountries?.size ?: 0,
-                    dominated = uiState.user?.dominatedCountries?.size ?: 0
-                )
-                Spacer(modifier = Modifier.height(24.dp))
+        if (uiState.isLoading) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding), // Aplicar padding
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
+        } else if (uiState.user == null || uiState.levelInfo == null) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding), // Aplicar padding
+                contentAlignment = Alignment.Center
+            ) {
+                Text(stringResource(R.string.profile_error_loading))
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding), // Aplicar padding
+                contentPadding = PaddingValues(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    ProfileHeader(
+                        name = uiState.user?.displayName
+                            ?: stringResource(R.string.default_player_name),
+                        imageUrl = uiState.user?.photoUrl
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp), // Un padding para que no se peguen a los bordes
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Indicador de Nivel (usamos un Box con peso para que ocupe el espacio disponible)
+                        Box(modifier = Modifier.weight(1f)) {
+                            uiState.levelInfo?.let { levelInfo ->
+                                PlayerLevelIndicator(
+                                    levelInfo = levelInfo,
+                                    boostCount = uiState.user?.unassignedPcBoosts ?: 0
+                                )
+                            }
+                        }
 
-            item {
-                uiState.nextMilestone?.let { milestone ->
-                    // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
-                    MilestoneCard(
-                        milestone = milestone,
-                        cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
-                        scale = animatedScale
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        // Indicador de Gemas
+                        GemsBalanceIndicator(gems = uiState.user?.gems ?: 0)
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                item {
+                    StatisticsCard(
+                        totalXp = uiState.user?.totalXp ?: 0,
+                        conquered = uiState.user?.conqueredCountries?.size ?: 0,
+                        dominated = uiState.user?.dominatedCountries?.size ?: 0
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
-            }
 
-            item {
-                ActionsCard(
-                    onSignOutClick = { showSignOutDialog = true },
-                    onSettingsClick = onSettingsClick,
-                    onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
-                    isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false
-                )
+                item {
+                    uiState.nextMilestone?.let { milestone ->
+                        // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
+                        MilestoneCard(
+                            milestone = milestone,
+                            cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
+                            scale = animatedScale
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+
+                item {
+                    ActionsCard(
+                        onSignOutClick = { showSignOutDialog = true },
+                        onSettingsClick = onSettingsClick,
+                        onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
+                        isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false
+                    )
+                }
             }
         }
     }

@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,15 +26,17 @@ import coil.compose.AsyncImage
 import com.akrubastudios.playquizgames.ui.screens.ranking.RankedUserUiItem
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import java.text.NumberFormat
 import java.util.Locale
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RankingScreen(
-    viewModel: RankingViewModel = hiltViewModel()
+    viewModel: RankingViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -45,6 +50,19 @@ fun RankingScreen(
 
     // Usamos Scaffold para tener una ranura para el bottomBar
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.cd_back)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
+                    }
+                }
+            )
+        },
         // La fila del jugador actual va en el bottomBar
         bottomBar = {
             if (!uiState.isLoading && uiState.currentUserRank != null) {

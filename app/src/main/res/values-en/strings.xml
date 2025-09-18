@@ -164,6 +164,8 @@
 
     <string name="profile_button_library">My Knowledge Library</string>
 
+    <string name="profile_title">Player Profile</string>
+
     <!-- Fun Fact Library -->
     <string name="library_title">Knowledge Library</string>
     <string name="library_empty_message">Your library is empty! Master levels (get 3 ⭐) to collect the Fun Facts you discover here.</string>

@@ -68,7 +68,7 @@ fun NavGraph() {
         }
 
         composable(Routes.RANKING_SCREEN) {
-            RankingScreen()
+            RankingScreen(navController = navController)
         }
 
         composable(Routes.FREE_MODE_SCREEN) {
@@ -80,7 +80,8 @@ fun NavGraph() {
                         .replace("{levelId}", levelId)
                         .replace("{difficulty}", difficulty)
                     navController.navigate(route)
-                }
+                },
+                navController = navController
             )
         }
         composable(Routes.PROFILE_SCREEN) {

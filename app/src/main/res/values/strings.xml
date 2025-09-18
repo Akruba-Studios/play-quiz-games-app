@@ -164,6 +164,8 @@
 
     <string name="profile_button_library">Mi Biblioteca de Conocimiento</string>
 
+    <string name="profile_title">Perfil Jugador</string>
+
     <!-- Biblioteca de Fun Facts -->
     <string name="library_title">Biblioteca de Conocimiento</string>
     <string name="library_empty_message">¡Tu biblioteca está vacía! Domina niveles (consigue 3 ⭐) para coleccionar aquí los Datos Curiosos que descubras.</string>
