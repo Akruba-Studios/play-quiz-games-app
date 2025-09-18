@@ -4,6 +4,7 @@ package com.akrubastudios.playquizgames.ui.screens.result
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,7 +22,8 @@ data class ResultState(
 class ResultViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    val soundManager: SoundManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ResultState())

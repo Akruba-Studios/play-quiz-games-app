@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.result
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -20,9 +22,15 @@ import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.scale
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.akrubastudios.playquizgames.core.SoundEffect
+import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
+import kotlinx.coroutines.delay
 
 @Composable
 fun ResultScreen(
@@ -87,20 +95,10 @@ fun ResultScreen(
         // Mostramos las estrellas SOLO si NO es una batalla de jefe.
         if (!isFromBossFight) {
             Spacer(modifier = Modifier.height(16.dp))
-            Row {
-                // Iteramos de 1 a 3 para crear cada una de las 3 estrellas.
-                (1..3).forEach { starIndex ->
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = stringResource(R.string.cd_star_number, starIndex),
-                        modifier = Modifier.size(48.dp),
-                        // Lógica de color: si el índice de la estrella (1, 2, o 3)
-                        // es menor o igual a las estrellas que ganó el jugador (starsEarned),
-                        // la pintamos de dorado. Si no, la pintamos de gris.
-                        tint = if (starIndex <= starsEarned) Color(0xFFFFD700) else Color.Gray
-                    )
-                }
-            }
+            AnimatedStars(
+                starsEarned = starsEarned,
+                soundManager = viewModel.soundManager
+            )
         }
         Spacer(modifier = Modifier.height(48.dp))
         // El botón ahora se muestra condicionalmente
@@ -127,5 +125,53 @@ fun ResultScreen(
             text = stringResource(R.string.xp_tutorial_message),
             confirmButtonText = stringResource(R.string.dialog_button_ok_levelup)
         )
+    }
+}
+@Composable
+private fun AnimatedStars(
+    starsEarned: Int,
+    soundManager: SoundManager
+) {
+    // Un estado para controlar la visibilidad y escala de cada estrella
+    val starStates = listOf(
+        remember { mutableStateOf(0f) }, // Escala de la estrella 1
+        remember { mutableStateOf(0f) }, // Escala de la estrella 2
+        remember { mutableStateOf(0f) }  // Escala de la estrella 3
+    )
+
+    // Animar la escala de cada estrella individualmente
+    val animatedScales = starStates.map {
+        animateFloatAsState(
+            targetValue = it.value,
+            // Animación de resorte (spring) para un efecto de "rebote"
+            animationSpec = tween(durationMillis = 400),
+            label = "StarScaleAnimation"
+        ).value
+    }
+
+    // Este efecto se ejecuta una sola vez para orquestar la secuencia
+    LaunchedEffect(key1 = starsEarned) {
+        for (i in 0 until starsEarned) {
+            // Esperamos un poco antes de mostrar la siguiente estrella
+            delay(300L)
+            // Disparamos el sonido
+            soundManager.playSound(SoundEffect.STAR_APPEAR)
+            // Activamos la animación de la estrella actual
+            starStates[i].value = 1f
+        }
+    }
+
+    Row {
+        (0..2).forEach { index ->
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = stringResource(R.string.cd_star_number, index + 1),
+                modifier = Modifier
+                    .size(48.dp)
+                    .scale(animatedScales[index]), // Aplicamos la escala animada
+                // El color se basa en si la animación de esta estrella se ha activado
+                tint = if (starStates[index].value > 0f) Color(0xFFFFD700) else Color.Gray
+            )
+        }
     }
 }
