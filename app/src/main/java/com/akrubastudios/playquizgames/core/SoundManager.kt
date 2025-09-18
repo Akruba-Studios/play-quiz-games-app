@@ -23,7 +23,8 @@ enum class SoundEffect(val resourceId: Int) {
     INCORRECT_ANSWER(R.raw.sfx_incorrect_answer),
     LETTER_CLICK(R.raw.sfx_letter_click),
     CLEAR_ANSWER(R.raw.sfx_clear_answer),
-    STAR_APPEAR(R.raw.sfx_star_appear)
+    STAR_APPEAR(R.raw.sfx_star_appear),
+    BUTTON_CLICK(R.raw.sfx_button_click)
     // Aquí añadiremos más sonidos en el futuro (ej. BUTTON_CLICK)
 }
 
