@@ -17,6 +17,11 @@ import com.akrubastudios.playquizgames.ui.screens.onboarding.CountrySelectionScr
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
 import android.util.Log
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,9 +66,17 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.SPLASH_SCREEN
+        startDestination = Routes.SPLASH_SCREEN,
+        enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+        exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+        popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+        popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
     ) {
-        composable(Routes.SPLASH_SCREEN) {
+        composable(
+            route = Routes.SPLASH_SCREEN,
+            // Animación especial para que la splash solo se desvanezca
+            exitTransition = { fadeOut(animationSpec = tween(300)) }
+        ) {
             SplashScreen(navController = navController)
         }
 
@@ -271,7 +284,9 @@ fun NavGraph() {
                 navArgument("continentId") { type = NavType.StringType },
                 navArgument("origin") { type = NavType.StringType },
                 navArgument("previousBestStars") { type = NavType.IntType }
-            )
+            ),
+            // Animación especial para que los resultados aparezcan suavemente
+            enterTransition = { fadeIn(animationSpec = tween(2000)) }
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
             val view = LocalView.current
