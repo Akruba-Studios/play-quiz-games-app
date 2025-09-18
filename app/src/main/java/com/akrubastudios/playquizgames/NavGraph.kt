@@ -17,6 +17,7 @@ import com.akrubastudios.playquizgames.ui.screens.onboarding.CountrySelectionScr
 import com.akrubastudios.playquizgames.core.AdManager
 import android.app.Activity
 import android.util.Log
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -67,15 +68,32 @@ fun NavGraph() {
     NavHost(
         navController = navController,
         startDestination = Routes.SPLASH_SCREEN,
-        enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-        exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-        popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-        popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+        // --- INICIO DEL BLOQUE MEJORADO ---
+        // Transición por defecto para NAVEGAR HACIA ADELANTE
+        enterTransition = {
+            slideInHorizontally(initialOffsetX = { 300 }, animationSpec = tween(300)) +
+                    fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutHorizontally(targetOffsetX = { -300 }, animationSpec = tween(300)) +
+                    fadeOut(animationSpec = tween(300))
+        },
+
+        // Transición por defecto para NAVEGAR HACIA ATRÁS
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -300 }, animationSpec = tween(300)) +
+                    fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { 300 }, animationSpec = tween(300)) +
+                    fadeOut(animationSpec = tween(300))
+        }
+        // --- FIN DEL BLOQUE MEJORADO ---
     ) {
         composable(
             route = Routes.SPLASH_SCREEN,
             // Animación especial para que la splash solo se desvanezca
-            exitTransition = { fadeOut(animationSpec = tween(300)) }
+            exitTransition = { fadeOut(animationSpec = tween(500)) }
         ) {
             SplashScreen(navController = navController)
         }
@@ -285,8 +303,10 @@ fun NavGraph() {
                 navArgument("origin") { type = NavType.StringType },
                 navArgument("previousBestStars") { type = NavType.IntType }
             ),
-            // Animación especial para que los resultados aparezcan suavemente
-            enterTransition = { fadeIn(animationSpec = tween(2000)) }
+            // Al entrar a Resultados, solo aparece suavemente.
+            enterTransition = { fadeIn(animationSpec = tween(500)) },
+            // Al salir de Resultados (para ir al Mapa), solo desvanece.
+            exitTransition = { fadeOut(animationSpec = tween(500)) }
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
             val view = LocalView.current
