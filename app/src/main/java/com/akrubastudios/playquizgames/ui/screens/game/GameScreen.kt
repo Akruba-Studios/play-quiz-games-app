@@ -86,6 +86,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VpnKey
@@ -100,7 +101,9 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.PureWhite
+import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -363,7 +366,14 @@ fun QuestionImage(
                 .size(180.dp) // Cuadrado fijo (continene la imagen dentro)
                 // 1. FONDO con el color y la forma deseados.
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    // Lógica condicional para el color:
+                    color = if (isSystemInDarkTheme()) {
+                        // Si el tema es oscuro, forzamos el fondo gris claro.
+                        LightGray
+                    } else {
+                        // Si el tema es claro, usamos el color por defecto del tema.
+                        MaterialTheme.colorScheme.surfaceContainer
+                    },
                     shape = RoundedCornerShape(12.dp)
                 )
                 // 2. BORDE que usa el color 'outline' de nuestro tema.

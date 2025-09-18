@@ -342,8 +342,9 @@ fun NavGraph() {
                         .replace("{countryId}", countryId)
                         .replace("{levelId}", levelId)
                         .replace("{difficulty}", difficulty)
+                        .replace("{origin}", origin)
                     navController.navigate(route) {
-                        popUpTo(Routes.MAP_SCREEN)
+                        popUpTo(Routes.RESULT_SCREEN) { inclusive = true }
                     }
                 },
                 onBackToMenu = {
