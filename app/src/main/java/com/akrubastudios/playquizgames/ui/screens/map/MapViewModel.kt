@@ -20,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,7 +68,9 @@ class MapViewModel @Inject constructor(
 
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
+        Log.d("MapViewModel", "🎵 onResume iniciado")
         musicManager.play(MusicTrack.MAP)
+        Log.d("MapViewModel", "🎵 onResume terminado")
     }
 
     private fun getLocalizedResources(): android.content.res.Resources {
@@ -89,6 +92,9 @@ class MapViewModel @Inject constructor(
 
     private fun processUserData() {
         viewModelScope.launch {
+
+            Log.d("MapViewModel", "🔄 processUserData iniciado")
+
             // Carga la lista de países una sola vez, ya que es estática.
             val countryList = gameDataRepository.getCountryList()
 
@@ -98,11 +104,18 @@ class MapViewModel @Inject constructor(
                 gameDataRepository.userStateFlow,
                 settingsRepository.dismissedExpeditionLevelFlow
             ) { userData, dismissedLevel ->
+
+                Log.d("MapViewModel", "🔄 combine ejecutado - userData: ${userData != null}, dismissedLevel: $dismissedLevel")
+
                 Pair(userData, dismissedLevel)
             }.collect { (userData, dismissedLevel) ->
 
+                Log.d("MapViewModel", "📥 collect ejecutado - userData: ${userData != null}")
+
                 if (_uiState.value.playerLevelInfo == null) {
                     _uiState.value = _uiState.value.copy(isLoading = true)
+                    delay(0) // ESTE DELAY SE QUEDA solo para probar el cicular progrees al iniciar mapscreen
+                    Log.d("MapViewModel", "⏳ isLoading = true")
                 }
 
                 if (userData != null) {
@@ -210,6 +223,7 @@ class MapViewModel @Inject constructor(
                         hasProfileNotification = hasNotification,
                         gems = userData.gems
                     )
+                    Log.d("MapViewModel", "✅ isLoading = false, playerLevel: ${levelInfo.level}")
                 }
             }
         }

@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
@@ -91,6 +92,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -116,6 +118,7 @@ fun MapScreen(
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel()
 ) {
+    Log.d("MapScreen", "🎨 MapScreen recomponiéndose")
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.addObserver(viewModel)
@@ -136,7 +139,7 @@ fun MapScreen(
 
     val currentLanguageCode = Locale.getDefault().language
 
-        // Scaffold nos da la estructura de la pantalla principal
+    // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
         Scaffold(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -525,70 +528,111 @@ private fun RewardRow(icon: ImageVector, text: String) {
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
-private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
-    // OPCION 3: Colores oceánicos claros - estilo tropical/mediterráneo
-    val deepOcean = Color(0xFF1B4F72)      // Azul profundo más claro
-    val mediumOcean = Color(0xFF2874A6)    // Azul medio vibrante
-    val shallowOcean = Color(0xFF3498DB)   // Azul claro brillante
-    val surfaceShine = Color(0xFF85C1E9)   // Brillo superficial luminoso
+// SOLUCIÓN DEFINITIVA: Optimizar drawOceanBackground matemáticamente
+// PASO 1: Crear tablas precalculadas para funciones trigonométricas
+class OptimizedOceanRenderer {
+    companion object {
+        // Tablas precalculadas para evitar cálculos repetitivos
+        private const val TABLE_SIZE = 3600 // 360 grados * 10 para precisión
+        private val sinTable = FloatArray(TABLE_SIZE)
+        private val cosTable = FloatArray(TABLE_SIZE)
 
-    // CAPA 1: Fondo base con gradiente de profundidad
+        init {
+            // Precalcular todas las funciones trigonométricas
+            for (i in 0 until TABLE_SIZE) {
+                val angle = (i * PI * 2.0 / TABLE_SIZE).toFloat()
+                sinTable[i] = kotlin.math.sin(angle.toDouble()).toFloat()
+                cosTable[i] = kotlin.math.cos(angle.toDouble()).toFloat()
+            }
+        }
+
+        // Funciones optimizadas que usan lookup tables
+        fun fastSin(x: Float): Float {
+            val index = ((x * TABLE_SIZE / (2 * PI)) % TABLE_SIZE + TABLE_SIZE).toInt() % TABLE_SIZE
+            return sinTable[index]
+        }
+
+        fun fastCos(x: Float): Float {
+            val index = ((x * TABLE_SIZE / (2 * PI)) % TABLE_SIZE + TABLE_SIZE).toInt() % TABLE_SIZE
+            return cosTable[index]
+        }
+    }
+}
+
+// PASO 2: Versión optimizada de drawOceanBackground
+private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
+    // Colores oceánicos (sin cambios)
+    val deepOcean = Color(0xFF1B4F72)
+    val mediumOcean = Color(0xFF2874A6)
+    val shallowOcean = Color(0xFF3498DB)
+    val surfaceShine = Color(0xFF85C1E9)
+
+    // CAPA 1: Fondo base (sin cambios)
     drawRect(color = deepOcean, size = canvasSize)
 
-    // CAPA 2: Variaciones de profundidad procedurales
+    // CAPA 2: Variaciones de profundidad OPTIMIZADAS
     val noiseScale = 0.002f
+    val stepSize = 16 // Incrementado de 8 a 16 (75% menos cálculos)
     val depthVariationIntensity = 0.3f
 
-    // Generar variaciones de profundidad usando funciones matemáticas
-    for (x in 0 until canvasSize.width.toInt() step 8) {
-        for (y in 0 until canvasSize.height.toInt() step 8) {
-            // Simular Perlin noise con funciones trigonométricas
-            val nx = x * noiseScale
+    // Precalcular valores que no cambian en el loop
+    val timeOffset1 = waveTime * 0.2f
+    val timeOffset2 = waveTime * 0.15f
+    val timeOffset3 = waveTime * 0.1f
+    val timeOffset4 = waveTime * 0.25f
+
+    for (x in 0 until canvasSize.width.toInt() step stepSize) {
+        val nx = x * noiseScale
+        val preCalcX1 = nx * 3.7f + timeOffset1
+        val preCalcX2 = nx * 7.3f + timeOffset3
+
+        for (y in 0 until canvasSize.height.toInt() step stepSize) {
             val ny = y * noiseScale
 
-            val noise1 = sin(nx * 3.7f + waveTime * 0.2f) * cos(ny * 2.1f + waveTime * 0.15f)
-            val noise2 = sin(nx * 7.3f + waveTime * 0.1f) * cos(ny * 5.9f + waveTime * 0.25f)
-            val noise3 = sin(nx * 1.4f + waveTime * 0.3f) * cos(ny * 1.8f + waveTime * 0.08f)
+            // Usar funciones trigonométricas optimizadas
+            val noise1 = OptimizedOceanRenderer.fastSin(preCalcX1) *
+                    OptimizedOceanRenderer.fastCos(ny * 2.1f + timeOffset2)
+            val noise2 = OptimizedOceanRenderer.fastSin(preCalcX2) *
+                    OptimizedOceanRenderer.fastCos(ny * 5.9f + timeOffset4)
 
-            val combinedNoise = (noise1 * 0.5f + noise2 * 0.3f + noise3 * 0.2f)
-            val normalizedNoise = (combinedNoise + 1f) / 2f // 0 a 1
+            val combinedNoise = (noise1 * 0.6f + noise2 * 0.4f + 1f) / 2f
+            val depthFactor = combinedNoise * depthVariationIntensity
 
-            // Calcular color basado en la "profundidad simulada"
-            val depthFactor = normalizedNoise * depthVariationIntensity
-            val currentColor = when {
-                depthFactor < 0.1f -> deepOcean
-                depthFactor < 0.15f -> mediumOcean.copy(alpha = 0.7f)
-                else -> shallowOcean.copy(alpha = 0.4f)
-            }
+            // Simplificar lógica de colores
+            if (depthFactor > 0.15f) {
+                val currentColor = if (depthFactor > 0.25f) {
+                    shallowOcean.copy(alpha = 0.4f)
+                } else {
+                    mediumOcean.copy(alpha = 0.7f)
+                }
 
-            if (depthFactor > 0.05f) {
                 drawRect(
                     color = currentColor,
                     topLeft = Offset(x.toFloat(), y.toFloat()),
-                    size = androidx.compose.ui.geometry.Size(8f, 8f)
+                    size = androidx.compose.ui.geometry.Size(stepSize.toFloat(), stepSize.toFloat())
                 )
             }
         }
     }
 
-    // CAPA 3: Corrientes marinas direccionales
+    // CAPA 3: Corrientes marinas SIMPLIFICADAS (50% menos iteraciones)
     val currentDirection1 = waveTime * 0.5f
-    val currentDirection2 = waveTime * -0.3f + PI.toFloat()
+    val path = androidx.compose.ui.graphics.Path()
 
-    // Corriente principal (horizontal)
-    for (y in 0 until canvasSize.height.toInt() step 25) {
-        val amplitude = 15f + sin(y * 0.01f + waveTime * 0.4f) * 8f
-        val frequency = 0.008f + sin(y * 0.005f) * 0.002f
+    for (y in 0 until canvasSize.height.toInt() step 40) { // Incrementado de 25 a 40
+        val amplitude = 15f + OptimizedOceanRenderer.fastSin(y * 0.01f + waveTime * 0.4f) * 8f
+        val frequency = 0.008f
 
-        val path = androidx.compose.ui.graphics.Path()
+        path.reset()
         path.moveTo(0f, y.toFloat())
 
-        for (x in 0..canvasSize.width.toInt() step 4) {
-            val waveY = y + sin(x * frequency + currentDirection1) * amplitude
+        // Menos puntos en la curva (cada 8px en lugar de 4px)
+        for (x in 0..canvasSize.width.toInt() step 8) {
+            val waveY = y + OptimizedOceanRenderer.fastSin(x * frequency + currentDirection1) * amplitude
             path.lineTo(x.toFloat(), waveY)
         }
 
-        val alpha = abs(sin(waveTime * 0.3f + y * 0.008f)) * 0.12f
+        val alpha = abs(OptimizedOceanRenderer.fastSin(waveTime * 0.3f + y * 0.008f)) * 0.1f
         drawPath(
             path = path,
             color = mediumOcean.copy(alpha = alpha),
@@ -596,91 +640,49 @@ private fun DrawScope.drawOceanBackground(waveTime: Float, canvasSize: androidx.
         )
     }
 
-    // Corriente secundaria (diagonal)
-    for (line in 0..20) {
-        val startX = line * canvasSize.width / 20f - canvasSize.width * 0.2f
-        val angle = 0.3f + sin(waveTime * 0.2f) * 0.1f
-
-        val path = androidx.compose.ui.graphics.Path()
-        path.moveTo(startX, 0f)
-
-        for (step in 0..50) {
-            val progress = step / 50f
-            val x = startX + progress * canvasSize.width * 1.4f
-            val y = progress * canvasSize.height + sin(progress * 4f + currentDirection2) * 30f
-
-            if (step == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-
-        val alpha = abs(sin(waveTime * 0.4f + line * 0.3f)) * 0.08f
-        drawPath(
-            path = path,
-            color = shallowOcean.copy(alpha = alpha),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1f)
-        )
-    }
-
-    // CAPA 4: Reflexiones especulares sutiles
+    // CAPA 4: Reflexiones especulares REDUCIDAS (menos centros)
     val specularCenters = listOf(
-        Offset(canvasSize.width * 0.3f, canvasSize.height * 0.2f),
-        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.5f),
-        Offset(canvasSize.width * 0.2f, canvasSize.height * 0.8f),
-        Offset(canvasSize.width * 0.8f, canvasSize.height * 0.3f)
-    )
+        Offset(canvasSize.width * 0.3f, canvasSize.height * 0.3f),
+        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.7f)
+    ) // Reducido de 4 a 2 centros
 
     specularCenters.forEachIndexed { index, center ->
-        val timeOffset = index * PI.toFloat() / 2f
+        val timeOffset = index * PI.toFloat()
         val animatedTime = waveTime * 0.6f + timeOffset
 
-        // Reflexión principal
-        val mainRadius = 40f + sin(animatedTime) * 15f
-        val mainAlpha = (0.15f + sin(animatedTime * 1.5f) * 0.08f).coerceIn(0f, 0.25f)
+        val mainRadius = 35f + OptimizedOceanRenderer.fastSin(animatedTime) * 12f
+        val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.2f)
 
         drawCircle(
             color = surfaceShine.copy(alpha = mainAlpha),
             radius = mainRadius,
             center = center
         )
-
-        // Reflexión secundaria más pequeña
-        val secondaryRadius = mainRadius * 0.4f
-        val secondaryAlpha = mainAlpha * 0.6f
-
-        drawCircle(
-            color = surfaceShine.copy(alpha = secondaryAlpha),
-            radius = secondaryRadius,
-            center = center + Offset(
-                sin(animatedTime * 2f) * 20f,
-                cos(animatedTime * 1.8f) * 15f
-            )
-        )
     }
 
-    // CAPA 5: Shimmer atmosférico global mejorado
-    val atmosphereIntensity = (sin(waveTime * 0.8f) + 1f) / 2f * 0.06f
+    // CAPA 5: Shimmer atmosférico simplificado
+    val atmosphereIntensity = (OptimizedOceanRenderer.fastSin(waveTime * 0.8f) + 1f) / 2f * 0.04f
     drawRect(
         color = surfaceShine.copy(alpha = atmosphereIntensity),
         size = canvasSize
     )
+}
 
-    // CAPA 6: Efecto de profundidad con gradiente radial desde el centro
-    val centerPoint = Offset(canvasSize.width * 0.5f, canvasSize.height * 0.5f)
-    val maxDistance = kotlin.math.sqrt(
-        (canvasSize.width * canvasSize.width + canvasSize.height * canvasSize.height).toDouble()
-    ).toFloat() * 0.5f
-
-    drawCircle(
-        brush = androidx.compose.ui.graphics.Brush.radialGradient(
-            colors = listOf(
-                Color.Transparent,
-                deepOcean.copy(alpha = 0.2f)
-            ),
-            center = centerPoint,
-            radius = maxDistance
-        ),
-        radius = maxDistance,
-        center = centerPoint
-    )
+// PASO 3: OceanCanvas optimizado con control de frecuencia
+@Composable
+fun OptimizedOceanCanvas(
+    modifier: Modifier = Modifier,
+    waveTime: Float = 0f,
+    isActive: Boolean = true
+) {
+    Canvas(modifier = modifier.fillMaxSize()) {
+        if (isActive) {
+            drawOptimizedOceanBackground(waveTime, size)
+        } else {
+            // Durante transiciones, mostrar océano estático
+            drawRect(color = Color(0xFF1B4F72), size = size)
+        }
+    }
 }
 
 @Composable
@@ -692,11 +694,13 @@ fun InteractiveWorldMap(
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Log.d("InteractiveWorldMap", "🗺️ InteractiveWorldMap recomponiendo con ${countries.size} países")
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1.6f) } // 1.6f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
     // Estados para la animación del océano
     var waveTime by remember { mutableStateOf(0f) }
+    var isAnimationActive by remember { mutableStateOf(true) }
 
     var canvasWidth by remember { mutableStateOf(1080f) }
     var canvasHeight by remember { mutableStateOf(1812f) }
@@ -786,22 +790,25 @@ fun InteractiveWorldMap(
     // MODIFICADO: Carga inicial del SVG con mejor control de estado
     LaunchedEffect(Unit) {
         try {
+            Log.d("InteractiveWorldMap", "📂 Iniciando carga de SVG...")
             isInitialProcessing = true
             val inputStream = context.assets.open("world-map.min.svg")
             val svg = SVG.getFromInputStream(inputStream)
             svgDocument = svg
+            Log.d("InteractiveWorldMap", "✅ SVG cargado exitosamente")
         } catch (e: IOException) {
             android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
             isInitialProcessing = false
         }
     }
 
-    // Animación del océano
+    // Animación optimizada del océano
     LaunchedEffect(Unit) {
-        while(true) {
-            waveTime += 0.016f  // Incremento suave ~60fps
-            delay(16)
-            // Opcional: reset muy ocasional para evitar overflow
+        while (true) {
+            if (isAnimationActive) {
+                waveTime += 0.05f // Incremento optimizado
+            }
+            delay(50) // 20fps en lugar de 60fps
             if (waveTime > 1000f) waveTime -= 1000f
         }
     }
@@ -831,10 +838,12 @@ fun InteractiveWorldMap(
         svgDocument?.let { svg ->
             if (pathColorMap.isNotEmpty()) {
                 try {
+                    Log.d("InteractiveWorldMap", "🎨 Iniciando procesamiento de colores...")
                     // NO limpiar processedSvgBitmap aquí para evitar flash
                     // processedSvgBitmap = null  // <-- REMOVIDO
 
                     val pathCoordinates = extractPathCoordinates(context, pathColorMap.keys)
+                    Log.d("InteractiveWorldMap", "📍 Paths extraídos: ${pathCoordinates.size}")
 
                     if (!isActive) return@LaunchedEffect
 
@@ -886,6 +895,7 @@ fun InteractiveWorldMap(
 
                         // MARCAR COMO LISTO SOLO CUANDO TODO ESTÉ PROCESADO
                         if (isInitialProcessing) {
+                            Log.d("InteractiveWorldMap", "🎯 Mapa listo - isMapReady = true")
                             isMapReady = true
                             isInitialProcessing = false
                         }
@@ -991,138 +1001,153 @@ fun InteractiveWorldMap(
         scale = newScale
         offset = newOffset
     }
+    // Nueva estructura con capas separadas
+    Box(modifier = modifier.fillMaxSize()) {
+        // CAPA 1: Océano en canvas separado
+        OptimizedOceanCanvas(
+            waveTime = waveTime,
+            isActive = isAnimationActive
+        )
 
-    // MODIFICADO: Canvas con mejor control de renderizado
-    Canvas(
-        modifier = modifier
-            .fillMaxSize()
-            .transformable(transformableState)
-            .pointerInput(Unit) {
-                detectTapGestures { tapOffset ->
-                    if (isMapReady) {  // Solo permitir taps cuando esté listo
-                        processedSvgBitmap?.let { bitmap ->
-                            detectCountryFromTap(tapOffset, bitmap, size.toSize())?.let { countryId ->
-                                onCountryClick(countryId)
+        // CAPA 2: Mapa en canvas original
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .transformable(transformableState)
+                .pointerInput(Unit) {
+                    detectTapGestures { tapOffset ->
+                        if (isMapReady) {  // Solo permitir taps cuando esté listo
+                            processedSvgBitmap?.let { bitmap ->
+                                detectCountryFromTap(
+                                    tapOffset,
+                                    bitmap,
+                                    size.toSize()
+                                )?.let { countryId ->
+                                    onCountryClick(countryId)
+                                }
                             }
                         }
                     }
                 }
-            }
-    ) {
-        canvasWidth = size.width
-        canvasHeight = size.height
+        ) {
+            Log.d(
+                "InteractiveWorldMap",
+                "🖌️ Canvas dibujando - isMapReady: $isMapReady, bitmap: ${processedSvgBitmap != null}"
+            )
+            canvasWidth = size.width
+            canvasHeight = size.height
 
-        // Fondo oceánico animado
-        drawOceanBackground(waveTime, size)
+            // MODIFICADO: Renderizado condicional mejorado
+            when {
+                // Mostrar el mapa solo cuando esté completamente listo
+                isMapReady && processedSvgBitmap != null -> {
+                    val bitmap = processedSvgBitmap!!
 
-        // MODIFICADO: Renderizado condicional mejorado
-        when {
-            // Mostrar el mapa solo cuando esté completamente listo
-            isMapReady && processedSvgBitmap != null -> {
-                val bitmap = processedSvgBitmap!!
+                    val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
+                    val canvasAspectRatio = size.width / size.height
 
-                val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-                val canvasAspectRatio = size.width / size.height
+                    val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                        size.width / bitmap.width
+                    } else {
+                        size.height / bitmap.height
+                    }
 
-                val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
-                    size.width / bitmap.width
-                } else {
-                    size.height / bitmap.height
-                }
+                    val scaledWidth = bitmap.width * scaleFactor * scale
+                    val scaledHeight = bitmap.height * scaleFactor * scale
 
-                val scaledWidth = bitmap.width * scaleFactor * scale
-                val scaledHeight = bitmap.height * scaleFactor * scale
+                    val centerX = size.width / 2f
+                    val centerY = size.height / 2f
+                    val left =
+                        centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
+                    val top =
+                        centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
 
-                val centerX = size.width / 2f
-                val centerY = size.height / 2f
-                val left = centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
-                val top = centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
+                    drawImage(
+                        image = bitmap.asImageBitmap(),
+                        dstOffset = IntOffset(left.toInt(), top.toInt()),
+                        dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
+                        filterQuality = FilterQuality.High
+                    )
 
-                drawImage(
-                    image = bitmap.asImageBitmap(),
-                    dstOffset = IntOffset(left.toInt(), top.toInt()),
-                    dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
-                    filterQuality = FilterQuality.High
-                )
-
-                // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
-                /*
-                countries.forEach { country ->
-                    if (pathColorMap[country.countryId] == defaultColor) {
-                        countryPaths[country.countryId]?.let { path ->
-                            // Coordenadas manuales para países problemáticos
-                            val (centerX, centerY) = when (country.countryId) {
-                                "es" -> Pair(395f, 420f)  // España - coordenadas ajustadas manualmente
-                                "fr" -> Pair(410f, 410f)  // Francia - coordenadas ajustadas manualmente
-                                else -> {
-                                    // Para el resto usar cálculo automático
-                                    val bounds = android.graphics.RectF()
-                                    path.computeBounds(bounds, true)
-                                    Pair(bounds.centerX(), bounds.centerY())
-                                }
-                            }
-
-                            // USAR LA MISMA LÓGICA EXACTA QUE EL BITMAP
-                            val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-                            val canvasAspectRatio = size.width / size.height
-
-                            val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
-                                size.width / bitmap.width
-                            } else {
-                                size.height / bitmap.height
-                            }
-
-                            val transformedX = left + (centerX * scaleFactor * scale)
-                            val transformedY = top + (centerY * scaleFactor * scale)
-
-                            val lockSize = 4.dp.toPx() * scale // 6. Tamaño del candado
-
-                            drawContext.canvas.nativeCanvas.apply {
-                                val lockPaint = android.graphics.Paint().apply {
-                                    isAntiAlias = true
-                                    setColor(android.graphics.Color.argb(
-                                        (255 * pulseAlpha).toInt(), 220, 220, 220 // Color candados: rgb 220,220,220 = gris blanco
-                                    ))
-                                    style = android.graphics.Paint.Style.STROKE
-                                    strokeWidth = 3f * scale
+                    // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
+                    /*
+                    countries.forEach { country ->
+                        if (pathColorMap[country.countryId] == defaultColor) {
+                            countryPaths[country.countryId]?.let { path ->
+                                // Coordenadas manuales para países problemáticos
+                                val (centerX, centerY) = when (country.countryId) {
+                                    "es" -> Pair(395f, 420f)  // España - coordenadas ajustadas manualmente
+                                    "fr" -> Pair(410f, 410f)  // Francia - coordenadas ajustadas manualmente
+                                    else -> {
+                                        // Para el resto usar cálculo automático
+                                        val bounds = android.graphics.RectF()
+                                        path.computeBounds(bounds, true)
+                                        Pair(bounds.centerX(), bounds.centerY())
+                                    }
                                 }
 
-                                // Dibujar candado simple
-                                val lockRect = android.graphics.RectF(
-                                    transformedX - lockSize/2,
-                                    transformedY - lockSize/4,
-                                    transformedX + lockSize/2,
-                                    transformedY + lockSize/2
-                                )
-                                drawRoundRect(lockRect, 4f * scale, 4f * scale, lockPaint)
+                                // USAR LA MISMA LÓGICA EXACTA QUE EL BITMAP
+                                val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
+                                val canvasAspectRatio = size.width / size.height
 
-                                // Arco del candado
-                                val arcRect = android.graphics.RectF(
-                                    transformedX - lockSize/3,
-                                    transformedY - lockSize/2,
-                                    transformedX + lockSize/3,
-                                    transformedY
-                                )
-                                drawArc(arcRect, 180f, 180f, false, lockPaint)
+                                val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                                    size.width / bitmap.width
+                                } else {
+                                    size.height / bitmap.height
+                                }
+
+                                val transformedX = left + (centerX * scaleFactor * scale)
+                                val transformedY = top + (centerY * scaleFactor * scale)
+
+                                val lockSize = 4.dp.toPx() * scale // 6. Tamaño del candado
+
+                                drawContext.canvas.nativeCanvas.apply {
+                                    val lockPaint = android.graphics.Paint().apply {
+                                        isAntiAlias = true
+                                        setColor(android.graphics.Color.argb(
+                                            (255 * pulseAlpha).toInt(), 220, 220, 220 // Color candados: rgb 220,220,220 = gris blanco
+                                        ))
+                                        style = android.graphics.Paint.Style.STROKE
+                                        strokeWidth = 3f * scale
+                                    }
+
+                                    // Dibujar candado simple
+                                    val lockRect = android.graphics.RectF(
+                                        transformedX - lockSize/2,
+                                        transformedY - lockSize/4,
+                                        transformedX + lockSize/2,
+                                        transformedY + lockSize/2
+                                    )
+                                    drawRoundRect(lockRect, 4f * scale, 4f * scale, lockPaint)
+
+                                    // Arco del candado
+                                    val arcRect = android.graphics.RectF(
+                                        transformedX - lockSize/3,
+                                        transformedY - lockSize/2,
+                                        transformedX + lockSize/3,
+                                        transformedY
+                                    )
+                                    drawArc(arcRect, 180f, 180f, false, lockPaint)
+                                }
                             }
                         }
                     }
-                }
-                 */
+                     */
 
-                // Debug info (opcional - puedes removarlo)
-                /*
-                drawContext.canvas.nativeCanvas.drawText(
-                    "Scale: ${String.format("%.1f", scale)} | Países: ${pathColorMap.size}",
-                    20f,
-                    40f,
-                    android.graphics.Paint().apply {
-                        color = android.graphics.Color.BLACK
-                        textSize = 30f
-                        isAntiAlias = true
-                    }
-                )
-                 */
+                    // Debug info (opcional - puedes removarlo)
+                    /*
+                    drawContext.canvas.nativeCanvas.drawText(
+                        "Scale: ${String.format("%.1f", scale)} | Países: ${pathColorMap.size}",
+                        20f,
+                        40f,
+                        android.graphics.Paint().apply {
+                            color = android.graphics.Color.BLACK
+                            textSize = 30f
+                            isAntiAlias = true
+                        }
+                    )
+                     */
+                }
             }
         }
     }
