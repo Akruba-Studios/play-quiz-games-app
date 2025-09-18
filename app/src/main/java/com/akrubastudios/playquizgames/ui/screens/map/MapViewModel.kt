@@ -68,9 +68,7 @@ class MapViewModel @Inject constructor(
 
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
-        Log.d("MapViewModel", "🎵 onResume iniciado")
         musicManager.play(MusicTrack.MAP)
-        Log.d("MapViewModel", "🎵 onResume terminado")
     }
 
     private fun getLocalizedResources(): android.content.res.Resources {
@@ -93,8 +91,6 @@ class MapViewModel @Inject constructor(
     private fun processUserData() {
         viewModelScope.launch {
 
-            Log.d("MapViewModel", "🔄 processUserData iniciado")
-
             // Carga la lista de países una sola vez, ya que es estática.
             val countryList = gameDataRepository.getCountryList()
 
@@ -105,17 +101,12 @@ class MapViewModel @Inject constructor(
                 settingsRepository.dismissedExpeditionLevelFlow
             ) { userData, dismissedLevel ->
 
-                Log.d("MapViewModel", "🔄 combine ejecutado - userData: ${userData != null}, dismissedLevel: $dismissedLevel")
-
                 Pair(userData, dismissedLevel)
             }.collect { (userData, dismissedLevel) ->
-
-                Log.d("MapViewModel", "📥 collect ejecutado - userData: ${userData != null}")
 
                 if (_uiState.value.playerLevelInfo == null) {
                     _uiState.value = _uiState.value.copy(isLoading = true)
                     delay(0) // ESTE DELAY SE QUEDA solo para probar el cicular progrees al iniciar mapscreen
-                    Log.d("MapViewModel", "⏳ isLoading = true")
                 }
 
                 if (userData != null) {
@@ -223,7 +214,6 @@ class MapViewModel @Inject constructor(
                         hasProfileNotification = hasNotification,
                         gems = userData.gems
                     )
-                    Log.d("MapViewModel", "✅ isLoading = false, playerLevel: ${levelInfo.level}")
                 }
             }
         }
@@ -262,7 +252,6 @@ class MapViewModel @Inject constructor(
                 val userRef = db.collection("users").document(uid)
                 // Usamos FieldValue.delete() para eliminar completamente el campo del documento.
                 userRef.update("pendingBossChallenge", com.google.firebase.firestore.FieldValue.delete())
-                Log.d("MapViewModel", "✅ Bandera pendingBossChallenge eliminada.")
             } catch (e: Exception) {
                 Log.e("MapViewModel", "❌ Error al limpiar la bandera pendingBossChallenge.", e)
             }
@@ -303,7 +292,6 @@ class MapViewModel @Inject constructor(
                 // Usamos FieldValue.arrayUnion para añadir el nuevo país a la lista
                 // de forma segura, evitando duplicados.
                 userRef.update("availableCountries", com.google.firebase.firestore.FieldValue.arrayUnion(countryToUnlock))
-                android.util.Log.d("MapViewModel", "✅ País '$countryToUnlock' añadido a availableCountries para el usuario $uid.")
 
                 _uiState.value = _uiState.value.copy(expeditionAvailable = false)
 

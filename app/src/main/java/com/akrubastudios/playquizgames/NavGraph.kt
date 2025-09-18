@@ -93,16 +93,24 @@ fun NavGraph() {
         composable(
             route = Routes.SPLASH_SCREEN,
             // Animación especial para que la splash solo se desvanezca
-            exitTransition = { fadeOut(animationSpec = tween(500)) }
+            exitTransition = { fadeOut(animationSpec = tween(800)) }
         ) {
             SplashScreen(navController = navController)
         }
 
-        composable(Routes.RANKING_SCREEN) {
+        composable(
+            route = Routes.RANKING_SCREEN,
+            // Añadimos la transición de salida "hacia atrás"
+            popExitTransition = { fadeOut(animationSpec = tween(800)) }
+        ) {
             RankingScreen(navController = navController)
         }
 
-        composable(Routes.FREE_MODE_SCREEN) {
+        composable(
+            route = Routes.FREE_MODE_SCREEN,
+            // Añadimos la transición de salida "hacia atrás"
+            popExitTransition = { fadeOut(animationSpec = tween(800)) }
+        ) {
             FreeModeScreen(
                 onNavigateToGame = { levelId, countryId, difficulty ->
                     // Navega a la pantalla del juego con los datos del nivel seleccionado.
@@ -116,8 +124,11 @@ fun NavGraph() {
                 navController = navController
             )
         }
-        composable(Routes.PROFILE_SCREEN) {
-
+        composable(
+            route = Routes.PROFILE_SCREEN,
+            // Añadimos la transición de salida "hacia atrás"
+            popExitTransition = { fadeOut(animationSpec = tween(800)) }
+        ) {
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
                 viewModel = viewModel,
@@ -220,7 +231,11 @@ fun NavGraph() {
             )
         }
 
-        composable(Routes.LOGIN_SCREEN) {
+        composable(
+            route = Routes.LOGIN_SCREEN,
+            // Añadimos esta transición de entrada
+            enterTransition = { fadeIn(animationSpec = tween(500)) }
+        ) {
             LoginScreen(
                 onSignInComplete = { isNewUser ->
                     if (isNewUser) {
@@ -238,7 +253,11 @@ fun NavGraph() {
             )
         }
 
-        composable(Routes.CONTINENT_SELECTION_SCREEN) {
+        composable(
+            route = Routes.CONTINENT_SELECTION_SCREEN,
+            // Añadimos esta transición de entrada
+            enterTransition = { fadeIn(animationSpec = tween(500)) }
+        ) {
             ContinentSelectionScreen(
                 onContinentSelected = { continentId ->
                     // Navega a la nueva pantalla de selección de país
@@ -262,7 +281,11 @@ fun NavGraph() {
             )
         }
 
-        composable(Routes.MAP_SCREEN) {
+        composable(
+            route = Routes.MAP_SCREEN,
+            // Añadimos esta transición de entrada
+            enterTransition = { fadeIn(animationSpec = tween(800)) }
+        ) {
             MapScreen(navController = navController) // Por ahora no hace nada más
         }
 
@@ -306,7 +329,7 @@ fun NavGraph() {
             // Al entrar a Resultados, solo aparece suavemente.
             enterTransition = { fadeIn(animationSpec = tween(500)) },
             // Al salir de Resultados (para ir al Mapa), solo desvanece.
-            exitTransition = { fadeOut(animationSpec = tween(500)) }
+            exitTransition = { fadeOut(animationSpec = tween(800)) }
         ) { backStackEntry ->
             // Extraemos los valores de los argumentos
             val view = LocalView.current

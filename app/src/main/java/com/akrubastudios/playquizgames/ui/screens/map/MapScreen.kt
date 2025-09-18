@@ -95,6 +95,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
@@ -118,7 +120,6 @@ fun MapScreen(
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel()
 ) {
-    Log.d("MapScreen", "🎨 MapScreen recomponiéndose")
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.addObserver(viewModel)
@@ -572,8 +573,8 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
 
     // CAPA 2: Variaciones de profundidad OPTIMIZADAS
     val noiseScale = 0.002f
-    val stepSize = 16 // Incrementado de 8 a 16 (75% menos cálculos)
-    val depthVariationIntensity = 0.3f
+    val stepSize = 10 // Incrementado de 8 a 16 (75% menos cálculos, menor valos, mas calculo, menor rendimiento)
+    val depthVariationIntensity = 0.40f // Este valor es muy importante para mejor la calidad de las olas, mas grande mucho mejor pero menor rendimiento pantalla se congela
 
     // Precalcular valores que no cambian en el loop
     val timeOffset1 = waveTime * 0.2f
@@ -694,13 +695,28 @@ fun InteractiveWorldMap(
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Log.d("InteractiveWorldMap", "🗺️ InteractiveWorldMap recomponiendo con ${countries.size} países")
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1.6f) } // 1.6f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
     // Estados para la animación del océano
     var waveTime by remember { mutableStateOf(0f) }
     var isAnimationActive by remember { mutableStateOf(true) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> isAnimationActive = false
+                Lifecycle.Event.ON_RESUME -> isAnimationActive = true
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            isAnimationActive = false // Detener completamente al salir
+        }
+    }
 
     var canvasWidth by remember { mutableStateOf(1080f) }
     var canvasHeight by remember { mutableStateOf(1812f) }
@@ -790,12 +806,10 @@ fun InteractiveWorldMap(
     // MODIFICADO: Carga inicial del SVG con mejor control de estado
     LaunchedEffect(Unit) {
         try {
-            Log.d("InteractiveWorldMap", "📂 Iniciando carga de SVG...")
             isInitialProcessing = true
             val inputStream = context.assets.open("world-map.min.svg")
             val svg = SVG.getFromInputStream(inputStream)
             svgDocument = svg
-            Log.d("InteractiveWorldMap", "✅ SVG cargado exitosamente")
         } catch (e: IOException) {
             android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
             isInitialProcessing = false
@@ -806,9 +820,9 @@ fun InteractiveWorldMap(
     LaunchedEffect(Unit) {
         while (true) {
             if (isAnimationActive) {
-                waveTime += 0.05f // Incremento optimizado
+                waveTime += 0.033f // Incremento optimizado
             }
-            delay(50) // 20fps en lugar de 60fps
+            delay(33) // 20fps en lugar de 60fps
             if (waveTime > 1000f) waveTime -= 1000f
         }
     }
@@ -838,12 +852,10 @@ fun InteractiveWorldMap(
         svgDocument?.let { svg ->
             if (pathColorMap.isNotEmpty()) {
                 try {
-                    Log.d("InteractiveWorldMap", "🎨 Iniciando procesamiento de colores...")
                     // NO limpiar processedSvgBitmap aquí para evitar flash
                     // processedSvgBitmap = null  // <-- REMOVIDO
 
                     val pathCoordinates = extractPathCoordinates(context, pathColorMap.keys)
-                    Log.d("InteractiveWorldMap", "📍 Paths extraídos: ${pathCoordinates.size}")
 
                     if (!isActive) return@LaunchedEffect
 
@@ -895,7 +907,6 @@ fun InteractiveWorldMap(
 
                         // MARCAR COMO LISTO SOLO CUANDO TODO ESTÉ PROCESADO
                         if (isInitialProcessing) {
-                            Log.d("InteractiveWorldMap", "🎯 Mapa listo - isMapReady = true")
                             isMapReady = true
                             isInitialProcessing = false
                         }
@@ -1030,10 +1041,6 @@ fun InteractiveWorldMap(
                     }
                 }
         ) {
-            Log.d(
-                "InteractiveWorldMap",
-                "🖌️ Canvas dibujando - isMapReady: $isMapReady, bitmap: ${processedSvgBitmap != null}"
-            )
             canvasWidth = size.width
             canvasHeight = size.height
 
