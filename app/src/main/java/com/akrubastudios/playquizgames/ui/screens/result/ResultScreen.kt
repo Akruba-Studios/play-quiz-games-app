@@ -39,6 +39,7 @@ fun ResultScreen(
     totalQuestions: Int,
     correctAnswers: Int,
     starsEarned: Int,
+    previousBestStars: Int,
     pcGained: Int,
     gemsGained: Int,
     isFromBossFight: Boolean,
@@ -97,6 +98,7 @@ fun ResultScreen(
             Spacer(modifier = Modifier.height(16.dp))
             AnimatedStars(
                 starsEarned = starsEarned,
+                previousBestStars = previousBestStars,
                 soundManager = viewModel.soundManager
             )
         }
@@ -130,47 +132,52 @@ fun ResultScreen(
 @Composable
 private fun AnimatedStars(
     starsEarned: Int,
+    previousBestStars: Int,
     soundManager: SoundManager
 ) {
     // Un estado para controlar la visibilidad y escala de cada estrella
-    val starStates = listOf(
-        remember { mutableStateOf(0f) }, // Escala de la estrella 1
-        remember { mutableStateOf(0f) }, // Escala de la estrella 2
-        remember { mutableStateOf(0f) }  // Escala de la estrella 3
+    val starScales = listOf(
+        remember { mutableStateOf(if (previousBestStars >= 1) 1f else 0f) },
+        remember { mutableStateOf(if (previousBestStars >= 2) 1f else 0f) },
+        remember { mutableStateOf(if (previousBestStars >= 3) 1f else 0f) }
     )
 
     // Animar la escala de cada estrella individualmente
-    val animatedScales = starStates.map {
+    val animatedScales = starScales.map {
         animateFloatAsState(
             targetValue = it.value,
-            // Animación de resorte (spring) para un efecto de "rebote"
             animationSpec = tween(durationMillis = 400),
             label = "StarScaleAnimation"
         ).value
     }
 
     // Este efecto se ejecuta una sola vez para orquestar la secuencia
-    LaunchedEffect(key1 = starsEarned) {
-        for (i in 0 until starsEarned) {
-            // Esperamos un poco antes de mostrar la siguiente estrella
-            delay(300L)
-            // Disparamos el sonido
-            soundManager.playSound(SoundEffect.STAR_APPEAR)
-            // Activamos la animación de la estrella actual
-            starStates[i].value = 1f
+    LaunchedEffect(key1 = starsEarned, key2 = previousBestStars) {
+        // Solo animamos si el nuevo resultado es MEJOR que el anterior
+        if (starsEarned > previousBestStars) {
+            // Iteramos desde la primera estrella NUEVA hasta la última ganada
+            for (i in previousBestStars until starsEarned) {
+                delay(300L)
+                soundManager.playSound(SoundEffect.STAR_APPEAR)
+                // Activamos la animación de la estrella correspondiente
+                starScales[i].value = 1f
+            }
         }
     }
 
     Row {
         (0..2).forEach { index ->
+            val starIsEarned = index < starsEarned
+            val previousStarWasEarned = index < previousBestStars
+
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = stringResource(R.string.cd_star_number, index + 1),
                 modifier = Modifier
                     .size(48.dp)
-                    .scale(animatedScales[index]), // Aplicamos la escala animada
-                // El color se basa en si la animación de esta estrella se ha activado
-                tint = if (starStates[index].value > 0f) Color(0xFFFFD700) else Color.Gray
+                    .scale(animatedScales[index]),
+                // El color ahora depende del récord MÁXIMO entre el anterior y el actual
+                tint = if (starIsEarned || previousStarWasEarned) Color(0xFFFFD700) else Color.Gray
             )
         }
     }

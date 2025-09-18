@@ -6,5 +6,6 @@ data class GameResult(
     val totalQuestions: Int,
     val starsEarned: Int = 0,
     val pcGained: Int = 0,
-    val gemsGained: Int = 0
+    val gemsGained: Int = 0,
+    val previousBestStars: Int = 0
 )

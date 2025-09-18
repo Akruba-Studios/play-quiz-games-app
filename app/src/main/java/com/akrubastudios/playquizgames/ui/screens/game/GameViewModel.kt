@@ -27,6 +27,7 @@ import com.akrubastudios.playquizgames.core.SoundEffect
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Question
+import kotlinx.coroutines.async
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
@@ -63,6 +64,7 @@ class GameViewModel @Inject constructor(
     private var levelPackage: QuizLevelPackage? = null
     private var shuffledQuestions: List<Question> = emptyList()
     private var currentQuestionIndex = 0
+    private var previousBestStars: Int = 0
         private var reshuffleJob: Job? = null
     // ---------------------------------------------
 
@@ -74,7 +76,12 @@ class GameViewModel @Inject constructor(
         // Lanzamos una coroutine para llamar a nuestra función suspendida
         viewModelScope.launch {
             resetRoundState()
-            val loadedLevel = repository.getLevel(levelId) // Llama a la nueva función suspend
+
+            val levelRequest = async { repository.getLevel(levelId) }
+            val bestScoreRequest = async { gameDataRepository.getUserGlobalLevelProgress(levelId) }
+
+            val loadedLevel = levelRequest.await()
+            previousBestStars = bestScoreRequest.await()
 
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
@@ -374,7 +381,8 @@ class GameViewModel @Inject constructor(
                     totalQuestions = totalQuestions,
                     starsEarned = starsEarned,
                     pcGained = pcGained,
-                    gemsGained = gemsGained
+                    gemsGained = gemsGained,
+                    previousBestStars = previousBestStars
                 )
                 _gameResult.value = result
 
