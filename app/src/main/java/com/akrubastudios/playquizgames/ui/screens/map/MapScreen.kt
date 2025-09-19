@@ -574,7 +574,7 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
     // CAPA 2: Variaciones de profundidad OPTIMIZADAS
     val noiseScale = 0.002f
     val stepSize = 10 // Incrementado de 8 a 16 (75% menos cálculos, menor valos, mas calculo, menor rendimiento)
-    val depthVariationIntensity = 0.40f // Este valor es muy importante para mejor la calidad de las olas, mas grande mucho mejor pero menor rendimiento pantalla se congela
+    val depthVariationIntensity = 0.50f // Este valor es muy importante para mejor la calidad de las olas, mas grande mucho mejor pero menor rendimiento pantalla se congela
 
     // Precalcular valores que no cambian en el loop
     val timeOffset1 = waveTime * 0.2f
@@ -633,7 +633,7 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
             path.lineTo(x.toFloat(), waveY)
         }
 
-        val alpha = abs(OptimizedOceanRenderer.fastSin(waveTime * 0.3f + y * 0.008f)) * 0.1f
+        val alpha = abs(OptimizedOceanRenderer.fastSin(waveTime * 0.3f + y * 0.008f)) * 0.15f
         drawPath(
             path = path,
             color = mediumOcean.copy(alpha = alpha),
@@ -652,7 +652,7 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
         val animatedTime = waveTime * 0.6f + timeOffset
 
         val mainRadius = 35f + OptimizedOceanRenderer.fastSin(animatedTime) * 12f
-        val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.2f)
+        val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.35f)
 
         drawCircle(
             color = surfaceShine.copy(alpha = mainAlpha),

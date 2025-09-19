@@ -538,6 +538,10 @@ fun BossScreen(
                 .replace("{victory}", isVictory.toString())
                 .replace("{pcGained}", "0")
                 .replace("{gemsGained}", "0")
+                .replace("{categoryId}", "boss") // Valor dummy, ya que no pertenece a una categoría
+                .replace("{continentId}", "boss") // Valor dummy
+                .replace("{origin}", "bossfight") // Origen específico para este flujo
+                .replace("{previousBestStars}", "0") // No aplica, ponemos 0
 
             navController.navigate(route) {
                 popUpTo(Routes.MAP_SCREEN)
