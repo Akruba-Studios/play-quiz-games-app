@@ -566,8 +566,7 @@ fun BossScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. HEADER DEL BOSS
                 BossHeaderFixed(
@@ -579,6 +578,7 @@ fun BossScreen(
                     currentGems = uiState.currentGems,
                     onGemsClick = { viewModel.openHelpsSheet() }
                 )
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // 2. CONTENIDO DE LA PREGUNTA
                 uiState.currentQuestion?.let { question ->
@@ -586,7 +586,10 @@ fun BossScreen(
                     // QuestionImageFixed(imageUrl = question.imageUrl)
 
                     // Texto de la pregunta
-                    QuestionTextFixed(questionText = uiState.questionText)
+                    QuestionTextFixed(
+                        questionText = uiState.questionText
+                    )
+                    Spacer(modifier = Modifier.height(8.dp)) // Espacio reducido
 
                     // Casillas de respuesta - SIN SCROLL HORIZONTAL
                     AnswerSlotsFixed(
@@ -604,9 +607,15 @@ fun BossScreen(
                         phase = uiState.currentPhase,
                         isRunning = uiState.isTimerRunning
                     )
+                    Spacer(modifier = Modifier.height(8.dp)) // Espacio reducido
 
                     // Banco de letras
-                    Box(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(), // Aseguramos que ocupe todo el ancho
+                        contentAlignment = Alignment.Center
+                    ) {
                         LetterBankFixed(
                             hintLetters = uiState.generatedHintLetters,
                             usedIndices = uiState.usedLetterIndices,
@@ -617,9 +626,10 @@ fun BossScreen(
                         )
                     }
                 }
-
-                // Espaciado adicional para el último elemento
-                Spacer(Modifier.height(32.dp))
+                // Si no hay pregunta, mostramos un Spacer para centrar el Header
+                if (uiState.currentQuestion == null) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
             // Efecto spray para respuestas
             // Efecto spray verde
