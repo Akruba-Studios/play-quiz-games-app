@@ -327,8 +327,6 @@ private fun AnswerSlotsFixed(
                                 )
                             }
                         }
-                        // --- FIN DEL CÓDIGO RESTAURADO ---
-
                         letterIndex++
                     }
                 }

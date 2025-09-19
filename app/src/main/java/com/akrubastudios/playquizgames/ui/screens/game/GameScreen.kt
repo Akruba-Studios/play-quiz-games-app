@@ -86,6 +86,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Timer
@@ -96,6 +97,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
@@ -496,18 +498,30 @@ fun AnswerSlots(
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // --- INICIO DE LA LÓGICA DE AGRUPAMIENTO ---
-
         // 1. Dividimos la respuesta correcta en palabras.
         val words = correctAnswer.split(' ')
+        val configuration = LocalConfiguration.current
+        val screenWidthDp = configuration.screenWidthDp.dp
+        // GameScreen AnswerSlots no tiene padding horizontal, así que usamos el ancho completo.
+        val availableWidth = screenWidthDp
+        val longestWord = words.maxByOrNull { it.length } ?: ""
+        val totalLetters = longestWord.length
 
-        // 2. Iteramos sobre cada palabra.
-        // Determinar el tamaño global para todas las palabras
-        val hasLongWord = words.any { it.length > 8 }
-        val globalSlotSize = if (hasLongWord) 30.dp else 40.dp // 30.dp y 40.dp, son los tamaños de las casillas respuestas
+        // El mismo cálculo que hicimos para BossScreen
+        val globalSlotSize = if (totalLetters > 0) {
+            val totalLetterGaps = (totalLetters - 1).coerceAtLeast(0)
+            val letterSpacing = 6.dp
+            val totalSpacing = letterSpacing * totalLetterGaps
+            ((availableWidth - totalSpacing) / totalLetters).coerceIn(28.dp, 40.dp)
+        } else {
+            40.dp // Un valor por defecto si no hay letras
+        }
 
         words.forEach { word ->
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp) // 6.dp Espacio entre letras
+            ) {
                 word.forEach { _ ->
                     val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
                     val isRevealed = revealedLetterPositions.contains(letterIndex)
