@@ -187,7 +187,11 @@ fun GameScreen(
                 onGemsClick = { viewModel.openHelpsSheet() }
             )
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
-            QuestionImage(imageUrl = uiState.currentQuestion!!.imageUrl)
+            QuestionImage(
+                imageUrl = uiState.currentQuestion!!.imageUrl,
+                // Le damos un "peso" para que ocupe una parte proporcional del espacio vertical.
+                modifier = Modifier.weight(0.7f)
+            )
 
             QuestionText(
                 text = uiState.questionText,
@@ -356,14 +360,13 @@ fun QuestionImage(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(182.dp) // Altura caja invisible externa de la imagen
             .padding(horizontal = 16.dp, vertical = 5.dp), // vertical 5dp, espacio arriba y abajo de la imagen
         contentAlignment = Alignment.Center
     ) {
         // Contenedor interno cuadrado con efectos
         Box(
             modifier = Modifier
-                .size(180.dp) // Cuadrado fijo (continene la imagen dentro)
+                .fillMaxSize()
                 // 1. FONDO con el color y la forma deseados.
                 .background(
                     // Lógica condicional para el color:
@@ -390,7 +393,7 @@ fun QuestionImage(
                 model = imageUrl,
                 contentDescription = stringResource(R.string.cd_question_image),
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit // Mantiene proporciones, cabe dentro del contenedor
+                contentScale = ContentScale.Fit
             )
         }
     }
@@ -577,7 +580,7 @@ fun LetterBank(
             .padding(8.dp) // 3. AÑADIMOS UN PADDING INTERNO
             .verticalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.Center,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp), // Espacio vertical entre las filas del letterbank
         maxItemsInEachRow = 7
     ) {
         // Creamos un botón por cada letra de nuestras pistas
