@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lightbulb
@@ -287,7 +288,10 @@ private fun AnswerSlotsFixed(
             val userAnswerLetters = userAnswer
 
             words.forEach { word ->
-                Row(horizontalArrangement = Arrangement.spacedBy(letterSpacing)) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()), // <-- AÑADE ESTA LÍNEA
+                    horizontalArrangement = Arrangement.spacedBy(letterSpacing)
+                ) {
                     word.forEach { _ ->
                         val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
                         val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
