@@ -70,6 +70,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
@@ -238,6 +239,7 @@ private fun AnswerSlotsFixed(
     onClear: () -> Unit,
     showClearAnimation: Boolean
 ) {
+    // La lógica de animación no cambia
     val clearOffsetX by animateFloatAsState(
         targetValue = if (showClearAnimation) {
             if ((System.currentTimeMillis() / 80) % 2 == 0L) -8f else 8f
@@ -251,57 +253,80 @@ private fun AnswerSlotsFixed(
         label = "boss_clear_fade"
     )
 
-    val userAnswerLetters = userAnswer
-    var letterIndex = 0
+    // La lógica de cálculo de tamaño dinámico se queda
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val horizontalPadding = 16.dp * 2
+    val availableWidth = screenWidthDp - horizontalPadding
+    val words = correctAnswer.split(' ')
+    val longestWord = words.maxByOrNull { it.length } ?: ""
 
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(x = clearOffsetX.dp)
-            .alpha(clearAlpha)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clickable { onClear() },
-        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // 18.dp Espacio entre palabras
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        val words = correctAnswer.split(' ')
+    // 2. Todos los cálculos ahora se basan en la longitud de esa palabra.
+    val totalLetters = longestWord.length
+    if (totalLetters > 0) { // Evitar división por cero si la respuesta está vacía
+        val totalLetterGaps = (totalLetters - 1).coerceAtLeast(0)
+        val letterSpacing = 6.dp
+        val wordSpacing = 18.dp
+        val totalSpacing = letterSpacing * totalLetterGaps
 
-        // Determinar el tamaño global para todas las palabras
-        val hasLongWord = words.any { it.length > 8 }
-        val globalSlotSize = if (hasLongWord) 30.dp else 40.dp // 30.dp y 40.dp son los tamaños de casillas respuestas
+        // 3. El tamaño se calcula para que la palabra MÁS LARGA quepa.
+        val globalSlotSize = ((availableWidth - totalSpacing) / totalLetters)
+            .coerceIn(28.dp, 40.dp) // Mantenemos los límites de seguridad
 
-        words.forEach { word ->
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(x = clearOffsetX.dp)
+                .alpha(clearAlpha)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .clickable { onClear() },
+            horizontalArrangement = Arrangement.spacedBy(wordSpacing, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            var letterIndex = 0
+            val userAnswerLetters = userAnswer
 
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 6.dp Espacio entre letras
-                word.forEach { _ ->
-                    val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
-                    val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
-                    Card(
-                        modifier = Modifier.size(globalSlotSize),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        border = if (charToShow == ' ') BorderStroke(1.dp, GoldAccent) else null,
-                        colors = CardDefaults.cardColors(
-                            containerColor = when {
-                                charToShow == ' ' -> LightGray
-                                isRevealedLetter -> Color(0xFF4CAF50) // Verde para letras reveladas
-                                else -> SkyBlue // Letras Normales
-                            }
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+            words.forEach { word ->
+                Row(horizontalArrangement = Arrangement.spacedBy(letterSpacing)) {
+                    word.forEach { _ ->
+                        val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
+                        val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
+
+                        // --- INICIO DEL CÓDIGO RESTAURADO ---
+                        // Este es tu código original del Card, 100% intacto.
+                        // Lo único que cambia es que 'globalSlotSize' ahora es dinámico.
+                        Card(
+                            modifier = Modifier.size(globalSlotSize),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            border = if (charToShow == ' ') BorderStroke(
+                                1.dp,
+                                GoldAccent
+                            ) else null,
+                            colors = CardDefaults.cardColors(
+                                containerColor = when {
+                                    charToShow == ' ' -> LightGray
+                                    isRevealedLetter -> Color(0xFF4CAF50) // Verde para letras reveladas
+                                    else -> SkyBlue // Letras Normales
+                                }
+                            ),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text(
-                                text = charToShow.toString().uppercase(),
-                                color = if (charToShow == ' ') Color.Transparent else Color.White,
-                                fontSize = if (globalSlotSize < 35.dp) 14.sp else 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = charToShow.toString().uppercase(),
+                                    color = if (charToShow == ' ') Color.Transparent else Color.White,
+                                    fontSize = if (globalSlotSize < 35.dp) 14.sp else 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
+                        // --- FIN DEL CÓDIGO RESTAURADO ---
+
+                        letterIndex++
                     }
-                    letterIndex++
                 }
             }
         }
