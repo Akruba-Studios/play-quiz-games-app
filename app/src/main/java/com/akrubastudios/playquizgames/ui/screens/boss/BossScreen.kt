@@ -72,10 +72,12 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
@@ -460,8 +462,45 @@ private fun LetterBankFixed(
     hintLetters: String,
     usedIndices: Set<Int>,
     difficulty: String, // No se usa pero lo mantenemos por consistencia
+    availableHeight: Dp,
     onLetterClick: (Char, Int) -> Unit
 ) {
+    // Calcular tamaño dinámico basado en espacio disponible
+    val buttonSize = remember(availableHeight, hintLetters.length) {
+        when {
+            availableHeight < 180.dp -> 42.dp
+            availableHeight < 220.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 50.dp
+                    hintLetters.length <= 16 -> 48.dp
+                    else -> 46.dp
+                }
+            }
+            availableHeight < 280.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 55.dp
+                    hintLetters.length <= 16 -> 52.dp
+                    else -> 48.dp
+                }
+            }
+            availableHeight < 350.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 60.dp
+                    hintLetters.length <= 16 -> 56.dp
+                    else -> 52.dp
+                }
+            }
+            else -> {
+                when {
+                    hintLetters.length <= 12 -> 65.dp
+                    hintLetters.length <= 16 -> 60.dp
+                    else -> 55.dp
+                }
+            }
+        }
+    }.also {
+        Log.d("ButtonSize", "availableHeight: $availableHeight, letters: ${hintLetters.length}, chosen size: $it")
+    }
     // 1. Box como contenedor principal con altura FIJA y estilo
     FlowRow(
         modifier = Modifier
@@ -477,7 +516,13 @@ private fun LetterBankFixed(
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(8.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState()) // borrar el log y luego poner la coma aqui ),
+
+            .onSizeChanged { size -> // ojo borrar todo esto despues
+                Log.d("LetterBankReal", "Real height used: ${size.height}px")
+            }, // <-- AQUÍ
+
+
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         maxItemsInEachRow = 7 // Mantenemos el límite máximo
@@ -486,7 +531,7 @@ private fun LetterBankFixed(
             val isUsed = usedIndices.contains(index)
             Button(
                 onClick = { if (!isUsed) onLetterClick(letter, index) },
-                modifier = Modifier.size(50.dp),
+                modifier = Modifier.size(buttonSize),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isUsed) Color.Gray else SkyBlue,
                     disabledContainerColor = Color.Gray
@@ -687,16 +732,19 @@ fun BossScreen(
                     Spacer(modifier = Modifier.height(8.dp)) // Espacio reducido
 
                     // Banco de letras
-                    Box(
+                    BoxWithConstraints(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth(), // Aseguramos que ocupe todo el ancho
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
+                        val availableHeight = this@BoxWithConstraints.maxHeight
+
                         LetterBankFixed(
                             hintLetters = uiState.generatedHintLetters,
                             usedIndices = uiState.usedLetterIndices,
                             difficulty = "principiante",
+                            availableHeight = availableHeight,
                             onLetterClick = { letter, index ->
                                 viewModel.onLetterClick(letter, index)
                             }
