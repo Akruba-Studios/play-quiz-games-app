@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.game
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
@@ -93,6 +94,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VpnKey
@@ -227,12 +229,15 @@ fun GameScreen(
                 showClearAnimation = uiState.showClearAnimation,
                 revealedLetterPositions = uiState.revealedLetterPositions
             )
-            Box(modifier = Modifier.weight(1f)) {
+            BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                val availableHeight = this@BoxWithConstraints.maxHeight
+
                 LetterBank(
                     hintLetters = uiState.generatedHintLetters,
                     usedIndices = uiState.usedLetterIndices,
-                    difficulty = uiState.difficulty, // Borrar para habilitar letras bloqueadas en Modo Dificil
-                    onLetterClick = { letter, index -> // <-- MODIFICADO
+                    difficulty = uiState.difficulty,
+                    availableHeight = availableHeight,
+                    onLetterClick = { letter, index ->
                         viewModel.onLetterClick(letter, index)
                     }
                 )
@@ -622,9 +627,46 @@ fun LetterBank(
     hintLetters: String,
     usedIndices: Set<Int>,
     difficulty: String, // Borrar para habilitar letras bloqueadas en Modo Dificil
+    availableHeight: Dp,
     onLetterClick: (Char, Int) -> Unit, // Una función que se llamará cuando se toque una letra
     modifier: Modifier = Modifier
 ) {
+    val buttonSize = remember(availableHeight, hintLetters.length) {
+        when {
+            availableHeight < 180.dp -> 42.dp
+            availableHeight < 220.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 50.dp
+                    hintLetters.length <= 16 -> 48.dp
+                    else -> 46.dp
+                }
+            }
+            availableHeight < 280.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 55.dp
+                    hintLetters.length <= 16 -> 52.dp
+                    else -> 48.dp
+                }
+            }
+            availableHeight < 350.dp -> {
+                when {
+                    hintLetters.length <= 12 -> 60.dp
+                    hintLetters.length <= 16 -> 56.dp
+                    else -> 52.dp
+                }
+            }
+            else -> {
+                when {
+                    hintLetters.length <= 12 -> 65.dp
+                    hintLetters.length <= 16 -> 60.dp
+                    else -> 55.dp
+                }
+            }
+        }
+    }.also {
+        Log.d("ButtonSizeGame", "availableHeight: $availableHeight, letters: ${hintLetters.length}, chosen size: $it")
+    }
+
     // FlowRow es como una Row, pero si no caben los elementos,
     // los pasa a la siguiente línea automáticamente. Ideal para nuestro banco de letras.
     FlowRow(
@@ -650,6 +692,7 @@ fun LetterBank(
         hintLetters.forEachIndexed { index, letter ->
             LetterButton(
                 letter = letter,
+                buttonSize = buttonSize,
                 // Si el modo es principiante Y el índice está en la lista de usados,
                 // el botón se deshabilita.
                 enabled = if (difficulty == "principiante") { // Reemplazar por esto: "enabled = usedIndices.contains(index).not()," para habilitar letras bloqueads en modo hard
@@ -666,15 +709,23 @@ fun LetterBank(
 @Composable
 fun LetterButton(
     letter: Char,
+    buttonSize: Dp,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.padding(horizontal = 4.dp),
-        enabled = enabled
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .size(buttonSize),
+        enabled = enabled,
+        contentPadding = PaddingValues(0.dp)
     ) {
-        Text(text = letter.toString().uppercase(), fontSize = 18.sp)
+        Text(
+            text = letter.toString().uppercase(),
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center // <- AGREGAR ESTA LÍNEA TAMBIÉN
+        )
     }
 }
 
