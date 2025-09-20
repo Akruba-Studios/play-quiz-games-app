@@ -442,7 +442,7 @@ fun QuestionText(
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val maxLines = 5 // cantidad de filas maximas que se pueden generar en las preguntas, despues se achican
+    val maxLines = 4 // cantidad de filas maximas que se pueden generar en las preguntas, despues se achican
     val initialFontSize = MaterialTheme.typography.titleLarge.fontSize.value
     val baseTextStyle = MaterialTheme.typography.titleLarge
 
@@ -456,7 +456,7 @@ fun QuestionText(
         // Calculamos el fontSize óptimo
         val optimalFontSize = remember(text, maxWidthPx) {
             var currentFontSize = initialFontSize
-            val minFontSize = 10f
+            val minFontSize = 8f
 
             while (currentFontSize >= minFontSize) {
                 val textStyle = baseTextStyle.copy(
@@ -474,7 +474,7 @@ fun QuestionText(
                     break
                 }
 
-                currentFontSize *= 0.85f
+                currentFontSize *= 0.80f
             }
 
             max(currentFontSize, minFontSize)

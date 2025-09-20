@@ -236,7 +236,10 @@ private fun QuestionTextFixed(
             // Calculamos el fontSize óptimo
             val optimalFontSize = remember(questionText, maxWidthPx) {
                 var currentFontSize = initialFontSize
-                val minFontSize = 12f
+                val minFontSize = 8f // Tamaño mínimo aceptado
+
+                Log.d("DEBUG", "Calculando para: ${questionText.take(50)}...")
+                Log.d("DEBUG", "fontSize inicial: $currentFontSize")
 
                 while (currentFontSize >= minFontSize) {
                     val textStyle = baseTextStyle.copy(
@@ -251,11 +254,13 @@ private fun QuestionTextFixed(
                         constraints = Constraints(maxWidth = maxWidthPx)
                     )
 
+                    Log.d("DEBUG", "fontSize: $currentFontSize, líneas: ${textLayoutResult.lineCount}")
+
                     if (textLayoutResult.lineCount <= maxLines) {
                         break
                     }
 
-                    currentFontSize *= 0.85f
+                    currentFontSize *= 0.70f
                 }
 
                 max(currentFontSize, minFontSize)
