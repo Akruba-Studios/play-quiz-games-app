@@ -236,7 +236,7 @@ private fun QuestionTextFixed(
             // Calculamos el fontSize óptimo
             val optimalFontSize = remember(questionText, maxWidthPx) {
                 var currentFontSize = initialFontSize
-                val minFontSize = 8f // Tamaño mínimo aceptado
+                val minFontSize = 6f // Tamaño mínimo aceptado
 
                 Log.d("DEBUG", "Calculando para: ${questionText.take(50)}...")
                 Log.d("DEBUG", "fontSize inicial: $currentFontSize")

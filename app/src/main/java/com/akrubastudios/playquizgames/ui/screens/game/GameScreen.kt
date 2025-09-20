@@ -456,7 +456,7 @@ fun QuestionText(
         // Calculamos el fontSize óptimo
         val optimalFontSize = remember(text, maxWidthPx) {
             var currentFontSize = initialFontSize
-            val minFontSize = 8f
+            val minFontSize = 6f
 
             while (currentFontSize >= minFontSize) {
                 val textStyle = baseTextStyle.copy(
