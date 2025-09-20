@@ -92,6 +92,7 @@ import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VpnKey
@@ -100,12 +101,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
@@ -115,6 +121,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.PureWhite
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -433,21 +440,61 @@ fun QuestionText(
         label = "question_pulse"
     )
 
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleLarge.copy(
-            shadow = Shadow(
-                color = Color(0xFF000000).copy(alpha = 0.25f),
-                offset = Offset(1f, 1f),
-                blurRadius = 2f
-            )
-        ),
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold,
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val maxLines = 5 // cantidad de filas maximas que se pueden generar en las preguntas, despues se achican
+    val initialFontSize = MaterialTheme.typography.titleLarge.fontSize.value
+    val baseTextStyle = MaterialTheme.typography.titleLarge
+
+    BoxWithConstraints(
         modifier = modifier
             .alpha(alpha)
             .scale(scale)
-    )
+    ) {
+        val maxWidthPx = with(density) { this@BoxWithConstraints.maxWidth.toPx().toInt() }
+
+        // Calculamos el fontSize óptimo
+        val optimalFontSize = remember(text, maxWidthPx) {
+            var currentFontSize = initialFontSize
+            val minFontSize = 10f
+
+            while (currentFontSize >= minFontSize) {
+                val textStyle = baseTextStyle.copy(
+                    fontSize = currentFontSize.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                val textLayoutResult = textMeasurer.measure(
+                    text = text,
+                    style = textStyle,
+                    constraints = Constraints(maxWidth = maxWidthPx)
+                )
+
+                if (textLayoutResult.lineCount <= maxLines) {
+                    break
+                }
+
+                currentFontSize *= 0.85f
+            }
+
+            max(currentFontSize, minFontSize)
+        }
+
+        Text(
+            text = text,
+            style = baseTextStyle.copy(
+                fontSize = optimalFontSize.sp,
+                shadow = Shadow(
+                    color = Color(0xFF000000).copy(alpha = 0.25f),
+                    offset = Offset(1f, 1f),
+                    blurRadius = 2f
+                )
+            ),
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            maxLines = maxLines
+        )
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

@@ -57,6 +57,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.ui.unit.times
+import kotlin.math.max
 
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
@@ -72,6 +73,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
@@ -207,27 +211,68 @@ private fun QuestionImageFixed(imageUrl: String) {
 private fun QuestionTextFixed(
     questionText: String
 ) {
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val maxLines = 4 // cantidad de filas maximas que se pueden generar en las preguntas, despues se achican
+    val initialFontSize = 20f // Tu fontSize original
+    val baseTextStyle = MaterialTheme.typography.bodyLarge
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), // <-- 1. Quitamos la sombra
-        border = BorderStroke(1.dp, DarkGoldAccent), // <-- 2. Añadimos el borde dorado
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, DarkGoldAccent),
         colors = CardDefaults.cardColors(
             containerColor = Color.Black.copy(alpha = 0.7f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Text(
-            text = questionText,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = Color.White,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 30.sp,
-            fontSize = 20.sp
-        )
+        BoxWithConstraints(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            val maxWidthPx = with(density) { this@BoxWithConstraints.maxWidth.toPx().toInt() }
+
+            // Calculamos el fontSize óptimo
+            val optimalFontSize = remember(questionText, maxWidthPx) {
+                var currentFontSize = initialFontSize
+                val minFontSize = 12f
+
+                while (currentFontSize >= minFontSize) {
+                    val textStyle = baseTextStyle.copy(
+                        fontSize = currentFontSize.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 30.sp
+                    )
+
+                    val textLayoutResult = textMeasurer.measure(
+                        text = questionText,
+                        style = textStyle,
+                        constraints = Constraints(maxWidth = maxWidthPx)
+                    )
+
+                    if (textLayoutResult.lineCount <= maxLines) {
+                        break
+                    }
+
+                    currentFontSize *= 0.85f
+                }
+
+                max(currentFontSize, minFontSize)
+            }
+
+            Text(
+                text = questionText,
+                style = baseTextStyle.copy(
+                    fontSize = optimalFontSize.sp,
+                    lineHeight = 30.sp
+                ),
+                textAlign = TextAlign.Center,
+                color = Color.White,
+                fontWeight = FontWeight.Medium,
+                maxLines = maxLines
+            )
+        }
     }
 }
 
