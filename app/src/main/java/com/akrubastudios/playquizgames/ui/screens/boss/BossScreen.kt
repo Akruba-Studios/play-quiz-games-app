@@ -441,18 +441,67 @@ private fun TimerAndDialogueRow(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
+                AdaptiveDialogueText(
                     text = dialogue,
-                    modifier = Modifier.padding(8.dp),
                     color = textColor,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    modifier = Modifier.padding(8.dp)
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AdaptiveDialogueText(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val maxLines = 1 // Máximo 1 línea
+    val initialFontSize = 12f // Tamaño inicial
+    val baseTextStyle = MaterialTheme.typography.bodyMedium
+
+    BoxWithConstraints(modifier = modifier) {
+        val maxWidthPx = with(density) { this@BoxWithConstraints.maxWidth.toPx().toInt() }
+
+        val optimalFontSize = remember(text, maxWidthPx) {
+            var currentFontSize = initialFontSize
+            val minFontSize = 6f // Tamaño mínimo
+
+            while (currentFontSize >= minFontSize) {
+                val textStyle = baseTextStyle.copy(
+                    fontSize = currentFontSize.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                val textLayoutResult = textMeasurer.measure(
+                    text = text,
+                    style = textStyle,
+                    constraints = Constraints(maxWidth = maxWidthPx)
+                )
+
+                if (textLayoutResult.lineCount <= maxLines) {
+                    break
+                }
+
+                currentFontSize *= 0.80f
+            }
+
+            max(currentFontSize, minFontSize)
+        }
+
+        Text(
+            text = text,
+            style = baseTextStyle.copy(
+                fontSize = optimalFontSize.sp
+            ),
+            color = color,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = maxLines
+        )
     }
 }
 
