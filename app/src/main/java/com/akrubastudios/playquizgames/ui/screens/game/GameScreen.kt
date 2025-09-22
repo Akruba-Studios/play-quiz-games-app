@@ -109,11 +109,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
@@ -812,15 +814,15 @@ fun QuestionProgressCircles(
     onGemsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
+    Column( //modifier = modifier,
+        modifier = modifier.width(120.dp), // Tamaño fijo del card
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
 
-        Text(
-            text = stringResource(R.string.game_top_bar_question, currentQuestionIndex + 1, totalQuestions),
-            style = MaterialTheme.typography.labelMedium,
+        AdaptiveQuestionText(
+            questionIndex = currentQuestionIndex + 1,
+            totalQuestions = totalQuestions,
             modifier = Modifier.padding(bottom = 2.dp)
         )
 
@@ -944,6 +946,53 @@ fun QuestionProgressCircles(
 }
 
 @Composable
+private fun AdaptiveQuestionText(
+    questionIndex: Int,
+    totalQuestions: Int,
+    modifier: Modifier = Modifier
+) {
+    val text = stringResource(R.string.game_top_bar_question, questionIndex, totalQuestions)
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val baseTextStyle = MaterialTheme.typography.labelMedium
+
+    // Ancho fijo disponible (el mismo que usaste para el Column)
+    val availableWidthDp = 110.dp
+    val maxWidthPx = with(density) { availableWidthDp.toPx().toInt() }
+
+    val fontSize = remember(text, maxWidthPx) {
+        var currentFontSize = baseTextStyle.fontSize.value
+        val minFontSize = 8f
+        val safeMaxWidth = (maxWidthPx * 0.9f).toInt() // Solo usar 90% del ancho
+
+        while (currentFontSize >= minFontSize) {
+            val testStyle = baseTextStyle.copy(fontSize = currentFontSize.sp)
+            val result = textMeasurer.measure(
+                text = text,
+                style = testStyle,
+                constraints = Constraints(maxWidth = safeMaxWidth)
+            )
+
+            if (result.size.width <= safeMaxWidth) break
+            currentFontSize *= 0.85f
+        }
+
+        max(currentFontSize, minFontSize)
+    }
+
+    Text(
+        text = text,
+        style = baseTextStyle.copy(fontSize = fontSize.sp),
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        overflow = TextOverflow.Visible, // Cambiar de Clip a Visible
+        softWrap = false, // Forzar una sola línea
+        modifier = modifier.fillMaxWidth() // Asegurar que use todo el ancho
+    )
+}
+
+@Composable
 fun QuestionCircle(
     index: Int,
     currentIndex: Int,
@@ -1003,42 +1052,72 @@ fun ScoreAndDifficultyCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        BoxWithConstraints(
+            modifier = Modifier.padding(12.dp)
         ) {
-            // Fila del XP con trofeo
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "🏆",
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = "$score XP",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            val availableWidth = this@BoxWithConstraints.maxWidth
+
+            // Lógica más simple: basada en longitud de texto y ancho disponible
+            val fontSize = remember(score, difficulty, availableWidth) {
+                val scoreText = "$score XP"
+                val difficultyText = if (difficulty == "principiante") "Principiante" else "Difícil"
+                val longestTextLength = max(scoreText.length, difficultyText.length)
+
+                val baseFontSize = when {
+                    availableWidth < 90.dp -> 9f   // Más agresivo
+                    availableWidth < 110.dp -> 10f // Tu caso cae aquí
+                    availableWidth < 130.dp -> 12f
+                    else -> 16f
+                }
+
+                // Penalización más fuerte para texto largo
+                val penalty = when {
+                    longestTextLength > 10 -> 2f   // "Principiante" = 12 caracteres
+                    longestTextLength > 8 -> 1f
+                    else -> 0f
+                }
+
+                val finalSize = (baseFontSize - penalty).coerceAtLeast(8f)
+
+                Log.d("CardSize", "availableWidth: $availableWidth, longestText: $longestTextLength, fontSize: $finalSize")
+
+                finalSize
             }
 
-            // Fila de la dificultad con icono
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = if (difficulty == "principiante") "🪶" else "🔥",
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = stringResource(
-                        if (difficulty == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                    ),
-                    style = MaterialTheme.typography.labelMedium
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(text = "🏆", fontSize = fontSize.sp)
+                    Text(
+                        text = "$score XP",
+                        fontSize = fontSize.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Visible
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = if (difficulty == "principiante") "🪶" else "🔥",
+                        fontSize = (fontSize * 0.9f).sp
+                    )
+                    Text(
+                        text = stringResource(
+                            if (difficulty == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                        ),
+                        fontSize = (fontSize * 0.9f).sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Visible
+                    )
+                }
             }
         }
     }
