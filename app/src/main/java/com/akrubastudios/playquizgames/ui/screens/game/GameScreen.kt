@@ -815,7 +815,7 @@ fun QuestionProgressCircles(
     modifier: Modifier = Modifier
 ) {
     Column( //modifier = modifier,
-        modifier = modifier.width(120.dp), // Tamaño fijo del card
+        modifier = modifier.width((LocalConfiguration.current.screenWidthDp.dp * 0.30f).coerceIn(100.dp, 160.dp)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -953,11 +953,32 @@ private fun AdaptiveQuestionText(
 ) {
     val text = stringResource(R.string.game_top_bar_question, questionIndex, totalQuestions)
 
-    // Método simple y confiable
-    val fontSize = when {
-        totalQuestions >= 100 -> 8f   // "Pregunta 100/100"
-        totalQuestions >= 10 -> 9f   // "Pregunta 10/10"
-        else -> 10f                   // "Pregunta 1/5"
+    val availableWidth = LocalConfiguration.current.screenWidthDp.dp * 0.30f
+    val constrainedWidth = availableWidth.coerceIn(100.dp, 160.dp)
+
+    val fontSize = remember(totalQuestions, constrainedWidth) {
+        // Tamaño base más grande y mejor escalado
+        val baseSize = when {
+            totalQuestions >= 100 -> 12f  // Incrementado de 8f
+            totalQuestions >= 10 -> 14f   // Incrementado de 9f
+            else -> 16f                   // Incrementado de 10f
+        }
+
+        // Factor de escala más generoso basado en el ancho disponible
+        val scaleFactor = when {
+            constrainedWidth < 110.dp -> 0.75f    // Pantallas muy pequeñas
+            constrainedWidth < 120.dp -> 0.85f    // Pantallas pequeñas
+            constrainedWidth < 140.dp -> 1.0f     // Pantallas medianas
+            constrainedWidth < 160.dp -> 1.15f    // Pantallas grandes
+            else -> 1.3f                          // Pantallas muy grandes
+        }
+
+        // Aplicar el factor y permitir un rango más amplio
+        val finalSize = (baseSize * scaleFactor).coerceIn(10f, 22f)  // Rango ampliado
+
+        Log.d("AdaptiveText", "totalQuestions: $totalQuestions, constrainedWidth: $constrainedWidth, baseSize: $baseSize, scaleFactor: $scaleFactor, finalSize: $finalSize")
+
+        finalSize
     }
 
     Text(
