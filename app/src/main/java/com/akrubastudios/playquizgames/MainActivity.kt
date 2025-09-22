@@ -2,8 +2,12 @@ package com.akrubastudios.playquizgames
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Bundle
+import android.util.DisplayMetrics
+import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +20,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key // <-- NUEVA IMPORTACIÓN
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.ui.theme.PlayQuizGamesTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,39 +36,99 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var languageManager: LanguageManager
 
+    // --- INICIO DEL CÓDIGO A AÑADIR --- Comentar para validar que textos no estan alineados
+    // Variable para guardar la densidad REAL del hardware
+    private var hardwareDensity: Float = 0f
+
+    override fun attachBaseContext(newBase: Context) {
+        // NUEVO ENFOQUE: Solo controlar TEXTO, no layout/dimensiones
+        val userMetrics = newBase.resources.displayMetrics
+
+        Log.d("LAYOUT_DEBUG", "PRESERVING layout density: ${userMetrics.density}")
+        Log.d("LAYOUT_DEBUG", "PRESERVING layout DPI: ${userMetrics.densityDpi}")
+        Log.d("LAYOUT_DEBUG", "User scaledDensity: ${userMetrics.scaledDensity}")
+
+        val newConfiguration = Configuration(newBase.resources.configuration)
+
+        // Solo controlar el escalado de texto
+        newConfiguration.fontScale = 1.0f
+        // NO TOCAR densityDpi - mantener el original para que tus cálculos de layout funcionen
+
+        val newContext = newBase.createConfigurationContext(newConfiguration)
+
+        // CRÍTICO: Solo modificar scaledDensity (texto), mantener density (layout)
+        val newMetrics = DisplayMetrics()
+        newMetrics.setTo(userMetrics)
+        newMetrics.density = userMetrics.density        // MANTENER original (tus cálculos)
+        newMetrics.scaledDensity = userMetrics.density  // FORZAR = density (sin escalado de texto)
+        newMetrics.densityDpi = userMetrics.densityDpi  // MANTENER original (tus cálculos)
+
+        newContext.resources.updateConfiguration(newConfiguration, newMetrics)
+
+        hardwareDensity = userMetrics.density  // Usar la densidad original para Compose
+
+        Log.d("LAYOUT_DEBUG", "FINAL density: ${newMetrics.density} (unchanged)")
+        Log.d("LAYOUT_DEBUG", "FINAL scaledDensity: ${newMetrics.scaledDensity} (fixed)")
+
+        super.attachBaseContext(newContext)
+    }
+    // --- FIN DEL CÓDIGO A AÑADIR ---
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemUI()
 
+        // AGREGAR ESTA VERIFICACIÓN TEMPORAL PARA DEBUG
+        Log.d("SCALE_DEBUG", "fontScale: ${resources.configuration.fontScale}")
+        Log.d("SCALE_DEBUG", "density: ${resources.displayMetrics.density}")
+        Log.d("SCALE_DEBUG", "scaledDensity: ${resources.displayMetrics.scaledDensity}")
+        Log.d("SCALE_DEBUG", "densityDpi: ${resources.displayMetrics.densityDpi}")
+
         setContent {
-            // 1. Recolectamos el idioma como antes.
             val currentLanguageCode by languageManager.languageStateFlow.collectAsState()
 
-            // 2. Creamos la configuración actualizada.
             val newLocale = Locale(currentLanguageCode)
             val configuration = Configuration(LocalConfiguration.current)
             configuration.setLocale(newLocale)
 
-            // Este efecto sigue siendo útil para recursos que no son de Compose.
+            // FORZAR configuración fija para Compose
+            configuration.fontScale = 1.0f
+
+            // Usar la densidad REAL del hardware (no la modificada por el sistema)
+            val fixedDensity = Density(
+                density = hardwareDensity,  // Densidad REAL del hardware
+                fontScale = 1.0f           // Sin escalado de texto
+            )
+
+            Log.d("COMPOSE_DEBUG", "Using ORIGINAL system density: ${fixedDensity.density}")
+            Log.d("COMPOSE_DEBUG", "Forcing fontScale: ${fixedDensity.fontScale}")
+            Log.d("COMPOSE_DEBUG", "Layout calculations will work normally")
+
             LaunchedEffect(currentLanguageCode) {
                 val locale = Locale(currentLanguageCode)
                 Locale.setDefault(locale)
                 val config = resources.configuration
                 config.setLocale(locale)
-                resources.updateConfiguration(config, resources.displayMetrics)
+
+                // FORZAR CONFIGURACIÓN AQUÍ TAMBIÉN
+                config.fontScale = 1.0f
+                val metrics = DisplayMetrics()
+                metrics.setTo(resources.displayMetrics)
+                metrics.scaledDensity = metrics.density
+
+                resources.updateConfiguration(config, metrics)
             }
 
             // 3. LA CORRECCIÓN: Primero proveemos la configuración del idioma.
-            CompositionLocalProvider(LocalConfiguration provides configuration) {
-                // 4. AHORA, DENTRO del contexto correcto, aplicamos nuestro tema.
-                // La 'key' sigue forzando la recomposición cuando el idioma cambia.
+            CompositionLocalProvider(
+                LocalConfiguration provides configuration,
+                LocalDensity provides fixedDensity  // ESTA ES LA CLAVE
+            ) {
                 key(currentLanguageCode) {
                     PlayQuizGamesTheme {
-                        // 5. El Surface ya no necesita el 'color' override.
-                        // Heredará el color 'surface' correcto de nuestro tema.
                         Surface(
                             modifier = Modifier.fillMaxSize(),
-                            color = MaterialTheme.colorScheme.background // <-- ESTA ES LA LÍNEA CORRECTA
+                            color = MaterialTheme.colorScheme.background
                         ) {
                             NavGraph()
                         }
