@@ -952,43 +952,21 @@ private fun AdaptiveQuestionText(
     modifier: Modifier = Modifier
 ) {
     val text = stringResource(R.string.game_top_bar_question, questionIndex, totalQuestions)
-    val textMeasurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    val baseTextStyle = MaterialTheme.typography.labelMedium
 
-    // Ancho fijo disponible (el mismo que usaste para el Column)
-    val availableWidthDp = 110.dp
-    val maxWidthPx = with(density) { availableWidthDp.toPx().toInt() }
-
-    val fontSize = remember(text, maxWidthPx) {
-        var currentFontSize = baseTextStyle.fontSize.value
-        val minFontSize = 8f
-        val safeMaxWidth = (maxWidthPx * 0.9f).toInt() // Solo usar 90% del ancho
-
-        while (currentFontSize >= minFontSize) {
-            val testStyle = baseTextStyle.copy(fontSize = currentFontSize.sp)
-            val result = textMeasurer.measure(
-                text = text,
-                style = testStyle,
-                constraints = Constraints(maxWidth = safeMaxWidth)
-            )
-
-            if (result.size.width <= safeMaxWidth) break
-            currentFontSize *= 0.85f
-        }
-
-        max(currentFontSize, minFontSize)
+    // Método simple y confiable
+    val fontSize = when {
+        totalQuestions >= 100 -> 8f   // "Pregunta 100/100"
+        totalQuestions >= 10 -> 9f   // "Pregunta 10/10"
+        else -> 10f                   // "Pregunta 1/5"
     }
 
     Text(
         text = text,
-        style = baseTextStyle.copy(fontSize = fontSize.sp),
+        fontSize = fontSize.sp,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
         maxLines = 1,
-        overflow = TextOverflow.Visible, // Cambiar de Clip a Visible
-        softWrap = false, // Forzar una sola línea
-        modifier = modifier.fillMaxWidth() // Asegurar que use todo el ancho
+        modifier = modifier
     )
 }
 
