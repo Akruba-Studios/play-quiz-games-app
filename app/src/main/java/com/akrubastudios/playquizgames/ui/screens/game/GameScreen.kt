@@ -126,6 +126,8 @@ import com.akrubastudios.playquizgames.ui.theme.PureWhite
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -212,7 +214,7 @@ fun GameScreen(
             QuestionImage(
                 imageUrl = uiState.currentQuestion!!.imageUrl,
                 // Le damos un "peso" para que ocupe una parte proporcional del espacio vertical.
-                modifier = Modifier.weight(0.7f)
+                modifier = Modifier
             )
 
             QuestionText(
@@ -395,11 +397,28 @@ fun QuestionImage(
     imageUrl: String,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val density = LocalDensity.current
+
+    val imageContainerHeight = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 100.dp  // Zona crítica
+            screenWidth < 370.dp -> 120.dp  // Zona transición
+            else -> 150.dp                  // Zona normal
+        }
+    }
+    Log.d("ImageContainer", "screenWidth: $screenWidth → containerHeight: $imageContainerHeight")
+
     // Contenedor cuadrado estandarizado
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp), // vertical 5dp, espacio arriba y abajo de la imagen
+            .padding(horizontal = 16.dp, vertical = 5.dp) // vertical 5dp, espacio arriba y abajo de la imagen
+            .size(imageContainerHeight)
+            .onSizeChanged { size ->
+                val widthDp = with(density) { size.width.toDp() }
+                val heightDp = with(density) { size.height.toDp() }
+                Log.d("ImageContainer", "Final container size - width: $widthDp, height: $heightDp")
+            },
         contentAlignment = Alignment.Center
     ) {
         // Contenedor interno cuadrado con efectos
