@@ -596,6 +596,14 @@ fun AnswerSlots(
         // GameScreen AnswerSlots no tiene padding horizontal, así que usamos el ancho completo.
         val availableWidth = screenWidthDp
         val longestWord = words.maxByOrNull { it.length } ?: ""
+        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+        val (minSlotSize, maxSlotSize) = remember(screenWidth) {
+            when {
+                screenWidth < 340.dp -> Pair(26.dp, 35.dp)  // Más pequeño en zoom
+                screenWidth < 370.dp -> Pair(28.dp, 38.dp)  // Intermedio
+                else -> Pair(28.dp, 40.dp)                  // Actual
+            }
+        }
         val totalLetters = longestWord.length
 
         // El mismo cálculo que hicimos para BossScreen
@@ -603,9 +611,9 @@ fun AnswerSlots(
             val totalLetterGaps = (totalLetters - 1).coerceAtLeast(0)
             val letterSpacing = 6.dp
             val totalSpacing = letterSpacing * totalLetterGaps
-            ((availableWidth - totalSpacing) / totalLetters).coerceIn(28.dp, 40.dp)
+            ((availableWidth - totalSpacing) / totalLetters).coerceIn(minSlotSize, maxSlotSize)
         } else {
-            40.dp // Un valor por defecto si no hay letras
+            maxSlotSize // Un valor por defecto si no hay letras
         }
 
         words.forEach { word ->
