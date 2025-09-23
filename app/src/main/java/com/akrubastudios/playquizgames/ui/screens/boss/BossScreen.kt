@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.Dp
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
+import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
@@ -149,10 +150,11 @@ private fun BossHeaderFixed(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                AnimatedGemsIndicator(
+                GemsIndicator(
                     gems = currentGems,
-                    hasGems = currentGems > 0,
-                    onClick = onGemsClick
+                    onClick = onGemsClick,
+                    forceTheme = lightColorScheme(),
+                    maxScaleFactor = 1.1f // Valor más pequeño para evitar overflow
                 )
             }
 

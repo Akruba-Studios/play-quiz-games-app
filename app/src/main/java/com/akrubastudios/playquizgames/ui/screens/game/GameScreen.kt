@@ -128,6 +128,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1041,9 +1042,8 @@ fun QuestionProgressCircles(
                     )
                 )
             }
-            AnimatedGemsIndicator(
+            GemsIndicator(
                 gems = currentGems,
-                hasGems = currentGems > 0,
                 onClick = onGemsClick
             )
         }
@@ -1222,115 +1222,6 @@ fun ScoreAndDifficultyCard(
 }
 
 @Composable
-private fun AnimatedGemsIndicator(
-    gems: Int,
-    hasGems: Boolean,
-    onClick: () -> Unit
-) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val infiniteTransition = rememberInfiniteTransition(label = "gemsAnimation")
-
-    val gemsFontSize = remember(screenWidth) {
-        when {
-            screenWidth < 340.dp -> 10.sp    // Zona crítica
-            screenWidth < 370.dp -> 12.sp    // Zona transición
-            else -> 16.sp     // Zona normal
-        }
-    }
-    Log.d("GemsFontSize", "screenWidth: $screenWidth → fontSize: $gemsFontSize")
-
-    val gemsPadding = remember(screenWidth) {
-        when {
-            screenWidth < 340.dp -> PaddingValues(horizontal = 6.dp, vertical = 2.dp)    // Zona crítica
-            screenWidth < 370.dp -> PaddingValues(horizontal = 8.dp, vertical = 3.dp)    // Zona transición
-            else -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)                   // Zona normal
-        }
-    }
-    Log.d("GemsPadding", "screenWidth: $screenWidth → padding: $gemsPadding")
-
-    val iconSize = remember(screenWidth) {
-        when {
-            screenWidth < 340.dp -> 18.dp    // Zona crítica
-            screenWidth < 370.dp -> 20.dp    // Zona transición
-            else -> 22.dp                    // Zona normal
-        }
-    }
-    Log.d("GemIconSize", "screenWidth: $screenWidth → iconSize: $iconSize")
-
-    // Animación de pulso (escala)
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (hasGems) 1.15f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-
-    // Animación de brillo (alpha)
-    val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = if (hasGems) 0.6f else 0.5f,
-        targetValue = if (hasGems) 1f else 0.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "shimmerAlpha"
-    )
-
-    // NUEVA ANIMACIÓN: Cambio de color cada 2 segundos
-    val colorPhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing), // Tiempo animacion total = 4 Segundos
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "colorPhase"
-    )
-
-    // Determinar si debe ser rojo (últimos 1000ms de cada ciclo de 3000ms)
-    val isRedPhase = colorPhase > 0.75f // 75% del tiempo cambio de color (3 de 4 segundos)
-
-    Card(
-        modifier = Modifier.clickable(
-            enabled = hasGems,
-            onClick = onClick
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(gemsPadding)
-                .scale(pulseScale)
-                .alpha(shimmerAlpha),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Image(
-                imageVector = if (isRedPhase) GemIconDarkGold else GemIcon,
-                contentDescription = "Gems",
-                modifier = Modifier.size(iconSize)
-            )
-            Text(
-                text = formatGems(gems),
-                fontSize = gemsFontSize,
-                lineHeight = (gemsFontSize.value * 0.9f).sp,  // Interlineado más compacto
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-    }
-}
-
-@Composable
 private fun HelpItem( // COPIADO Y ADAPTADO
     icon: ImageVector,
     title: String,
@@ -1384,31 +1275,6 @@ private fun HelpItem( // COPIADO Y ADAPTADO
                 modifier = Modifier.align(Alignment.End).padding(end = 12.dp, bottom = 4.dp),
                 style = MaterialTheme.typography.labelSmall
             )
-        }
-    }
-}
-
-fun formatGems(gems: Int): String {
-    return when {
-        gems < 1000 -> gems.toString()
-        gems < 10000 -> {
-            val decimal = (gems % 1000) / 100
-            if (decimal == 0) {
-                "${gems / 1000}.0K"
-            } else {
-                "${gems / 1000}.${decimal}K"
-            }
-        }
-        gems < 100000 -> "${gems / 1000}K"
-        gems < 1000000 -> "${gems / 1000}K"
-        else -> {
-            val millions = gems / 1000000
-            val decimal = (gems % 1000000) / 100000
-            if (millions < 10 && decimal > 0) {
-                "$millions.${decimal}M"
-            } else {
-                "${millions}M"
-            }
         }
     }
 }
