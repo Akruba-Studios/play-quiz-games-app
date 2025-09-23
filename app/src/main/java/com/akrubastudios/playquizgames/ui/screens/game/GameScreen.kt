@@ -343,11 +343,25 @@ fun TopBar(
     onGemsClick: () -> Unit,
     modifier: Modifier = Modifier // Es una buena práctica aceptar un Modifier
 ) {
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    // Log para detectar el screenWidth actual
+    Log.d("TopBarZoom", "Detected screenWidth: $screenWidth")
+
+    val topBarPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp
+            screenWidth < 370.dp -> 12.dp
+            else -> 16.dp
+        }
+    }
+
+    Log.d("TopBarPadding", "screenWidth: $screenWidth → padding: $topBarPadding")
     // Row apila los elementos horizontalmente.
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(topBarPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -737,6 +751,44 @@ fun AnimatedTimer(
     timerExplosion: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // Detectar el ancho de pantalla disponible
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    // Ajustar tamaño del timer según zoom de pantalla
+    val timerSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 65.dp  // Zona crítica
+            screenWidth < 370.dp -> 72.dp  // Zona transición
+            else -> 80.dp                  // Zona normal
+        }
+    }
+
+    Log.d("TimerSize", "screenWidth: $screenWidth → timerSize: $timerSize")
+
+    // Ajustar stroke width proporcionalmente
+    val strokeWidth = remember(timerSize) {
+        when {
+            timerSize <= 65.dp -> 5.dp
+            timerSize <= 72.dp -> 5.5.dp
+            else -> 6.dp
+        }
+    }
+
+    val explosionStrokeWidth = remember(timerSize) {
+        when {
+            timerSize <= 65.dp -> 10.dp
+            timerSize <= 72.dp -> 11.dp
+            else -> 12.dp
+        }
+    }
+
+    // Ajustar font size del número
+    val fontSize = when {
+        timerSize <= 65.dp -> MaterialTheme.typography.headlineMedium.fontSize
+        timerSize <= 72.dp -> MaterialTheme.typography.headlineLarge.fontSize
+        else -> MaterialTheme.typography.headlineLarge.fontSize
+    }
+
     // Calculamos el progreso (0.0 = tiempo completo, 1.0 = sin tiempo)
     val progress = 1.0f - (remainingTime / 15.0f)
 
@@ -778,7 +830,7 @@ fun AnimatedTimer(
 
     Box(
         modifier = modifier
-            .size(80.dp)
+            .size(timerSize)
             .offset(x = offsetX.dp)
             .scale(explosionScale)
             .alpha(explosionAlpha),
@@ -787,16 +839,16 @@ fun AnimatedTimer(
         // Círculo de progreso
         CircularProgressIndicator(
             progress = progress,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(timerSize),
             color = if (timerExplosion) Color(0xFFF44336) else circleColor, // Rojo en explosión
-            strokeWidth = if (timerExplosion) 12.dp else 6.dp, // Más grueso en explosión
+            strokeWidth = if (timerExplosion) explosionStrokeWidth else strokeWidth, // Más grueso en explosión
             trackColor = circleColor.copy(alpha = 0.2f)
         )
 
         // Número del timer
         Text(
             text = remainingTime.toString(),
-            style = MaterialTheme.typography.headlineLarge,
+            fontSize = fontSize,
             color = if (timerExplosion) Color(0xFFF44336) else circleColor,
             fontWeight = FontWeight.Bold
         )
@@ -814,8 +866,45 @@ fun QuestionProgressCircles(
     onGemsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val circlesWidth = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 90.dp   // Zona crítica: más compacto
+            screenWidth < 370.dp -> 110.dp  // Zona transición
+            else -> 130.dp                  // Zona normal: ancho actual funcional
+        }
+    }
+    Log.d("CirclesWidth", "screenWidth: $screenWidth → circlesWidth: $circlesWidth")
+
+    val circleSpacing = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 4.dp     // Zona crítica
+            screenWidth < 370.dp -> 5.dp     // Zona transición
+            else -> 6.dp                     // Zona normal
+        }
+    }
+    Log.d("CircleSpacing", "screenWidth: $screenWidth → circleSpacing: $circleSpacing")
+
+    val buttonSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 20.dp    // Zona crítica
+            screenWidth < 370.dp -> 22.dp    // Zona transición
+            else -> 24.dp                    // Zona normal
+        }
+    }
+    Log.d("ButtonSize", "screenWidth: $screenWidth → buttonSize: $buttonSize")
+
+    val bottomRowSpacing = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 6.dp     // Zona crítica
+            screenWidth < 370.dp -> 7.dp     // Zona transición
+            else -> 8.dp                     // Zona normal
+        }
+    }
+    Log.d("BottomRowSpacing", "screenWidth: $screenWidth → spacing: $bottomRowSpacing")
+
     Column( //modifier = modifier,
-        modifier = modifier.width((LocalConfiguration.current.screenWidthDp.dp * 0.30f).coerceIn(100.dp, 160.dp)),
+        modifier = modifier.width(circlesWidth),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -846,7 +935,7 @@ fun QuestionProgressCircles(
         } else {
             // Primera fila (círculos 0-4)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(circleSpacing),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(5) { index ->
@@ -861,7 +950,7 @@ fun QuestionProgressCircles(
 
             // Segunda fila (círculos 5-9)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(circleSpacing),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(totalQuestions - 5) { index ->
@@ -878,7 +967,7 @@ fun QuestionProgressCircles(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(bottomRowSpacing)
         ) {
             // 1. Animación de escala para el pulso.
             // Creamos una transición infinita para que el efecto sea constante.
@@ -925,7 +1014,7 @@ fun QuestionProgressCircles(
                 },
                 enabled = true,
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(buttonSize)
                     .scale(finalScale)
             ) {
                 Icon(
@@ -951,32 +1040,28 @@ private fun AdaptiveQuestionText(
     totalQuestions: Int,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val text = stringResource(R.string.game_top_bar_question, questionIndex, totalQuestions)
 
-    val availableWidth = LocalConfiguration.current.screenWidthDp.dp * 0.30f
-    val constrainedWidth = availableWidth.coerceIn(100.dp, 160.dp)
-
-    val fontSize = remember(totalQuestions, constrainedWidth) {
+    val fontSize = remember(totalQuestions, screenWidth) {
         // Tamaño base más grande y mejor escalado
         val baseSize = when {
-            totalQuestions >= 100 -> 12f  // Incrementado de 8f
-            totalQuestions >= 10 -> 14f   // Incrementado de 9f
-            else -> 16f                   // Incrementado de 10f
+            totalQuestions >= 100 -> 12f
+            totalQuestions >= 10 -> 14f
+            else -> 16f
         }
 
-        // Factor de escala más generoso basado en el ancho disponible
+        // Factor de escala basado en screenWidth
         val scaleFactor = when {
-            constrainedWidth < 110.dp -> 0.75f    // Pantallas muy pequeñas
-            constrainedWidth < 120.dp -> 0.85f    // Pantallas pequeñas
-            constrainedWidth < 140.dp -> 1.0f     // Pantallas medianas
-            constrainedWidth < 160.dp -> 1.15f    // Pantallas grandes
-            else -> 1.3f                          // Pantallas muy grandes
+            screenWidth < 340.dp -> 0.70f    // Zona crítica
+            screenWidth < 370.dp -> 0.85f    // Zona transición
+            else -> 1.0f                     // Zona normal
         }
 
         // Aplicar el factor y permitir un rango más amplio
-        val finalSize = (baseSize * scaleFactor).coerceIn(10f, 22f)  // Rango ampliado
+        val finalSize = (baseSize * scaleFactor).coerceIn(10f, 22f)
 
-        Log.d("AdaptiveText", "totalQuestions: $totalQuestions, constrainedWidth: $constrainedWidth, baseSize: $baseSize, scaleFactor: $scaleFactor, finalSize: $finalSize")
+        Log.d("AdaptiveText", "screenWidth: $screenWidth, totalQuestions: $totalQuestions, baseSize: $baseSize, scaleFactor: $scaleFactor, finalSize: $finalSize")
 
         finalSize
     }
@@ -999,6 +1084,16 @@ fun QuestionCircle(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val circleSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 12.dp    // Zona crítica
+            screenWidth < 370.dp -> 14.dp    // Zona transición
+            else -> 16.dp                    // Zona normal
+        }
+    }
+    Log.d("CircleSize", "screenWidth: $screenWidth → circleSize: $circleSize")
+
     // Determinar color según el estado
     val circleColor = when {
         result == true -> Color(0xFF4CAF50) // Verde para correcta
@@ -1023,7 +1118,7 @@ fun QuestionCircle(
 
     Box(
         modifier = modifier
-            .size(16.dp)
+            .size(circleSize)
             .scale(scale)
             .alpha(if (isActive) alpha else 1.0f)
             .background(
@@ -1128,7 +1223,35 @@ private fun AnimatedGemsIndicator(
     hasGems: Boolean,
     onClick: () -> Unit
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val infiniteTransition = rememberInfiniteTransition(label = "gemsAnimation")
+
+    val gemsFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 10.sp    // Zona crítica
+            screenWidth < 370.dp -> 12.sp    // Zona transición
+            else -> 16.sp     // Zona normal
+        }
+    }
+    Log.d("GemsFontSize", "screenWidth: $screenWidth → fontSize: $gemsFontSize")
+
+    val gemsPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> PaddingValues(horizontal = 6.dp, vertical = 2.dp)    // Zona crítica
+            screenWidth < 370.dp -> PaddingValues(horizontal = 8.dp, vertical = 3.dp)    // Zona transición
+            else -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)                   // Zona normal
+        }
+    }
+    Log.d("GemsPadding", "screenWidth: $screenWidth → padding: $gemsPadding")
+
+    val iconSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 18.dp    // Zona crítica
+            screenWidth < 370.dp -> 20.dp    // Zona transición
+            else -> 22.dp                    // Zona normal
+        }
+    }
+    Log.d("GemIconSize", "screenWidth: $screenWidth → iconSize: $iconSize")
 
     // Animación de pulso (escala)
     val pulseScale by infiniteTransition.animateFloat(
@@ -1180,7 +1303,7 @@ private fun AnimatedGemsIndicator(
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 10.dp, vertical = 4.dp)
+                .padding(gemsPadding)
                 .scale(pulseScale)
                 .alpha(shimmerAlpha),
             verticalAlignment = Alignment.CenterVertically,
@@ -1189,13 +1312,15 @@ private fun AnimatedGemsIndicator(
             Image(
                 imageVector = if (isRedPhase) GemIconDarkGold else GemIcon,
                 contentDescription = "Gems",
-                modifier = Modifier.size(22.dp), // Tamaño del Icono
+                modifier = Modifier.size(iconSize)
             )
             Text(
-                text = "$gems",
-                style = MaterialTheme.typography.titleMedium,
+                text = formatGems(gems),
+                fontSize = gemsFontSize,
+                lineHeight = (gemsFontSize.value * 0.9f).sp,  // Interlineado más compacto
+                textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -1255,6 +1380,31 @@ private fun HelpItem( // COPIADO Y ADAPTADO
                 modifier = Modifier.align(Alignment.End).padding(end = 12.dp, bottom = 4.dp),
                 style = MaterialTheme.typography.labelSmall
             )
+        }
+    }
+}
+
+fun formatGems(gems: Int): String {
+    return when {
+        gems < 1000 -> gems.toString()
+        gems < 10000 -> {
+            val decimal = (gems % 1000) / 100
+            if (decimal == 0) {
+                "${gems / 1000}.0K"
+            } else {
+                "${gems / 1000}.${decimal}K"
+            }
+        }
+        gems < 100000 -> "${gems / 1000}K"
+        gems < 1000000 -> "${gems / 1000}K"
+        else -> {
+            val millions = gems / 1000000
+            val decimal = (gems % 1000000) / 100000
+            if (millions < 10 && decimal > 0) {
+                "$millions.${decimal}M"
+            } else {
+                "${millions}M"
+            }
         }
     }
 }
