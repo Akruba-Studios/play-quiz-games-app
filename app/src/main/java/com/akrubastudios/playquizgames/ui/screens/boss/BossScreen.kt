@@ -328,6 +328,15 @@ private fun AnswerSlotsFixed(
     onClear: () -> Unit,
     showClearAnimation: Boolean
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val (minSlotSize, maxSlotSize) = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> Pair(26.dp, 35.dp)
+            screenWidth < 370.dp -> Pair(28.dp, 38.dp)
+            else -> Pair(28.dp, 40.dp)
+        }
+    }
+
     // La lógica de animación no cambia
     val clearOffsetX by animateFloatAsState(
         targetValue = if (showClearAnimation) {
@@ -345,8 +354,7 @@ private fun AnswerSlotsFixed(
     // La lógica de cálculo de tamaño dinámico se queda
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
-    val horizontalPadding = 16.dp * 2
-    val availableWidth = screenWidthDp - horizontalPadding
+    val availableWidth = screenWidthDp
     val words = correctAnswer.split(' ')
     val longestWord = words.maxByOrNull { it.length } ?: ""
 
@@ -359,15 +367,14 @@ private fun AnswerSlotsFixed(
         val totalSpacing = letterSpacing * totalLetterGaps
 
         // 3. El tamaño se calcula para que la palabra MÁS LARGA quepa.
-        val globalSlotSize = ((availableWidth - totalSpacing) / totalLetters)
-            .coerceIn(28.dp, 40.dp) // Mantenemos los límites de seguridad
+        val globalSlotSize = ((availableWidth - totalSpacing) / totalLetters).coerceIn(minSlotSize, maxSlotSize)
 
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset(x = clearOffsetX.dp)
                 .alpha(clearAlpha)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(vertical = 12.dp)
                 .clickable { onClear() },
             horizontalArrangement = Arrangement.spacedBy(wordSpacing, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp)
