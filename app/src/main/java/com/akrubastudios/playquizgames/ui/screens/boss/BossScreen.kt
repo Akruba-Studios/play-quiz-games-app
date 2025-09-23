@@ -555,49 +555,23 @@ private fun LetterBankFixed(
     usedIndices: Set<Int>,
     difficulty: String, // No se usa pero lo mantenemos por consistencia
     availableHeight: Dp,
+    availableWidth: Dp,
     onLetterClick: (Char, Int) -> Unit
 ) {
-    // Calcular tamaño dinámico basado en espacio disponible
-    val buttonSize = remember(availableHeight, hintLetters.length) {
-        when {
-            availableHeight < 180.dp -> 42.dp
-            availableHeight < 220.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 50.dp
-                    hintLetters.length <= 16 -> 48.dp
-                    else -> 46.dp
-                }
-            }
-            availableHeight < 280.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 55.dp
-                    hintLetters.length <= 16 -> 52.dp
-                    else -> 48.dp
-                }
-            }
-            availableHeight < 350.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 60.dp
-                    hintLetters.length <= 16 -> 56.dp
-                    else -> 52.dp
-                }
-            }
-            else -> {
-                when {
-                    hintLetters.length <= 12 -> 65.dp
-                    hintLetters.length <= 16 -> 60.dp
-                    else -> 55.dp
-                }
-            }
+    val buttonSize = remember(availableHeight, availableWidth, hintLetters.length) {
+        calculateOptimalButtonSizeBoss(
+            availableHeight = availableHeight,
+            availableWidth = availableWidth,
+            totalLetters = hintLetters.length
+        ).also { size ->
+            Log.d("BossButtonSize", "Question: availableHeight=$availableHeight, availableWidth=$availableWidth, letters=${hintLetters.length}, buttonSize=$size")
         }
-    }.also {
-        Log.d("ButtonSize", "availableHeight: $availableHeight, letters: ${hintLetters.length}, chosen size: $it")
     }
     // 1. Box como contenedor principal con altura FIJA y estilo
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 8.dp, vertical = 8.dp)
             .background(
                 color = Color.Black.copy(alpha = 0.7f),
                 shape = RoundedCornerShape(8.dp)
@@ -614,16 +588,17 @@ private fun LetterBankFixed(
                 Log.d("LetterBankReal", "Real height used: ${size.height}px")
             }, // <-- AQUÍ
 
-
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
         maxItemsInEachRow = 7 // Mantenemos el límite máximo
     ) {
         hintLetters.forEachIndexed { index, letter ->
             val isUsed = usedIndices.contains(index)
             Button(
                 onClick = { if (!isUsed) onLetterClick(letter, index) },
-                modifier = Modifier.size(buttonSize),
+                modifier = Modifier
+                    .padding(horizontal = 2.dp) // <-- AGREGAR ESTA LÍNEA
+                    .size(buttonSize),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isUsed) Color.Gray else SkyBlue,
                     disabledContainerColor = Color.Gray
@@ -837,6 +812,7 @@ fun BossScreen(
                             usedIndices = uiState.usedLetterIndices,
                             difficulty = "principiante",
                             availableHeight = availableHeight,
+                            availableWidth = this@BoxWithConstraints.maxWidth,
                             onLetterClick = { letter, index ->
                                 viewModel.onLetterClick(letter, index)
                             }
@@ -1315,89 +1291,7 @@ private fun HelpItem(
         }
     }
 }
-@Composable
-private fun AnimatedGemsIndicator(
-    gems: Int,
-    hasGems: Boolean,
-    onClick: () -> Unit
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "gemsAnimation")
 
-    // Animación de pulso (escala)
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (hasGems) 1.15f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-
-    // Animación de brillo (alpha)
-    val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = if (hasGems) 0.6f else 0.5f,
-        targetValue = if (hasGems) 1f else 0.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "shimmerAlpha"
-    )
-
-    // NUEVA ANIMACIÓN: Cambio de color cada 2 segundos
-    val colorPhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing), // Tiempo animacion total = 4 Segundos
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "colorPhase"
-    )
-
-    // Determinar si debe ser rojo (últimos 1000ms de cada ciclo de 3000ms)
-    val isRedPhase = colorPhase > 0.75f // 75% del tiempo cambio de color (3 de 4 segundos)
-
-    // Usar el tema por defecto de Material3 para este componente específico
-    MaterialTheme(
-        colorScheme = lightColorScheme() // Fuerza el esquema por defecto
-    ) {
-        Card(
-            modifier = Modifier.clickable(
-                enabled = hasGems,
-                onClick = onClick
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                    .scale(pulseScale)
-                    .alpha(shimmerAlpha),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    imageVector = if (isRedPhase) GemIconDarkGold else GemIcon,
-                    contentDescription = "Gems",
-                    modifier = Modifier.size(28.dp), // Tamaño del Icono
-                    tint = Color.Unspecified
-                )
-                Text(
-                    text = "${gems}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
 @Composable
 private fun SprayEffectOverlay(isCorrect: Boolean) {
     val color = if (isCorrect) Color.Green else Color.Red
@@ -1438,4 +1332,63 @@ private fun SprayEffectOverlay(isCorrect: Boolean) {
             drawRect(brush = brush)
         }
     }
+}
+// Calculos para el Letterbankfixed
+private fun calculateOptimalButtonSizeBoss(
+    availableHeight: Dp,
+    availableWidth: Dp,
+    totalLetters: Int
+): Dp {
+    // Constantes del layout
+    val buttonHorizontalPadding = 4.dp
+    val totalButtonPadding = buttonHorizontalPadding * 2 // 8dp por botón
+    val containerHorizontalPadding = 8.dp * 2 // Cambiar de 16.dp * 2 a 8.dp * 2
+    val verticalSpacing = 6.dp // BossScreen usa 6dp vs 2dp de GameScreen
+
+    // Ancho efectivo disponible para botones
+    val effectiveWidth = availableWidth - containerHorizontalPadding
+
+    // Definir rangos de tamaño
+    val minButtonSize = 36.dp
+    val maxButtonSize = 68.dp
+
+    // Encontrar el tamaño óptimo
+    return findOptimalSizeBoss(
+        effectiveWidth = effectiveWidth,
+        availableHeight = availableHeight,
+        totalLetters = totalLetters,
+        totalButtonPadding = totalButtonPadding,
+        verticalSpacing = verticalSpacing,
+        minSize = minButtonSize,
+        maxSize = maxButtonSize
+    )
+}
+
+private fun findOptimalSizeBoss(
+    effectiveWidth: Dp,
+    availableHeight: Dp,
+    totalLetters: Int,
+    totalButtonPadding: Dp,
+    verticalSpacing: Dp,
+    minSize: Dp,
+    maxSize: Dp
+): Dp {
+    val realAvailableHeight = availableHeight - 16.dp
+    var currentSize = maxSize
+    val sizeStep = 2.dp
+
+    while (currentSize >= minSize) {
+        val totalButtonWidth = currentSize + totalButtonPadding
+        val buttonsPerRow = ((effectiveWidth / totalButtonWidth) * 0.90).toInt().coerceAtLeast(1)
+        val totalRows = (totalLetters + buttonsPerRow - 1) / buttonsPerRow
+        val totalHeight = (currentSize * totalRows) + (verticalSpacing * (totalRows - 1))
+
+        if (totalHeight <= realAvailableHeight) {
+            return currentSize
+        }
+
+        currentSize -= sizeStep
+    }
+
+    return minSize
 }
