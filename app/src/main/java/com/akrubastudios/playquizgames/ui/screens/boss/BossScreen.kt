@@ -113,6 +113,32 @@ private fun BossHeaderFixed(
     currentGems: Int,
     onGemsClick: () -> Unit
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    val cardPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 12.dp    // Zona crítica
+            screenWidth < 370.dp -> 14.dp    // Zona transición
+            else -> 16.dp                    // Zona normal (actual)
+        }
+    }
+
+    val heartSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 24.dp    // Zona crítica
+            screenWidth < 370.dp -> 26.dp    // Zona transición
+            else -> 28.dp                    // Zona normal (actual)
+        }
+    }
+
+    val progressBarHeight = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 10.dp    // Zona crítica
+            screenWidth < 370.dp -> 11.dp    // Zona transición
+            else -> 12.dp                    // Zona normal (actual)
+        }
+    }
+
     val animatedHealth by animateFloatAsState(
         targetValue = health,
         animationSpec = tween(durationMillis = 800),
@@ -126,7 +152,7 @@ private fun BossHeaderFixed(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = cardPadding),
         colors = CardDefaults.cardColors(
             containerColor = Color.Black.copy(alpha = 0.8f)
         ),
@@ -164,7 +190,7 @@ private fun BossHeaderFixed(
                 progress = { animatedHealth },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(12.dp),
+                    .height(progressBarHeight),
                 strokeCap = StrokeCap.Round,
                 color = healthColor,
                 trackColor = healthColor.copy(alpha = 0.3f)
@@ -183,7 +209,7 @@ private fun BossHeaderFixed(
                             Icons.Default.FavoriteBorder,
                         contentDescription = stringResource(R.string.cd_life),
                         tint = Color.Red,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(heartSize)
                     )
                 }
             }
