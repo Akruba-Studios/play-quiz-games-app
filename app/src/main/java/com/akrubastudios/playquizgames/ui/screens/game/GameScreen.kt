@@ -1046,8 +1046,8 @@ private fun AdaptiveQuestionText(
     val fontSize = remember(totalQuestions, screenWidth) {
         // Tamaño base más grande y mejor escalado
         val baseSize = when {
-            totalQuestions >= 100 -> 12f
-            totalQuestions >= 10 -> 14f
+            totalQuestions >= 10 -> 12f
+            totalQuestions >= 9 -> 14f
             else -> 16f
         }
 
@@ -1137,6 +1137,25 @@ fun ScoreAndDifficultyCard(
     difficulty: String,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    val cardFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 10.sp    // Zona crítica
+            screenWidth < 370.dp -> 12.sp    // Zona transición
+            else -> 14.sp                    // Zona normal
+        }
+    }
+
+    val cardPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp     // Zona crítica
+            screenWidth < 370.dp -> 10.dp    // Zona transición
+            else -> 12.dp                    // Zona normal
+        }
+    }
+    Log.d("ScoreCard", "screenWidth: $screenWidth → fontSize: $cardFontSize, padding: $cardPadding")
+
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -1146,72 +1165,41 @@ fun ScoreAndDifficultyCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        BoxWithConstraints(
-            modifier = Modifier.padding(12.dp)
+        Column(
+            modifier = Modifier.padding(cardPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val availableWidth = this@BoxWithConstraints.maxWidth
-
-            // Lógica más simple: basada en longitud de texto y ancho disponible
-            val fontSize = remember(score, difficulty, availableWidth) {
-                val scoreText = "$score XP"
-                val difficultyText = if (difficulty == "principiante") "Principiante" else "Difícil"
-                val longestTextLength = max(scoreText.length, difficultyText.length)
-
-                val baseFontSize = when {
-                    availableWidth < 90.dp -> 9f   // Más agresivo
-                    availableWidth < 110.dp -> 10f // Tu caso cae aquí
-                    availableWidth < 130.dp -> 12f
-                    else -> 16f
-                }
-
-                // Penalización más fuerte para texto largo
-                val penalty = when {
-                    longestTextLength > 10 -> 2f   // "Principiante" = 12 caracteres
-                    longestTextLength > 8 -> 1f
-                    else -> 0f
-                }
-
-                val finalSize = (baseFontSize - penalty).coerceAtLeast(8f)
-
-                Log.d("CardSize", "availableWidth: $availableWidth, longestText: $longestTextLength, fontSize: $finalSize")
-
-                finalSize
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(text = "🏆", fontSize = fontSize.sp)
-                    Text(
-                        text = "$score XP",
-                        fontSize = fontSize.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Visible
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = if (difficulty == "principiante") "🪶" else "🔥",
-                        fontSize = (fontSize * 0.9f).sp
-                    )
-                    Text(
-                        text = stringResource(
-                            if (difficulty == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                        ),
-                        fontSize = (fontSize * 0.9f).sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Visible
-                    )
-                }
+                Text(text = "🏆", fontSize = cardFontSize)
+                Text(
+                    text = "$score XP",
+                    fontSize = cardFontSize,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = if (difficulty == "principiante") "🪶" else "🔥",
+                    fontSize = cardFontSize,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = stringResource(
+                        if (difficulty == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                    ),
+                    fontSize = cardFontSize,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

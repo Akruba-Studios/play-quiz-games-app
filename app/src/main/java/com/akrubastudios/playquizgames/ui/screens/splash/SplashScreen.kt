@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
@@ -75,6 +76,7 @@ fun SplashScreen(
                 Text(
                     text = stringResource(id = R.string.splash_edition_founders),
                     style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     color = DeepNavy
 

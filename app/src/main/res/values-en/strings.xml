@@ -79,7 +79,7 @@
     <string name="level_selection_back_to_country">Back to Country</string>
 
     <!-- GameScreen & BossScreen -->
-    <string name="game_top_bar_question">Question: %1$d / %2$d</string> <!-- %1$d = current, %2$d = total -->
+    <string name="game_top_bar_question">Q. %1$d / %2$d</string> <!-- %1$d = current, %2$d = total -->
     <string name="game_top_bar_score">Score: %1$d</string> <!-- %1$d = score -->
     <string name="cd_question_image">Question image</string>
 

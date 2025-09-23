@@ -69,17 +69,17 @@
     <string name="cd_locked">Bloqueado</string>
 
     <!-- LevelSelectionScreen -->
-    <string name="difficulty_beginner">Principiante</string>
+    <string name="difficulty_beginner">Fácil</string>
     <string name="difficulty_hard">Difícil</string>
     <string name="difficulty_hard_bonus">Modo Difícil: ¡+50% XP!</string>
-    <string name="difficulty_beginner_tip">Modo Principiante: ¡Ideal para aprender!</string>
+    <string name="difficulty_beginner_tip">Modo Fácil: ¡Ideal para aprender!</string>
 
     <string name="level_unlock_toast">¡Necesitas 1 ⭐ en el nivel anterior para desbloquear este!</string>
 
     <string name="level_selection_back_to_country">Volver al País</string>
 
     <!-- GameScreen & BossScreen -->
-    <string name="game_top_bar_question">Pregunta: %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
+    <string name="game_top_bar_question">P. %1$d / %2$d</string> <!-- %1$d = actual, %2$d = total -->
     <string name="game_top_bar_score">Puntaje: %1$d</string> <!-- %1$d = puntaje -->
     <string name="cd_question_image">Imagen de la pregunta</string>
 
@@ -138,7 +138,7 @@
     <string name="free_mode_no_levels">Aún no has conseguido 3 estrellas en ningún nivel.</string>
     <string name="free_mode_record">Récord: %1$s</string> <!-- %1$s = highScore -->
     <string name="free_mode_max">Máximo: %1$s</string> <!-- %1$s = maxScore -->
-    <string name="free_mode_beginner_max_hint">(Máx. en Principiante: %1$s)</string>
+    <string name="free_mode_beginner_max_hint">(Máx. en Fácil: %1$s)</string>
     <string name="free_mode_button_play">Jugar</string>
 
     <!-- ProfileScreen -->
