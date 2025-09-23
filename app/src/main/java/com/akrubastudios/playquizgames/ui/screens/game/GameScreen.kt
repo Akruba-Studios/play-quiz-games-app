@@ -235,12 +235,14 @@ fun GameScreen(
             )
             BoxWithConstraints(modifier = Modifier.weight(1f)) {
                 val availableHeight = this@BoxWithConstraints.maxHeight
+                val availableWidth = this@BoxWithConstraints.maxWidth
 
                 LetterBank(
                     hintLetters = uiState.generatedHintLetters,
                     usedIndices = uiState.usedLetterIndices,
                     difficulty = uiState.difficulty,
                     availableHeight = availableHeight,
+                    availableWidth = availableWidth,
                     onLetterClick = { letter, index ->
                         viewModel.onLetterClick(letter, index)
                     }
@@ -663,43 +665,21 @@ fun LetterBank(
     usedIndices: Set<Int>,
     difficulty: String, // Borrar para habilitar letras bloqueadas en Modo Dificil
     availableHeight: Dp,
+    availableWidth: Dp,
     onLetterClick: (Char, Int) -> Unit, // Una función que se llamará cuando se toque una letra
     modifier: Modifier = Modifier
 ) {
-    val buttonSize = remember(availableHeight, hintLetters.length) {
-        when {
-            availableHeight < 180.dp -> 42.dp
-            availableHeight < 220.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 50.dp
-                    hintLetters.length <= 16 -> 48.dp
-                    else -> 46.dp
-                }
-            }
-            availableHeight < 280.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 55.dp
-                    hintLetters.length <= 16 -> 52.dp
-                    else -> 48.dp
-                }
-            }
-            availableHeight < 350.dp -> {
-                when {
-                    hintLetters.length <= 12 -> 60.dp
-                    hintLetters.length <= 16 -> 56.dp
-                    else -> 52.dp
-                }
-            }
-            else -> {
-                when {
-                    hintLetters.length <= 12 -> 65.dp
-                    hintLetters.length <= 16 -> 60.dp
-                    else -> 55.dp
-                }
-            }
+    val buttonSize = remember(availableHeight, availableWidth, hintLetters.length) {
+        calculateOptimalButtonSize(
+            availableHeight = availableHeight,
+            availableWidth = availableWidth,
+            totalLetters = hintLetters.length
+        ).also { size ->
+            Log.d("ButtonSizeCalculation", "availableHeight: $availableHeight, availableWidth: $availableWidth")
+            Log.d("ButtonSizeCalculation", "letters: ${hintLetters.length}, chosen size: $size")
+            Log.d("ButtonCalc", "Container internal padding: 16dp")
+            Log.d("ButtonCalc", "Real available height after padding: ${availableHeight - 16.dp}")
         }
-    }.also {
-        Log.d("ButtonSizeGame", "availableHeight: $availableHeight, letters: ${hintLetters.length}, chosen size: $it")
     }
 
     // FlowRow es como una Row, pero si no caben los elementos,
@@ -739,6 +719,8 @@ fun LetterBank(
             )
         }
     }
+    Log.d("FlowRowDebug", "Total buttons created: ${hintLetters.length}")
+    Log.d("FlowRowDebug", "Expected: ${hintLetters.length / 5} rows with mostly 5 buttons per row")
 }
 
 @Composable
@@ -748,6 +730,13 @@ fun LetterButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    val fontSize = when {
+        buttonSize >= 65.dp -> 24.sp
+        buttonSize >= 55.dp -> 20.sp
+        buttonSize >= 45.dp -> 18.sp
+        else -> 16.sp
+    }
+
     Button(
         onClick = onClick,
         modifier = Modifier
@@ -758,7 +747,7 @@ fun LetterButton(
     ) {
         Text(
             text = letter.toString().uppercase(),
-            fontSize = 18.sp,
+            fontSize = fontSize,
             textAlign = TextAlign.Center // <- AGREGAR ESTA LÍNEA TAMBIÉN
         )
     }
@@ -1414,6 +1403,79 @@ fun formatGems(gems: Int): String {
             }
         }
     }
+}
+
+// Nueva función de cálculo bidimensional
+private fun calculateOptimalButtonSize(
+    availableHeight: Dp,
+    availableWidth: Dp,
+    totalLetters: Int
+): Dp {
+    // Constantes del layout
+    val buttonHorizontalPadding = 4.dp
+    val totalButtonPadding = buttonHorizontalPadding * 2 // 8dp por botón
+    val containerHorizontalPadding = 8.dp * 2 // 16dp total del container
+    val verticalSpacing = 2.dp
+
+    // Ancho efectivo disponible para botones
+    val effectiveWidth = availableWidth - containerHorizontalPadding
+
+    // Definir rangos de tamaño
+    val minButtonSize = 38.dp
+    val maxButtonSize = 68.dp
+
+    Log.d("ButtonCalc", "effectiveWidth: $effectiveWidth, totalLetters: $totalLetters")
+
+    // Encontrar el tamaño óptimo probando diferentes configuraciones
+    val optimalSize = findOptimalSize(
+        effectiveWidth = effectiveWidth,
+        availableHeight = availableHeight,
+        totalLetters = totalLetters,
+        totalButtonPadding = totalButtonPadding,
+        verticalSpacing = verticalSpacing,
+        minSize = minButtonSize,
+        maxSize = maxButtonSize
+    )
+
+    Log.d("ButtonCalc", "Final optimal size: $optimalSize")
+    return optimalSize
+}
+
+private fun findOptimalSize(
+    effectiveWidth: Dp,
+    availableHeight: Dp,
+    totalLetters: Int,
+    totalButtonPadding: Dp,
+    verticalSpacing: Dp,
+    minSize: Dp,
+    maxSize: Dp
+): Dp {
+    val realAvailableHeight = availableHeight - 16.dp
+    // Probar tamaños desde el máximo hacia el mínimo
+    var currentSize = maxSize
+    val sizeStep = 2.dp
+
+    while (currentSize >= minSize) {
+        val totalButtonWidth = currentSize + totalButtonPadding
+        val buttonsPerRow = ((effectiveWidth / totalButtonWidth) * 0.90).toInt().coerceAtLeast(1) // 0.90 Semiconservador
+        val totalRows = (totalLetters + buttonsPerRow - 1) / buttonsPerRow // Ceiling division
+        val totalHeight = (currentSize * totalRows) + (verticalSpacing * (totalRows - 1))
+
+        Log.d("ButtonCalc", "Testing size: $currentSize")
+        Log.d("ButtonCalc", "  - buttonsPerRow: $buttonsPerRow")
+        Log.d("ButtonCalc", "  - buttonsPerRow: $buttonsPerRow (with 0.90 factor)")
+        Log.d("ButtonCalc", "  - totalHeight: $totalHeight vs realAvailable: $realAvailableHeight")
+
+        if (totalHeight <= realAvailableHeight) {
+            Log.d("ButtonCalc", "  - ✓ Fits! Using size: $currentSize")
+            return currentSize
+        }
+
+        currentSize -= sizeStep
+    }
+
+    Log.d("ButtonCalc", "  - Using minimum size: $minSize")
+    return minSize
 }
 
 @Preview(showBackground = true)
