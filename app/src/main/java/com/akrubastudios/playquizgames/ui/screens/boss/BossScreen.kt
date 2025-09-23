@@ -241,10 +241,18 @@ private fun QuestionImageFixed(imageUrl: String) {
 private fun QuestionTextFixed(
     questionText: String
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val initialFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 16f      // Zona crítica (era 20f)
+            screenWidth < 370.dp -> 18f      // Zona transición
+            else -> 20f                      // Zona normal (actual)
+        }
+    }
+
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val maxLines = 4 // cantidad de filas maximas que se pueden generar en las preguntas, despues se achican
-    val initialFontSize = 20f // Tu fontSize original
     val baseTextStyle = MaterialTheme.typography.bodyLarge
 
     Card(
