@@ -49,6 +49,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
+import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -67,6 +68,7 @@ fun ProfileScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showGemsTutorialDialog by remember { mutableStateOf(false) }
 
     // Escucha el evento de cierre de sesión del ViewModel
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -200,7 +202,10 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         // Indicador de Gemas
-                        GemsBalanceIndicator(gems = uiState.user?.gems ?: 0)
+                        GemsIndicator(
+                            gems = uiState.user?.gems ?: 0,
+                            onClick = { showGemsTutorialDialog = true }
+                        )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -257,6 +262,14 @@ fun ProfileScreen(
                     DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
                 }
             }
+        )
+    }
+    if (showGemsTutorialDialog) {
+        AppAlertDialog(
+            onDismissRequest = { showGemsTutorialDialog = false },
+            title = stringResource(R.string.gems_tutorial_title),
+            text = stringResource(R.string.gems_tutorial_message),
+            confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
 }

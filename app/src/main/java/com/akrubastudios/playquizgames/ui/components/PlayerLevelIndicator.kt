@@ -1,13 +1,16 @@
 package com.akrubastudios.playquizgames.ui.components
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -18,16 +21,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
 import com.akrubastudios.playquizgames.ui.theme.PlayQuizGamesTheme
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.R
 import java.text.NumberFormat
 import java.util.Locale
@@ -44,6 +50,56 @@ fun PlayerLevelIndicator(
     boostCount: Int,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val componentPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> PaddingValues(vertical = 6.dp, horizontal = 12.dp)
+            screenWidth < 370.dp -> PaddingValues(vertical = 7.dp, horizontal = 14.dp)
+            else -> PaddingValues(vertical = 8.dp, horizontal = 16.dp)
+        }
+    }
+    val boostSpacing = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp
+            screenWidth < 370.dp -> 10.dp
+            else -> 12.dp
+        }
+    }
+    val progressBarHeight = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 6.dp
+            screenWidth < 370.dp -> 7.dp
+            else -> 8.dp
+        }
+    }
+    val titleFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 19.sp
+            screenWidth < 370.dp -> 21.sp
+            else -> 24.sp
+        }
+    }
+    val percentageFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 14.sp
+            screenWidth < 370.dp -> 16.sp
+            else -> 18.sp
+        }
+    }
+    val iconSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 19.dp
+            screenWidth < 370.dp -> 21.dp
+            else -> 24.dp
+        }
+    }
+    val boostFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 14.sp
+            screenWidth < 370.dp -> 16.sp
+            else -> 17.sp
+        }
+    }
     // --- LÓGICA DE CÁLCULO (sin cambios) ---
     val xpRange = (levelInfo.nextLevelThresholdXp - levelInfo.currentLevelThresholdXp).toFloat()
     val xpProgressInLevel = (levelInfo.playerTotalXp - levelInfo.currentLevelThresholdXp).toFloat()
@@ -58,7 +114,7 @@ fun PlayerLevelIndicator(
     )
 
     // --- ESTRUCTURA DE LA UI (versión final) ---
-    Column(modifier = modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
+    Column(modifier = modifier.padding(componentPadding)) {
 
         // Fila SUPERIOR: para el Nivel y el Porcentaje.
         Row(
@@ -70,28 +126,29 @@ fun PlayerLevelIndicator(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = stringResource(R.string.player_level, levelInfo.level),
-                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = titleFontSize,
                     fontWeight = FontWeight.Bold
                 )
                 // Mostramos el indicador de boost solo si hay al menos uno
                 if (boostCount > 0) {
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(boostSpacing))
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Boost de Conquista",
-                        tint = MaterialTheme.colorScheme.secondary // Color dorado para la estrella
+                        tint = MaterialTheme.colorScheme.secondary, // Color dorado para la estrella
+                        modifier = Modifier.size(iconSize)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "x $boostCount",
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = boostFontSize,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
             Text(
                 text = "${(progress * 100).toInt()}%",
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = percentageFontSize,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.secondary
             )
@@ -104,7 +161,7 @@ fun PlayerLevelIndicator(
             progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp),
+                .height(progressBarHeight),
             strokeCap = StrokeCap.Round
         )
 

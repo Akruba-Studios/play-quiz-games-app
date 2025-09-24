@@ -93,6 +93,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -104,6 +105,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
+import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.CyanAccent
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
@@ -140,6 +142,42 @@ fun MapScreen(
 
     val currentLanguageCode = Locale.getDefault().language
 
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val bottomBarHeight = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 72.dp     // Zona crítica - más compacto
+            screenWidth < 370.dp -> 76.dp     // Zona transición
+            else -> 80.dp                     // Zona normal (actual)
+        }
+    }
+    val iconSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 20.dp     // Zona crítica
+            screenWidth < 370.dp -> 22.dp     // Zona transición
+            else -> 24.dp                     // Zona normal (actual)
+        }
+    }
+    val labelTextSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 11.sp     // Zona crítica
+            screenWidth < 370.dp -> 12.sp     // Zona transición
+            else -> 14.sp                     // Zona normal (actual)
+        }
+    }
+    val badgeSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 6.dp      // Zona crítica
+            screenWidth < 370.dp -> 7.dp      // Zona transición
+            else -> 8.dp                      // Zona normal (actual)
+        }
+    }
+    val fabPadding = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 12.dp     // Zona crítica
+            screenWidth < 370.dp -> 14.dp     // Zona transición
+            else -> 16.dp                     // Zona normal (actual)
+        }
+    }
     // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
         Scaffold(
@@ -151,7 +189,8 @@ fun MapScreen(
                 ) {
                     BottomAppBar(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        tonalElevation = 0.dp
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.height(bottomBarHeight)
                     ) {
                         // --- Elemento 1: Ranking (sin cambios) ---
                         NavigationBarItem(
@@ -160,10 +199,11 @@ fun MapScreen(
                             icon = {
                                 Icon(
                                     Icons.Filled.Leaderboard,
-                                    contentDescription = stringResource(R.string.bottom_nav_ranking)
+                                    contentDescription = stringResource(R.string.bottom_nav_ranking),
+                                    modifier = Modifier.size(iconSize)
                                 )
                             },
-                            label = { Text(stringResource(R.string.bottom_nav_ranking)) }
+                            label = { Text(stringResource(R.string.bottom_nav_ranking), fontSize = labelTextSize) }
                         )
 
                         // --- Elemento 2: Modo Libre (Lógica Corregida) ---
@@ -196,18 +236,20 @@ fun MapScreen(
                                     ) {
                                         Icon(
                                             Icons.Filled.SwapHoriz,
-                                            contentDescription = stringResource(R.string.bottom_nav_free_mode)
+                                            contentDescription = stringResource(R.string.bottom_nav_free_mode),
+                                            modifier = Modifier.size(iconSize)
                                         )
                                     }
                                 } else {
                                     // Si está habilitado, mostramos el icono normalmente.
                                     Icon(
                                         Icons.Filled.SwapHoriz,
-                                        contentDescription = stringResource(R.string.bottom_nav_free_mode)
+                                        contentDescription = stringResource(R.string.bottom_nav_free_mode),
+                                        modifier = Modifier.size(iconSize)
                                     )
                                 }
                             },
-                            label = { Text(stringResource(R.string.bottom_nav_free_mode)) }
+                            label = { Text(stringResource(R.string.bottom_nav_free_mode), fontSize = labelTextSize) }
                         )
 
                         // --- Elemento 3: Perfil (sin cambios) ---
@@ -220,7 +262,7 @@ fun MapScreen(
                                     badge = {
                                         // El Badge solo se muestra si hasProfileNotification es true.
                                         if (uiState.hasProfileNotification) {
-                                            Badge() // El punto rojo por defecto
+                                            Badge(modifier = Modifier.size(badgeSize)) // El punto rojo por defecto
                                         }
                                     }
                                 ) {
@@ -230,7 +272,7 @@ fun MapScreen(
                                     )
                                 }
                             },
-                            label = { Text(stringResource(R.string.bottom_nav_profile)) }
+                            label = { Text(stringResource(R.string.bottom_nav_profile), fontSize = labelTextSize) }
                         )
                     }
                 }
@@ -281,16 +323,38 @@ fun MapScreen(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
                     ) {
+                        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                        val titlePadding = remember(screenWidth) {
+                            when {
+                                screenWidth < 340.dp -> 12.dp
+                                screenWidth < 370.dp -> 14.dp
+                                else -> 16.dp
+                            }
+                        }
+                        val bottomPadding = remember(screenWidth) {
+                            when {
+                                screenWidth < 340.dp -> 6.dp
+                                screenWidth < 370.dp -> 7.dp
+                                else -> 8.dp
+                            }
+                        }
+                        val spacerWidth = remember(screenWidth) {
+                            when {
+                                screenWidth < 340.dp -> 12.dp
+                                screenWidth < 370.dp -> 14.dp
+                                else -> 16.dp
+                            }
+                        }
                         // Usamos una Columna para apilar el título y el indicador verticalmente.
                         Column(
-                            modifier = Modifier.padding(bottom = 8.dp), // Un pequeño padding inferior
+                            modifier = Modifier.padding(bottom = bottomPadding), // Un pequeño padding inferior
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // 1. El Título
                             Text(
                                 stringResource(R.string.map_title),
                                 style = MaterialTheme.typography.headlineMedium,
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(titlePadding),
                                 textAlign = TextAlign.Center
                             )
 
@@ -298,7 +362,7 @@ fun MapScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = titlePadding),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -312,14 +376,12 @@ fun MapScreen(
                                     }
                                 }
                                 // Espacio entre ellos
-                                Spacer(modifier = Modifier.width(16.dp))
+                                Spacer(modifier = Modifier.width(spacerWidth))
 
                                 // Indicador de Gemas a la derecha
-                                GemsBalanceIndicator(
+                                GemsIndicator(
                                     gems = uiState.gems,
-                                    modifier = Modifier.clickable {
-                                        showGemsTutorialDialog = true
-                                    }
+                                    onClick = { showGemsTutorialDialog = true }
                                 )
                             }
                         }
@@ -331,7 +393,7 @@ fun MapScreen(
                         onClick = { viewModel.requestExpeditionDialog() }, // Al hacer clic, abre el diálogo
                         modifier = Modifier
                             .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
-                            .padding(16.dp),
+                            .padding(fabPadding),
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Icon(
@@ -695,6 +757,21 @@ fun InteractiveWorldMap(
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val maxOffsetFactorX = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 0.28f     // Zona crítica - más restrictivo
+            screenWidth < 370.dp -> 0.29f     // Zona transición
+            else -> 0.30f                     // Zona normal (actual)
+        }
+    }
+    val maxOffsetFactorY = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 0.08f     // Zona crítica - más restrictivo
+            screenWidth < 370.dp -> 0.09f     // Zona transición
+            else -> 0.10f                     // Zona normal (actual)
+        }
+    }
     // Estados para zoom y pan
     var scale by remember { mutableStateOf(1.6f) } // 1.6f es la escala para agrandar por defecto el mapa
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -1002,8 +1079,8 @@ fun InteractiveWorldMap(
         val newScale = (scale * zoomChange).coerceIn(0.8f, 5f) //0.8f y 5f; son el minimo y maximo para hacer zoom
 
         // Usar valores fijos basados en una pantalla promedio (más simple)
-        val maxOffsetX = canvasWidth * 0.30f * newScale   // 30% para hacer drag en horizontal
-        val maxOffsetY = canvasHeight * 0.10f * newScale  // 12% para hacer drag en vertical
+        val maxOffsetX = canvasWidth * maxOffsetFactorX * newScale   // 30% para hacer drag en horizontal
+        val maxOffsetY = canvasHeight * maxOffsetFactorY * newScale  // 12% para hacer drag en vertical
 
         val newOffset = (offset + panChange).copy(
             x = (offset.x + panChange.x).coerceIn(-maxOffsetX, maxOffsetX),
