@@ -340,9 +340,9 @@ fun MapScreen(
                         }
                         val spacerWidth = remember(screenWidth) {
                             when {
-                                screenWidth < 340.dp -> 12.dp
-                                screenWidth < 370.dp -> 14.dp
-                                else -> 15.dp
+                                screenWidth < 340.dp -> 8.dp
+                                screenWidth < 370.dp -> 10.dp
+                                else -> 10.dp
                             }
                         }
                         // Usamos una Columna para apilar el título y el indicador verticalmente.

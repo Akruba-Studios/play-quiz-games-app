@@ -186,8 +186,8 @@ fun ProfileScreen(
             val horizontalPadding = remember(screenWidth) {
                 when {
                     screenWidth < 340.dp -> 8.dp      // Pantallas muy angostas
-                    screenWidth < 370.dp -> 12.dp     // Pantallas angostas
-                    else -> 16.dp                     // Pantallas normales
+                    screenWidth < 370.dp -> 10.dp     // Pantallas angostas
+                    else -> 10.dp                     // Pantallas normales
                 }
             }
             LazyColumn(

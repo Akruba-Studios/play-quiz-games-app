@@ -15,8 +15,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,11 +35,26 @@ fun FunFactLibraryScreen(
 
     Scaffold(
         topBar = {
+            val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+            val titleFontSize = remember(screenWidth) {
+                if (screenWidth < 370.dp) {
+                    16.sp // Un tamaño razonable para titleMedium
+                } else {
+                    22.sp // El tamaño por defecto de titleLarge
+                }
+            }
             TopAppBar(
                 modifier = Modifier.height(64.dp),
                 title = {
                     Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.library_title))
+                        Text(
+                            text = stringResource(R.string.library_title),
+                            // 2. Aplicamos el TAMAÑO de fuente calculado.
+                            // El resto de las propiedades del estilo se toman del tema.
+                            fontSize = titleFontSize,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 },
                 navigationIcon = {
