@@ -10,6 +10,8 @@ import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
+import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
+import com.akrubastudios.playquizgames.performance.OceanConfigManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +29,9 @@ data class SettingsState(
     val areSfxEnabled: Boolean = true,
     val sfxVolume: Float = 1.0f,
     val currentLanguageCode: String = "es", // Añadimos el idioma actual
-    val musicVolume: Float = 1.0f
+    val musicVolume: Float = 1.0f,
+    val currentQualityTier: DevicePerformanceDetector.DeviceTier? = null,
+    val isAutoAdjustEnabled: Boolean = true
 )
 
 @HiltViewModel
@@ -36,7 +40,8 @@ class SettingsViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
     private val settingsRepository: SettingsRepository, // <-- INYECTAR REPOSITORY
-    private val soundManager: SoundManager
+    private val soundManager: SoundManager,
+    private val oceanConfigManager: OceanConfigManager
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -49,27 +54,43 @@ class SettingsViewModel @Inject constructor(
     }
 
     init {
-        // Combinamos todos los flows de configuración en uno solo.
-        // El bloque se ejecutará cada vez que CUALQUIERA de los valores cambie.
+        // Observamos cada flujo por separado. Es más claro, más robusto
+        // y evita los límites de la función 'combine'.
+
         viewModelScope.launch {
-            combine(
-                languageManager.languageStateFlow,
-                settingsRepository.musicPreferenceFlow,
-                settingsRepository.musicVolumeFlow,
-                settingsRepository.sfxEnabledFlow,
-                settingsRepository.sfxVolumeFlow
-            ) { lang, musicOn, musicVol, sfxOn, sfxVol ->
-                // Creamos un estado actualizado con todos los valores a la vez.
-                _uiState.update {
-                    it.copy(
-                        currentLanguageCode = lang,
-                        isMusicEnabled = musicOn,
-                        musicVolume = musicVol,
-                        areSfxEnabled = sfxOn,
-                        sfxVolume = sfxVol
-                    )
-                }
-            }.collect() // Iniciamos la recolección
+            languageManager.languageStateFlow.collect { lang ->
+                _uiState.update { it.copy(currentLanguageCode = lang) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.musicPreferenceFlow.collect { isEnabled ->
+                _uiState.update { it.copy(isMusicEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.musicVolumeFlow.collect { volume ->
+                _uiState.update { it.copy(musicVolume = volume) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.sfxEnabledFlow.collect { isEnabled ->
+                _uiState.update { it.copy(areSfxEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.sfxVolumeFlow.collect { volume ->
+                _uiState.update { it.copy(sfxVolume = volume) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.userOverrideTierFlow.collect { userOverride ->
+                _uiState.update { it.copy(currentQualityTier = userOverride) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.autoAdjustEnabledFlow.collect { isEnabled ->
+                _uiState.update { it.copy(isAutoAdjustEnabled = isEnabled) }
+            }
         }
     }
 
@@ -112,7 +133,22 @@ class SettingsViewModel @Inject constructor(
         soundManager.setSfxVolume(volume)
     }
 
-    // El resto de funciones para música, etc., irían aquí en el futuro.
-    // fun onMusicToggle(isEnabled: Boolean) { ... }
-    // fun onSfxToggle(isEnabled: Boolean) { ... }
+    fun onQualityTierSelected(tier: DevicePerformanceDetector.DeviceTier) {
+        viewModelScope.launch {
+            settingsRepository.saveUserOverrideTier(tier)
+        }
+        oceanConfigManager.setUserOverrideConfig(tier)
+    }
+
+    fun onAutomaticQualitySelected() {
+        viewModelScope.launch {
+            settingsRepository.saveUserOverrideTier(null) // Guardamos null para indicar automático
+        }
+        oceanConfigManager.clearUserOverride()
+    }
+
+    fun onAutoAdjustToggled(isEnabled: Boolean) {
+        oceanConfigManager.setAutoAdjustEnabled(isEnabled)
+        _uiState.update { it.copy(isAutoAdjustEnabled = isEnabled) }
+    }
 }

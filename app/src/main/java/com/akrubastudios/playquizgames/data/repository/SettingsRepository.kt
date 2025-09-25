@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -31,6 +32,8 @@ class SettingsRepository @Inject constructor(
         val MUSIC_VOLUME_KEY = floatPreferencesKey("music_volume")
         val SFX_ENABLED_KEY = booleanPreferencesKey("sfx_enabled")
         val SFX_VOLUME_KEY = floatPreferencesKey("sfx_volume")
+        val AUTO_ADJUST_ENABLED_KEY = booleanPreferencesKey("auto_adjust_enabled")
+        val USER_OVERRIDE_TIER_KEY = stringPreferencesKey("user_override_tier")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -80,6 +83,17 @@ class SettingsRepository @Inject constructor(
             preferences[SFX_VOLUME_KEY] ?: 1.0f
         }
 
+    val autoAdjustEnabledFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            // Por defecto, el ajuste automático estará activado.
+            preferences[AUTO_ADJUST_ENABLED_KEY] ?: true
+        }
+
+    val userOverrideTierFlow: Flow<DevicePerformanceDetector.DeviceTier?> = dataStore.data
+        .map { preferences ->
+            preferences[USER_OVERRIDE_TIER_KEY]?.let { DevicePerformanceDetector.DeviceTier.valueOf(it) }
+        }
+
     // ... (funciones de guardado existentes)
 
     // V AÑADE ESTA NUEVA FUNCIÓN COMPLETA V
@@ -99,6 +113,22 @@ class SettingsRepository @Inject constructor(
     suspend fun saveSfxVolume(volume: Float) {
         dataStore.edit { preferences ->
             preferences[SFX_VOLUME_KEY] = volume.coerceIn(0f, 1f)
+        }
+    }
+
+    suspend fun saveAutoAdjustEnabled(isEnabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_ADJUST_ENABLED_KEY] = isEnabled
+        }
+    }
+
+    suspend fun saveUserOverrideTier(tier: DevicePerformanceDetector.DeviceTier?) {
+        dataStore.edit { preferences ->
+            if (tier == null) {
+                preferences.remove(USER_OVERRIDE_TIER_KEY)
+            } else {
+                preferences[USER_OVERRIDE_TIER_KEY] = tier.name
+            }
         }
     }
 

@@ -29,6 +29,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.akrubastudios.playquizgames.core.SoundManager
+import com.akrubastudios.playquizgames.performance.OceanConfigManager
 
 // Definimos la instancia de DataStore aquí, de forma centralizada.
 private const val USER_PREFERENCES_NAME = "user_settings"
@@ -140,5 +141,15 @@ object AppModule {
     @Singleton
     fun provideProcessLifecycleOwner(): LifecycleOwner { // <-- Cambia el tipo de retorno a LifecycleOwner
         return ProcessLifecycleOwner.get()
+    }
+
+    @Provides
+    @Singleton
+    fun provideOceanConfigManager(
+        @ApplicationContext context: Context
+    ): OceanConfigManager {
+        // Hilt ahora sabe que para crear un OceanConfigManager,
+        // debe llamar a getInstance() pasándole el contexto de la aplicación.
+        return OceanConfigManager.getInstance(context)
     }
 }

@@ -188,6 +188,21 @@
     <string name="language_spanish">Spanish</string>
     <string name="language_english">English</string>
 
+    <string name="settings_graphics_section">Graphics</string>
+    <string name="settings_graphics_quality">Map Quality</string>
+    <string name="settings_quality_dialog_title">Select Graphic Quality</string>
+    <string name="settings_quality_tier_very_low">Very Low (Performance)</string>
+    <string name="settings_quality_tier_low">Low (Balanced)</string>
+    <string name="settings_quality_tier_medium">Medium (Quality)</string>
+    <string name="settings_quality_tier_high">High (Visuals)</string>
+    <string name="settings_quality_tier_auto">Automatic</string>
+    <string name="settings_auto_adjust">Auto-Adjust Quality</string>
+
+    <string name="settings_quality_tier_very_low_A">Very Low</string>
+    <string name="settings_quality_tier_low_B">Low</string>
+    <string name="settings_quality_tier_medium_C">Medium</string>
+    <string name="settings_quality_tier_high_D">High</string>
+
     <!-- RankingScreen -->
     <string name="ranking_title">Global Ranking</string>
     <string name="ranking_your_position">Your Position</string>

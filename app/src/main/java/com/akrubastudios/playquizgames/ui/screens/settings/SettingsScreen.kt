@@ -51,6 +51,7 @@ import java.util.Locale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.material3.Slider
 import androidx.navigation.NavController
+import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +70,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showQualityDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -168,6 +170,25 @@ fun SettingsScreen(
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
+            // --- INICIO DE LA NUEVA SECCIÓN DE GRÁFICOS ---
+            SectionTitle(stringResource(R.string.settings_graphics_section))
+
+            // Fila para seleccionar la calidad
+            ClickableRow(
+                title = stringResource(R.string.settings_graphics_quality),
+                value = tierToDisplayName(tier = uiState.currentQualityTier), // Muestra el tier actual
+                onClick = { showQualityDialog = true }
+            )
+
+            // Fila para el toggle de ajuste automático
+            SettingRow(
+                title = stringResource(R.string.settings_auto_adjust),
+                checked = uiState.isAutoAdjustEnabled,
+                onCheckedChange = { isEnabled -> viewModel.onAutoAdjustToggled(isEnabled) }
+            )
+
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+
             // Sección Legal y Créditos
             SectionTitle(stringResource(R.string.settings_info_section))
             ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
@@ -185,6 +206,19 @@ fun SettingsScreen(
             onLanguageSelected = { langCode ->
                 viewModel.onLanguageSelected(langCode)
                 showLanguageDialog = false // Cerramos el diálogo después de seleccionar
+            }
+        )
+    }
+    if (showQualityDialog) {
+        QualitySelectionDialog(
+            onDismiss = { showQualityDialog = false },
+            onTierSelected = { tier ->
+                viewModel.onQualityTierSelected(tier)
+                showQualityDialog = false
+            },
+            onAutoSelected = {
+                viewModel.onAutomaticQualitySelected()
+                showQualityDialog = false
             }
         )
     }
@@ -227,6 +261,79 @@ private fun LanguageSelectionDialog(
             }
         }
     )
+}
+
+@Composable
+private fun QualitySelectionDialog(
+    onDismiss: () -> Unit,
+    onTierSelected: (DevicePerformanceDetector.DeviceTier) -> Unit,
+    onAutoSelected: () -> Unit
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { DialogTitle(text = stringResource(R.string.settings_quality_dialog_title)) },
+        text = {
+            Column {
+                // Opción para Automático
+                Text(
+                    text = stringResource(R.string.settings_quality_tier_auto),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onAutoSelected() }
+                        .padding(vertical = 12.dp)
+                )
+                Divider()
+                // Opción para Muy Baja
+                Text(
+                    text = stringResource(R.string.settings_quality_tier_very_low),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.VERY_LOW) }
+                        .padding(vertical = 12.dp)
+                )
+                // Opción para Baja
+                Text(
+                    text = stringResource(R.string.settings_quality_tier_low),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.LOW) }
+                        .padding(vertical = 12.dp)
+                )
+                // Opción para Media
+                Text(
+                    text = stringResource(R.string.settings_quality_tier_medium),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.MEDIUM) }
+                        .padding(vertical = 12.dp)
+                )
+                // Opción para Alta
+                Text(
+                    text = stringResource(R.string.settings_quality_tier_high),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.HIGH) }
+                        .padding(vertical = 12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun tierToDisplayName(tier: DevicePerformanceDetector.DeviceTier?): String {
+    return when (tier) {
+        DevicePerformanceDetector.DeviceTier.VERY_LOW -> stringResource(R.string.settings_quality_tier_very_low_A)
+        DevicePerformanceDetector.DeviceTier.LOW -> stringResource(R.string.settings_quality_tier_low_B)
+        DevicePerformanceDetector.DeviceTier.MEDIUM -> stringResource(R.string.settings_quality_tier_medium_C)
+        DevicePerformanceDetector.DeviceTier.HIGH -> stringResource(R.string.settings_quality_tier_high_D)
+        null -> stringResource(R.string.settings_quality_tier_auto) // null significa Automático
+    }
 }
 
 // <-- NUEVO: Composable específico para la fila de ajuste de idioma -->
@@ -297,4 +404,23 @@ private fun ClickableRow(title: String, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp)
     )
+}
+
+@Composable
+private fun ClickableRow(title: String, value: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
+    }
 }
