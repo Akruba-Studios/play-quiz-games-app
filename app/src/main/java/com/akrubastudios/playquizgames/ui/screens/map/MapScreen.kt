@@ -342,7 +342,7 @@ fun MapScreen(
                             when {
                                 screenWidth < 340.dp -> 12.dp
                                 screenWidth < 370.dp -> 14.dp
-                                else -> 16.dp
+                                else -> 15.dp
                             }
                         }
                         // Usamos una Columna para apilar el título y el indicador verticalmente.
@@ -375,7 +375,7 @@ fun MapScreen(
                                         )
                                     }
                                 }
-                                // Espacio entre ellos
+                                // Espacio entre ellos (PlayerlevelIndicator y GEmsIndicator)
                                 Spacer(modifier = Modifier.width(spacerWidth))
 
                                 // Indicador de Gemas a la derecha

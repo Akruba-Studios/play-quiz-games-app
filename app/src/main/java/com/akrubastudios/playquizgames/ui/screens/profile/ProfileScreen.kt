@@ -37,10 +37,17 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -136,13 +143,20 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.profile_title)) },
+                modifier = Modifier.height(64.dp),
+                title = {
+                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.profile_title))
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
-                        )
+                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_back)
+                            )
+                        }
                     }
                 }
             )
@@ -168,24 +182,46 @@ fun ProfileScreen(
                 Text(stringResource(R.string.profile_error_loading))
             }
         } else {
+            val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+            val horizontalPadding = remember(screenWidth) {
+                when {
+                    screenWidth < 340.dp -> 8.dp      // Pantallas muy angostas
+                    screenWidth < 370.dp -> 12.dp     // Pantallas angostas
+                    else -> 16.dp                     // Pantallas normales
+                }
+            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding), // Aplicar padding
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
+                    val imageSize = remember(screenWidth) {
+                        when {
+                            screenWidth < 340.dp -> 80.dp
+                            screenWidth < 370.dp -> 90.dp
+                            else -> 100.dp
+                        }
+                    }
                     ProfileHeader(
                         name = uiState.user?.displayName
                             ?: stringResource(R.string.default_player_name),
-                        imageUrl = uiState.user?.photoUrl
+                        imageUrl = uiState.user?.photoUrl,
+                        imageSize = imageSize
                     )
                     Spacer(modifier = Modifier.height(24.dp))
+
+                    val spacerWidth = remember(screenWidth) {
+                        when {
+                            screenWidth < 340.dp -> 8.dp
+                            screenWidth < 370.dp -> 12.dp
+                            else -> 15.dp
+                        }
+                    }
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp), // Un padding para que no se peguen a los bordes
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -199,7 +235,7 @@ fun ProfileScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(spacerWidth)) // Espacio entre playerlevelindicator y gemsindicator
 
                         // Indicador de Gemas
                         GemsIndicator(
@@ -214,7 +250,8 @@ fun ProfileScreen(
                     StatisticsCard(
                         totalXp = uiState.user?.totalXp ?: 0,
                         conquered = uiState.user?.conqueredCountries?.size ?: 0,
-                        dominated = uiState.user?.dominatedCountries?.size ?: 0
+                        dominated = uiState.user?.dominatedCountries?.size ?: 0,
+                        cardPadding = horizontalPadding
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -225,7 +262,8 @@ fun ProfileScreen(
                         MilestoneCard(
                             milestone = milestone,
                             cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
-                            scale = animatedScale
+                            scale = animatedScale,
+                            cardPadding = horizontalPadding
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
@@ -236,7 +274,8 @@ fun ProfileScreen(
                         onSignOutClick = { showSignOutDialog = true },
                         onSettingsClick = onSettingsClick,
                         onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
-                        isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false
+                        isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false,
+                        cardPadding = horizontalPadding
                     )
                 }
             }
@@ -275,13 +314,13 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileHeader(name: String, imageUrl: String?) {
+private fun ProfileHeader(name: String, imageUrl: String?, imageSize: Dp) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AsyncImage(
             model = imageUrl,
             contentDescription = "Foto de Perfil",
             modifier = Modifier
-                .size(100.dp)
+                .size(imageSize)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
@@ -291,12 +330,12 @@ private fun ProfileHeader(name: String, imageUrl: String?) {
 }
 
 @Composable
-private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int) {
+private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int, cardPadding: Dp) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(cardPadding)) {
             Text(stringResource(R.string.profile_stats_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             StatisticRow(icon = Icons.Default.EmojiEvents, label = stringResource(R.string.profile_stats_total_xp), value = formatNumber(totalXp))
@@ -313,13 +352,14 @@ private fun ActionsCard(
     onSignOutClick: () -> Unit,
     onSettingsClick: () -> Unit, // <-- NUEVO PARÁMETRO
     onLibraryClick: () -> Unit,
-    isLibraryEnabled: Boolean
+    isLibraryEnabled: Boolean,
+    cardPadding: Dp
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(cardPadding)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
@@ -327,7 +367,10 @@ private fun ActionsCard(
                 enabled = isLibraryEnabled, // Se habilita/deshabilita dinámicamente
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.profile_button_library))
+                Text(
+                    stringResource(R.string.profile_button_library),
+                    textAlign = TextAlign.Center
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -335,7 +378,10 @@ private fun ActionsCard(
                 onClick = onSettingsClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.profile_button_settings))
+                Text(
+                    stringResource(R.string.profile_button_settings),
+                    textAlign = TextAlign.Center
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
@@ -345,10 +391,18 @@ private fun ActionsCard(
             ) {
                 Icon(Icons.Default.Logout, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.profile_button_sign_out))
+                Text(
+                    stringResource(R.string.profile_button_sign_out),
+                    textAlign = TextAlign.Center
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(R.string.app_version), style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text(
+                stringResource(R.string.app_version),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -373,7 +427,8 @@ private fun MilestoneCard(
     milestone: Milestone,
     modifier: Modifier = Modifier,
     cardColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-    scale: Float = 1f
+    scale: Float = 1f,
+    cardPadding: Dp
 ) {
     Card(
         modifier = modifier
@@ -381,7 +436,7 @@ private fun MilestoneCard(
             .graphicsLayer(scaleX = scale, scaleY = scale),
         colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(cardPadding)) {
             Text(
                 text = milestone.title,
                 style = MaterialTheme.typography.titleMedium,
