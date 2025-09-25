@@ -99,6 +99,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.akrubastudios.playquizgames.core.MusicTrack
+import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
+import com.akrubastudios.playquizgames.performance.OceanConfigManager
+import com.akrubastudios.playquizgames.performance.OceanPerformanceConfig
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -133,6 +136,11 @@ fun MapScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
+
+    // NUEVA LÍNEA: Obtener el gestor de configuración
+    val oceanConfigManager = remember { OceanConfigManager.getInstance(context) }
+    val oceanConfig by oceanConfigManager.currentConfig.collectAsState()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -302,6 +310,8 @@ fun MapScreen(
                                 Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
                             )
                         },
+                        oceanConfig = oceanConfig, // NUEVA LÍNEA: Pasar la configuración
+                        oceanConfigManager = oceanConfigManager, // NUEVA LÍNEA: Pasar el manager
                         modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
                     )
                 }
@@ -387,6 +397,24 @@ fun MapScreen(
                         }
                     }
                 }
+
+                // --- INICIO DEL CÓDIGO DE DEBUG --- COMENTAR PARA BORRAR DE PANTALLA PERO MANTENER ESTE DEBUG
+                // Lo ponemos al final para que se dibuje encima de todo.
+                val detector = remember { DevicePerformanceDetector(context) }
+                val debugInfo = remember { detector.getDebugInfo() }
+
+                Text(
+                    text = debugInfo,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart) // Lo posiciona en la esquina inferior izquierda
+                        .padding(16.dp)
+                        .background(Color.Black.copy(alpha = 0.7f)) // Fondo semitransparente para legibilidad
+                        .padding(8.dp),
+                    color = Color.White,
+                    fontSize = 8.sp
+                )
+                // --- FIN DEL CÓDIGO DE DEBUG ---
+
                 // El icono del avión (botón flotante) se muestra si una expedición está disponible.
                 if (uiState.expeditionAvailable) {
                     FloatingActionButton(
@@ -623,7 +651,11 @@ class OptimizedOceanRenderer {
 }
 
 // PASO 2: Versión optimizada de drawOceanBackground
-private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: androidx.compose.ui.geometry.Size) {
+private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
+    waveTime: Float,
+    canvasSize: androidx.compose.ui.geometry.Size,
+    config: OceanPerformanceConfig // NUEVO PARÁMETRO
+) {
     // Colores oceánicos (sin cambios)
     val deepOcean = Color(0xFF1B4F72)
     val mediumOcean = Color(0xFF2874A6)
@@ -633,10 +665,10 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
     // CAPA 1: Fondo base (sin cambios)
     drawRect(color = deepOcean, size = canvasSize)
 
-    // CAPA 2: Variaciones de profundidad OPTIMIZADAS
+    // CAPA 2: Variaciones de profundidad CON CONFIGURACIÓN DINÁMICA
     val noiseScale = 0.002f
-    val stepSize = 10 // Incrementado de 8 a 16 (75% menos cálculos, menor valos, mas calculo, menor rendimiento)
-    val depthVariationIntensity = 0.50f // Este valor es muy importante para mejor la calidad de las olas, mas grande mucho mejor pero menor rendimiento pantalla se congela
+    val stepSize = config.stepSize // USAR CONFIGURACIÓN DINÁMICA
+    val depthVariationIntensity = config.depthIntensity // USAR CONFIGURACIÓN DINÁMICA
 
     // Precalcular valores que no cambian en el loop
     val timeOffset1 = waveTime * 0.2f
@@ -661,7 +693,6 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
             val combinedNoise = (noise1 * 0.6f + noise2 * 0.4f + 1f) / 2f
             val depthFactor = combinedNoise * depthVariationIntensity
 
-            // Simplificar lógica de colores
             if (depthFactor > 0.15f) {
                 val currentColor = if (depthFactor > 0.25f) {
                     shallowOcean.copy(alpha = 0.4f)
@@ -678,19 +709,19 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
         }
     }
 
-    // CAPA 3: Corrientes marinas SIMPLIFICADAS (50% menos iteraciones)
+    // CAPA 3: Corrientes marinas CON CONFIGURACIÓN DINÁMICA
     val currentDirection1 = waveTime * 0.5f
     val path = androidx.compose.ui.graphics.Path()
 
-    for (y in 0 until canvasSize.height.toInt() step 40) { // Incrementado de 25 a 40
+    for (y in 0 until canvasSize.height.toInt() step config.currentSpacing) { // USAR CONFIGURACIÓN DINÁMICA
         val amplitude = 15f + OptimizedOceanRenderer.fastSin(y * 0.01f + waveTime * 0.4f) * 8f
         val frequency = 0.008f
 
         path.reset()
         path.moveTo(0f, y.toFloat())
 
-        // Menos puntos en la curva (cada 8px en lugar de 4px)
-        for (x in 0..canvasSize.width.toInt() step 8) {
+        // USAR CONFIGURACIÓN DINÁMICA PARA DETALLE DE CURVAS
+        for (x in 0..canvasSize.width.toInt() step config.curveDetailSpacing) {
             val waveY = y + OptimizedOceanRenderer.fastSin(x * frequency + currentDirection1) * amplitude
             path.lineTo(x.toFloat(), waveY)
         }
@@ -703,44 +734,52 @@ private fun DrawScope.drawOptimizedOceanBackground(waveTime: Float, canvasSize: 
         )
     }
 
-    // CAPA 4: Reflexiones especulares REDUCIDAS (menos centros)
-    val specularCenters = listOf(
-        Offset(canvasSize.width * 0.3f, canvasSize.height * 0.3f),
-        Offset(canvasSize.width * 0.7f, canvasSize.height * 0.7f)
-    ) // Reducido de 4 a 2 centros
+    // CAPA 4: Reflexiones especulares CON CONFIGURACIÓN DINÁMICA
+    if (config.specularEnabled) {
+        // Crear lista dinámica de centros especulares según configuración
+        val specularCenters = mutableListOf<Offset>()
+        repeat(config.specularCenters) { index ->
+            val x = canvasSize.width * (0.2f + (index * 0.3f) % 0.8f)
+            val y = canvasSize.height * (0.3f + (index * 0.4f) % 0.6f)
+            specularCenters.add(Offset(x, y))
+        }
 
-    specularCenters.forEachIndexed { index, center ->
-        val timeOffset = index * PI.toFloat()
-        val animatedTime = waveTime * 0.6f + timeOffset
+        specularCenters.forEachIndexed { index, center ->
+            val timeOffset = index * PI.toFloat()
+            val animatedTime = waveTime * 0.6f + timeOffset
 
-        val mainRadius = 35f + OptimizedOceanRenderer.fastSin(animatedTime) * 12f
-        val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.35f)
+            val mainRadius = 35f + OptimizedOceanRenderer.fastSin(animatedTime) * 12f
+            val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.35f)
 
-        drawCircle(
-            color = surfaceShine.copy(alpha = mainAlpha),
-            radius = mainRadius,
-            center = center
-        )
+            drawCircle(
+                color = surfaceShine.copy(alpha = mainAlpha),
+                radius = mainRadius,
+                center = center
+            )
+        }
     }
 
-    // CAPA 5: Shimmer atmosférico simplificado
-    val atmosphereIntensity = (OptimizedOceanRenderer.fastSin(waveTime * 0.8f) + 1f) / 2f * 0.04f
-    drawRect(
-        color = surfaceShine.copy(alpha = atmosphereIntensity),
-        size = canvasSize
-    )
+    // CAPA 5: Shimmer atmosférico CON CONFIGURACIÓN CONDICIONAL
+    if (config.shimmerEnabled) {
+        val atmosphereIntensity = (OptimizedOceanRenderer.fastSin(waveTime * 0.8f) + 1f) / 2f * 0.04f
+        drawRect(
+            color = surfaceShine.copy(alpha = atmosphereIntensity),
+            size = canvasSize
+        )
+    }
 }
 
 // PASO 3: OceanCanvas optimizado con control de frecuencia
 @Composable
-fun OptimizedOceanCanvas(
+fun OptimizedOceanCanvasWithConfig(
     modifier: Modifier = Modifier,
     waveTime: Float = 0f,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    config: OceanPerformanceConfig // NUEVO PARÁMETRO
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
         if (isActive) {
-            drawOptimizedOceanBackground(waveTime, size)
+            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config) // USAR NUEVA FUNCIÓN
         } else {
             // Durante transiciones, mostrar océano estático
             drawRect(color = Color(0xFF1B4F72), size = size)
@@ -755,6 +794,8 @@ fun InteractiveWorldMap(
     dominatedCountryIds: List<String>,
     availableCountryIds: List<String>,
     onCountryClick: (String) -> Unit,
+    oceanConfig: OceanPerformanceConfig, // NUEVO PARÁMETRO
+    oceanConfigManager: OceanConfigManager, // NUEVO PARÁMETRO
     modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -895,11 +936,24 @@ fun InteractiveWorldMap(
 
     // Animación optimizada del océano
     LaunchedEffect(Unit) {
+        // Iniciar benchmark automático
+        oceanConfigManager.startInitialBenchmark()
+
         while (true) {
             if (isAnimationActive) {
-                waveTime += 0.033f // Incremento optimizado
+                waveTime += 0.033f
+
+                // NUEVA LÍNEA: Registrar rendimiento cada 10 frames
+                if ((waveTime * 30).toInt() % 10 == 0) {
+                    val currentTime = System.nanoTime()
+                    val fps = 1_000_000_000f / oceanConfig.frameDelayMs / 1_000_000f
+                    oceanConfigManager.recordFramePerformance(fps)
+                }
             }
-            delay(33) // 20fps en lugar de 60fps
+
+            // CAMBIAR DELAY FIJO POR CONFIGURACIÓN DINÁMICA:
+            delay(oceanConfig.frameDelayMs) // LÍNEA MODIFICADA
+
             if (waveTime > 1000f) waveTime -= 1000f
         }
     }
@@ -1092,9 +1146,10 @@ fun InteractiveWorldMap(
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
         // CAPA 1: Océano en canvas separado
-        OptimizedOceanCanvas(
+        OptimizedOceanCanvasWithConfig(
             waveTime = waveTime,
-            isActive = isAnimationActive
+            isActive = isAnimationActive,
+            config = oceanConfig // PASAR LA CONFIGURACIÓN DINÁMICA
         )
 
         // CAPA 2: Mapa en canvas original
