@@ -54,7 +54,6 @@ fun GemsIndicator(
             else -> 16.sp                    // Zona normal
         }
     }
-
     val gemsPadding = remember(screenWidth) {
         when {
             screenWidth < 340.dp -> PaddingValues(horizontal = 6.dp, vertical = 2.dp)    // Zona crítica
@@ -62,7 +61,6 @@ fun GemsIndicator(
             else -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)                   // Zona normal
         }
     }
-
     val iconSize = remember(screenWidth) {
         when {
             screenWidth < 340.dp -> 18.dp    // Zona crítica
@@ -70,7 +68,13 @@ fun GemsIndicator(
             else -> 22.dp                    // Zona normal
         }
     }
-
+    val cornerRadius = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp     // Zona crítica - menos redondeado
+            screenWidth < 370.dp -> 10.dp    // Zona transición
+            else -> 12.dp                    // Zona normal (actual)
+        }
+    }
     // Animación de pulso (escala)
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -81,7 +85,6 @@ fun GemsIndicator(
         ),
         label = "pulseScale"
     )
-
     // Animación de brillo (alpha)
     val shimmerAlpha by infiniteTransition.animateFloat(
         initialValue = if (hasGems) 0.6f else 0.5f,
@@ -92,7 +95,6 @@ fun GemsIndicator(
         ),
         label = "shimmerAlpha"
     )
-
     // Animación de cambio de color
     val colorPhase by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -105,7 +107,6 @@ fun GemsIndicator(
     )
 
     val isRedPhase = colorPhase > 0.75f
-
     val cardContent = @Composable {
         Card(
             modifier = modifier.clickable(
@@ -114,7 +115,7 @@ fun GemsIndicator(
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(cornerRadius),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             )
