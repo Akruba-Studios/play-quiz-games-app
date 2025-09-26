@@ -135,20 +135,39 @@ class SettingsViewModel @Inject constructor(
 
     fun onQualityTierSelected(tier: DevicePerformanceDetector.DeviceTier) {
         viewModelScope.launch {
+            // 1. Guarda la selección manual del usuario
             settingsRepository.saveUserOverrideTier(tier)
+            // 2. Apaga el ajuste automático
+            settingsRepository.saveAutoAdjustEnabled(false)
         }
+        // 3. Aplica la configuración inmediatamente
         oceanConfigManager.setUserOverrideConfig(tier)
+        oceanConfigManager.setAutoAdjustEnabled(false)
     }
 
     fun onAutomaticQualitySelected() {
         viewModelScope.launch {
-            settingsRepository.saveUserOverrideTier(null) // Guardamos null para indicar automático
+            // 1. Borra la selección manual
+            settingsRepository.saveUserOverrideTier(null)
+            // 2. Enciende el ajuste automático
+            settingsRepository.saveAutoAdjustEnabled(true)
         }
+        // 3. Devuelve el control al sistema
         oceanConfigManager.clearUserOverride()
+        oceanConfigManager.setAutoAdjustEnabled(true)
     }
 
     fun onAutoAdjustToggled(isEnabled: Boolean) {
-        oceanConfigManager.setAutoAdjustEnabled(isEnabled)
-        _uiState.update { it.copy(isAutoAdjustEnabled = isEnabled) }
+        if (isEnabled) {
+            // Si el usuario lo enciende, volvemos a modo automático
+            onAutomaticQualitySelected()
+        } else {
+            // Si lo apaga, no hacemos nada (la selección manual ya lo apaga)
+            // Solo guardamos el estado por si acaso.
+            viewModelScope.launch {
+                settingsRepository.saveAutoAdjustEnabled(false)
+            }
+            oceanConfigManager.setAutoAdjustEnabled(false)
+        }
     }
 }

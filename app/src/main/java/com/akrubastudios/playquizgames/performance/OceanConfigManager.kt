@@ -29,7 +29,7 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         // Configuración de comportamiento
         private const val BENCHMARK_DURATION_MS = 8000L    // 8 segundos de benchmark inicial
-        private const val MONITORING_INTERVAL_MS = 30000L  // Monitorear cada 30 segundos
+        private const val MONITORING_INTERVAL_MS = 5000L  // Monitorear cada 30 segundos (30000)
         private const val PERFORMANCE_HISTORY_SIZE = 20     // Guardar últimas 20 mediciones
         private const val MIN_FPS_THRESHOLD = 12           // FPS mínimo antes de downgrade
         private const val EXCELLENT_FPS_THRESHOLD = 25     // FPS para considerar upgrade
