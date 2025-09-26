@@ -162,12 +162,12 @@
     <string name="milestone_goal_level">Alcanzar Nivel %1$d</string>
     <string name="milestone_goal_conquests">Conquistar %1$d Países</string>
 
-    <string name="profile_button_library">Mi Biblioteca de Conocimiento</string>
+    <string name="profile_button_library">Mi Centro de Conocimiento</string>
 
     <string name="profile_title">Perfil Jugador</string>
 
     <!-- Biblioteca de Fun Facts -->
-    <string name="library_title">Biblioteca de Conocimiento</string>
+    <string name="library_title">Centro de Conocimiento</string>
     <string name="library_empty_message">¡Tu biblioteca está vacía! Domina niveles (consigue 3 ⭐) para coleccionar aquí los Datos Curiosos que descubras.</string>
     <string name="cd_collapse">Contraer</string>
 
@@ -189,14 +189,14 @@
     <string name="language_english">Inglés</string>
 
     <string name="settings_graphics_section">Gráficos</string>
-    <string name="settings_graphics_quality">Calidad del Mapa</string>
-    <string name="settings_quality_dialog_title">Seleccionar Calidad Gráfica</string>
-    <string name="settings_quality_tier_very_low">Muy Baja (Rendimiento)</string>
-    <string name="settings_quality_tier_low">Baja (Balanceado)</string>
-    <string name="settings_quality_tier_medium">Media (Calidad)</string>
-    <string name="settings_quality_tier_high">Alta (Visual)</string>
+    <string name="settings_graphics_quality">Calidad del Océano</string>
+    <string name="settings_quality_dialog_title">Calidad Gráfica Océano</string>
+    <string name="settings_quality_tier_very_low">Muy Baja: Mínimo uso de recursos</string>
+    <string name="settings_quality_tier_low">Baja: Uso eficiente de recursos</string>
+    <string name="settings_quality_tier_medium">Media: Consumo moderado de recursos</string>
+    <string name="settings_quality_tier_high">Alta: Alto consumo de recursos</string>
     <string name="settings_quality_tier_auto">Automático</string>
-    <string name="settings_auto_adjust">Ajuste Automático de Calidad</string>
+    <string name="settings_auto_adjust">Calidad Automática</string>
 
     <string name="settings_quality_tier_very_low_A">Muy Baja</string>
     <string name="settings_quality_tier_low_B">Baja</string>

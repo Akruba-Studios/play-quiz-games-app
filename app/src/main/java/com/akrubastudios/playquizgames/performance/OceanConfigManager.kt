@@ -243,6 +243,10 @@ class OceanConfigManager private constructor(private val context: Context) {
      * Evalúa el rendimiento actual y ajusta la configuración si es necesario
      */
     private suspend fun evaluateAndAdjustPerformance(averageFPS: Float) {
+
+        // --- LÍNEA TEMPORAL PARA PRUEBAS ---
+        val simulatedFPS = 5f // Simulamos 5 FPS //
+
         if (!isAutoAdjustEnabled()) return
 
         val currentTier = getCurrentTierFromConfig()
@@ -251,20 +255,19 @@ class OceanConfigManager private constructor(private val context: Context) {
         Log.d(TAG, "Evaluando rendimiento: ${averageFPS.toInt()} FPS (target: $currentTargetFPS)")
 
         when {
-            // Rendimiento muy bajo - bajar calidad inmediatamente
+            // Rendimiento muy bajo - bajar calidad inmediatamente - averageFPS/simulatedFPS
             averageFPS < MIN_FPS_THRESHOLD && currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
                 Log.w(TAG, "Rendimiento crítico detectado, bajando calidad")
                 adjustConfigurationTier(false)
             }
 
             // Rendimiento excelente sostenido - considerar subir calidad
-            averageFPS > EXCELLENT_FPS_THRESHOLD &&
-                    averageFPS > currentTargetFPS * 1.2f &&
+            averageFPS > currentTargetFPS * 1.5f && // <-- CONDICIÓN CAMBIADA
                     currentTier != DevicePerformanceDetector.DeviceTier.HIGH -> {
 
-                // Verificar que el buen rendimiento sea sostenido
                 val recentHistory = getRecentPerformanceHistory(10)
-                if (recentHistory.size >= 8 && recentHistory.all { it > EXCELLENT_FPS_THRESHOLD }) {
+                // La condición de estabilidad se queda
+                if (recentHistory.size >= 8 && recentHistory.all { it > currentTargetFPS * 1.4f }) {
                     Log.i(TAG, "Rendimiento excelente sostenido, subiendo calidad")
                     adjustConfigurationTier(true)
                 }
