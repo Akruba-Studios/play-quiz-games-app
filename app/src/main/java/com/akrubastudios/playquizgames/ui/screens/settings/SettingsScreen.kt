@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,6 +51,8 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.material3.Slider
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
 
@@ -71,6 +74,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
+    var showAdvancedDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -189,6 +193,13 @@ fun SettingsScreen(
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
+            ClickableRow(
+                title = stringResource(R.string.settings_advanced_options),
+                onClick = { showAdvancedDialog = true }
+            )
+
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+
             // Sección Legal y Créditos
             SectionTitle(stringResource(R.string.settings_info_section))
             ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
@@ -220,6 +231,19 @@ fun SettingsScreen(
                 viewModel.onAutomaticQualitySelected()
                 showQualityDialog = false
             }
+        )
+    }
+    if (showAdvancedDialog) {
+        val toastMessage = stringResource(id = R.string.settings_force_redetection_toast)
+        AdvancedOptionsDialog(
+            onDismiss = { showAdvancedDialog = false },
+            onForceRedetection = {
+                viewModel.onForceRedetection()
+                // Mostramos un Toast como feedback inmediato para el usuario
+                Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
+                showAdvancedDialog = false // Cerramos el diálogo
+            },
+            debugInfo = uiState.debugInfo
         )
     }
 }
@@ -320,6 +344,48 @@ private fun QualitySelectionDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun AdvancedOptionsDialog(
+    onDismiss: () -> Unit,
+    onForceRedetection: () -> Unit,
+    debugInfo: String
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { DialogTitle(text = stringResource(R.string.settings_advanced_dialog_title)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                // Botón para forzar re-detección
+                Button(onClick = onForceRedetection, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.settings_force_redetection),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                // Información de depuración
+                Text(
+                    text = stringResource(R.string.settings_debug_info),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = debugInfo,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace // Fuente monoespaciada para el debug
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                DialogButtonText(text = stringResource(R.string.dialog_button_ok))
             }
         }
     )

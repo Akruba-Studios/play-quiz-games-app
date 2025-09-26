@@ -398,23 +398,6 @@ fun MapScreen(
                     }
                 }
 
-                // --- INICIO DEL CÓDIGO DE DEBUG --- COMENTAR PARA BORRAR DE PANTALLA PERO MANTENER ESTE DEBUG
-                // Lo ponemos al final para que se dibuje encima de todo.
-                val detector = remember { DevicePerformanceDetector(context) }
-                val debugInfo = remember { detector.getDebugInfo() }
-
-                Text(
-                    text = debugInfo,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart) // Lo posiciona en la esquina inferior izquierda
-                        .padding(16.dp)
-                        .background(Color.Black.copy(alpha = 0.7f)) // Fondo semitransparente para legibilidad
-                        .padding(8.dp),
-                    color = Color.White,
-                    fontSize = 8.sp
-                )
-                // --- FIN DEL CÓDIGO DE DEBUG ---
-
                 // El icono del avión (botón flotante) se muestra si una expedición está disponible.
                 if (uiState.expeditionAvailable) {
                     FloatingActionButton(

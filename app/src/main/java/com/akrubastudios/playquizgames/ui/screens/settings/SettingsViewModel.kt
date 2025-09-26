@@ -31,7 +31,8 @@ data class SettingsState(
     val currentLanguageCode: String = "es", // Añadimos el idioma actual
     val musicVolume: Float = 1.0f,
     val currentQualityTier: DevicePerformanceDetector.DeviceTier? = null,
-    val isAutoAdjustEnabled: Boolean = true
+    val isAutoAdjustEnabled: Boolean = true,
+    val debugInfo: String = ""
 )
 
 @HiltViewModel
@@ -91,6 +92,10 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.autoAdjustEnabledFlow.collect { isEnabled ->
                 _uiState.update { it.copy(isAutoAdjustEnabled = isEnabled) }
             }
+        }
+        viewModelScope.launch {
+            val stats = oceanConfigManager.getPerformanceStats()
+            _uiState.update { it.copy(debugInfo = stats.deviceInfo) }
         }
     }
 
@@ -169,5 +174,11 @@ class SettingsViewModel @Inject constructor(
             }
             oceanConfigManager.setAutoAdjustEnabled(false)
         }
+    }
+
+    fun onForceRedetection() {
+        oceanConfigManager.forceDeviceRedetection()
+        // Podríamos querer refrescar la info de debug después de esto,
+        // pero por ahora, solo ejecutamos la acción.
     }
 }

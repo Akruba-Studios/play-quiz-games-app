@@ -203,6 +203,12 @@
     <string name="settings_quality_tier_medium_C">Media</string>
     <string name="settings_quality_tier_high_D">Alta</string>
 
+    <string name="settings_advanced_options">Opciones Avanzadas…</string>
+    <string name="settings_advanced_dialog_title">Ajustes de Rendimiento Avanzado</string>
+    <string name="settings_force_redetection">Forzar Re-evaluación del Dispositivo</string>
+    <string name="settings_force_redetection_toast">Iniciando nueva evaluación del hardware…</string>
+    <string name="settings_debug_info">Información de Depuración</string>
+
     <!-- RankingScreen -->
     <string name="ranking_title">Ranking Global</string>
     <string name="ranking_your_position">Tu Posición</string>
