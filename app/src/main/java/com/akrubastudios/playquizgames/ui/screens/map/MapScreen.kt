@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
@@ -195,6 +196,110 @@ private fun getFpsColor(fps: Float): Color {
         else -> Color.Red
     }
 }
+
+@Composable
+fun AdvancedFpsMonitor(
+    fpsTracker: RealFpsTracker,
+    oceanConfigManager: OceanConfigManager,
+    modifier: Modifier = Modifier,
+    showTestControls: Boolean = false
+) {
+    val currentConfig by oceanConfigManager.currentConfig.collectAsState()
+    // Necesitamos obtener los stats de forma que se recomponga si cambian
+    var performanceStats by remember(currentConfig) {
+        mutableStateOf(oceanConfigManager.getPerformanceStats())
+    }
+
+    var showExpanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = modifier.clickable { showExpanded = !showExpanded },
+        color = Color.Black.copy(alpha = 0.8f),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            // El FpsMonitorOverlay ahora solo muestra FPS, no necesita ser detallado
+            FpsMonitorOverlay(
+                fpsTracker = fpsTracker,
+                showDetailed = true, // Lo ponemos en false para una vista más limpia
+                modifier = Modifier
+            )
+
+            // AnimatedVisibility para una expansión/contracción suave
+            AnimatedVisibility(visible = showExpanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = Color.Gray)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Información de configuración
+                    Text(
+                        text = "Tier: ${currentConfig.tierName}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Text(
+                        text = "Target: ${currentConfig.targetFPS} FPS",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Text(
+                        text = "Auto: ${if (performanceStats.isAutoAdjustEnabled) "ON" else "OFF"}",
+                        color = if (performanceStats.isAutoAdjustEnabled) Color.Green else Color.Red,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    // Controles de testing
+                    // La constante BuildConfig se genera automáticamente por Gradle
+                    if (showTestControls) {
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row {
+                            Button(
+                                onClick = {
+                                    // Inyectar FPS bajos para testing
+                                    repeat(20) {
+                                        oceanConfigManager.recordFramePerformance(8f)
+                                    }
+                                    performanceStats = oceanConfigManager.getPerformanceStats()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Red.copy(alpha = 0.7f)
+                                ),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("Test Low", fontSize = 10.sp)
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            Button(
+                                onClick = {
+                                    // Inyectar FPS altos para testing
+                                    repeat(20) {
+                                        oceanConfigManager.recordFramePerformance(40f)
+                                    }
+                                    performanceStats = oceanConfigManager.getPerformanceStats()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Green.copy(alpha = 0.7f)
+                                ),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("Test High", fontSize = 10.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
@@ -492,6 +597,7 @@ fun MapScreen(
                 }
                 // NUEVO: Monitor de FPS superpuesto
                 if (showFpsMonitor) {
+                    /*
                     FpsMonitorOverlay(
                         fpsTracker = realFpsTracker,
                         showDetailed = true,
@@ -499,6 +605,18 @@ fun MapScreen(
                             .align(Alignment.TopEnd)
                             .padding(16.dp)
                     )
+                     */
+
+                    // DESPUÉS:
+                    AdvancedFpsMonitor(
+                        fpsTracker = realFpsTracker,
+                        oceanConfigManager = oceanConfigManager,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 160.dp, end = 16.dp), // Mantenemos el mismo padding
+                        showTestControls = true
+                    )
+                    // --- FIN DE LA MODIFICACIÓN ---
                 }
 
                 // El icono del avión (botón flotante) se muestra si una expedición está disponible.
