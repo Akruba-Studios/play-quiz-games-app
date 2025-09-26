@@ -102,6 +102,7 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
 import com.akrubastudios.playquizgames.performance.OceanConfigManager
 import com.akrubastudios.playquizgames.performance.OceanPerformanceConfig
+import com.akrubastudios.playquizgames.performance.RealFpsTracker
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -119,20 +120,87 @@ import kotlin.math.cos
 import kotlin.math.PI
 import kotlin.math.abs
 
+// ===================================================================
+// COMPOSABLE MONITOR VISUAL DE FPS
+// ===================================================================
+// Componente para mostrar FPS en pantalla
+
+@Composable
+fun FpsMonitorOverlay(
+    fpsTracker: RealFpsTracker,
+    modifier: Modifier = Modifier,
+    showDetailed: Boolean = false
+) {
+    val currentFPS by fpsTracker.currentFPS.collectAsState()
+    val averageFPS by fpsTracker.averageFPS.collectAsState()
+    val isTracking by fpsTracker.isTracking.collectAsState()
+
+    if (isTracking) {
+        Surface(
+            modifier = modifier,
+            color = Color.Black.copy(alpha = 0.7f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // FPS Actual (número grande)
+                Text(
+                    text = "${currentFPS.toInt()}",
+                    color = getFpsColor(currentFPS),
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+
+                Text(
+                    text = "FPS",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium
+                )
+
+                if (showDetailed) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Promedio: ${averageFPS.toInt()}",
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    val stats = remember(currentFPS, averageFPS) {
+                        fpsTracker.getStats()
+                    }
+
+                    Text(
+                        text = "Min: ${stats.minFPS.toInt()} Max: ${stats.maxFPS.toInt()}",
+                        color = Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Obtiene color basado en el FPS (verde = bueno, amarillo = medio, rojo = malo)
+ */
+@Composable
+private fun getFpsColor(fps: Float): Color {
+    return when {
+        fps >= 25f -> Color.Green
+        fps >= 15f -> Color.Yellow
+        else -> Color.Red
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel()
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.addObserver(viewModel)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(viewModel)
-        }
-    }
-
     val uiState by viewModel.uiState.collectAsState()
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
@@ -140,6 +208,30 @@ fun MapScreen(
     // NUEVA LÍNEA: Obtener el gestor de configuración
     val oceanConfigManager = remember { OceanConfigManager.getInstance(context) }
     val oceanConfig by oceanConfigManager.currentConfig.collectAsState()
+
+    // NUEVO: Crear tracker de FPS real
+    val realFpsTracker = remember { RealFpsTracker() }
+
+    // PARA MOSTRAR U OCULTAR EL FPS EN PANTALLA
+    val showFpsMonitor = true  // Cambiar a false para ocultar
+
+    // NUEVO: Controlar el tracking según el lifecycle
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> realFpsTracker.startTracking()
+                Lifecycle.Event.ON_PAUSE -> realFpsTracker.stopTracking()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            realFpsTracker.stopTracking()
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -186,6 +278,7 @@ fun MapScreen(
             else -> 16.dp                     // Zona normal (actual)
         }
     }
+
     // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
         Scaffold(
@@ -312,13 +405,13 @@ fun MapScreen(
                         },
                         oceanConfig = oceanConfig, // NUEVA LÍNEA: Pasar la configuración
                         oceanConfigManager = oceanConfigManager, // NUEVA LÍNEA: Pasar el manager
+                        realFpsTracker = realFpsTracker,
                         modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
                     )
                 }
 
                 // CAPA 2: El título y PlayerlevelIndicator dentro un surface
                 // Usamos un Surface como el contenedor principal del panel.
-
                 Surface( // <-- NUEVO SURFACE QUE ACTÚA COMO FONDO SÓLIDO
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -396,6 +489,16 @@ fun MapScreen(
                             }
                         }
                     }
+                }
+                // NUEVO: Monitor de FPS superpuesto
+                if (showFpsMonitor) {
+                    FpsMonitorOverlay(
+                        fpsTracker = realFpsTracker,
+                        showDetailed = true,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp)
+                    )
                 }
 
                 // El icono del avión (botón flotante) se muestra si una expedición está disponible.
@@ -778,6 +881,7 @@ fun InteractiveWorldMap(
     availableCountryIds: List<String>,
     onCountryClick: (String) -> Unit,
     oceanConfig: OceanPerformanceConfig, // NUEVO PARÁMETRO
+    realFpsTracker: RealFpsTracker,
     oceanConfigManager: OceanConfigManager, // NUEVO PARÁMETRO
     modifier: Modifier = Modifier
 ) {
@@ -923,14 +1027,16 @@ fun InteractiveWorldMap(
         oceanConfigManager.startInitialBenchmark()
 
         while (true) {
+            realFpsTracker.recordFrameStart()
             if (isAnimationActive) {
                 waveTime += 0.033f
 
-                // NUEVA LÍNEA: Registrar rendimiento cada 10 frames
+                // NUEVO: Registrar FPS real en el sistema automático cada 10 frames
                 if ((waveTime * 30).toInt() % 10 == 0) {
-                    val currentTime = System.nanoTime()
-                    val fps = 1_000_000_000f / oceanConfig.frameDelayMs / 1_000_000f
-                    oceanConfigManager.recordFramePerformance(fps)
+                    val realFPS = realFpsTracker.currentFPS.value
+                    if (realFPS > 0) {
+                        oceanConfigManager.recordFramePerformance(realFPS)
+                    }
                 }
             }
 

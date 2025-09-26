@@ -29,7 +29,7 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         // Configuración de comportamiento
         private const val BENCHMARK_DURATION_MS = 8000L    // 8 segundos de benchmark inicial
-        private const val MONITORING_INTERVAL_MS = 5000L  // Monitorear cada 30 segundos (30000)
+        private const val MONITORING_INTERVAL_MS = 30000L  // Monitorear cada 30 segundos (30000)
         private const val PERFORMANCE_HISTORY_SIZE = 20     // Guardar últimas 20 mediciones
         private const val MIN_FPS_THRESHOLD = 12           // FPS mínimo antes de downgrade
         private const val EXCELLENT_FPS_THRESHOLD = 25     // FPS para considerar upgrade
@@ -243,10 +243,6 @@ class OceanConfigManager private constructor(private val context: Context) {
      * Evalúa el rendimiento actual y ajusta la configuración si es necesario
      */
     private suspend fun evaluateAndAdjustPerformance(averageFPS: Float) {
-
-        // --- LÍNEA TEMPORAL PARA PRUEBAS ---
-        val simulatedFPS = 5f // Simulamos 5 FPS //
-
         if (!isAutoAdjustEnabled()) return
 
         val currentTier = getCurrentTierFromConfig()
@@ -255,26 +251,25 @@ class OceanConfigManager private constructor(private val context: Context) {
         Log.d(TAG, "Evaluando rendimiento: ${averageFPS.toInt()} FPS (target: $currentTargetFPS)")
 
         when {
-            // Rendimiento muy bajo - bajar calidad inmediatamente - averageFPS/simulatedFPS
+            // Rendimiento muy bajo - bajar calidad inmediatamente
             averageFPS < MIN_FPS_THRESHOLD && currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
                 Log.w(TAG, "Rendimiento crítico detectado, bajando calidad")
                 adjustConfigurationTier(false)
             }
 
             // Rendimiento excelente sostenido - considerar subir calidad
-            averageFPS > currentTargetFPS * 1.5f && // <-- CONDICIÓN CAMBIADA
+            averageFPS > EXCELLENT_FPS_THRESHOLD &&
+                    averageFPS > currentTargetFPS * 1.2f &&
                     currentTier != DevicePerformanceDetector.DeviceTier.HIGH -> {
 
                 val recentHistory = getRecentPerformanceHistory(10)
-                // La condición de estabilidad se queda
-                if (recentHistory.size >= 8 && recentHistory.all { it > currentTargetFPS * 1.4f }) {
+                if (recentHistory.size >= 8 && recentHistory.all { it > EXCELLENT_FPS_THRESHOLD }) {
                     Log.i(TAG, "Rendimiento excelente sostenido, subiendo calidad")
                     adjustConfigurationTier(true)
                 }
             }
         }
 
-        // Guardar estadísticas
         saveAverageFPS(averageFPS)
     }
 
