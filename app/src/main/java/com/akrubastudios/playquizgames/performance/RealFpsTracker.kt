@@ -29,40 +29,28 @@ class RealFpsTracker {
     private val updateFrequency = 5 // Actualizar cada 5 frames
 
     /**
-     * Marca el inicio de un nuevo frame
-     * Debe llamarse al comienzo de cada iteración del loop de animación
+     * Mide el tiempo específico de renderizado del océano
      */
-    fun recordFrameStart() {
-        val currentTime = System.nanoTime()
+    fun measureOceanRenderTime(renderTimeNanos: Long) {
+        if (_isTracking.value && renderTimeNanos > 0) {
+            val instantFPS = 1_000_000_000f / renderTimeNanos.toFloat()
 
-        if (_isTracking.value && lastFrameTime != 0L) {
-            val frameTimeNanos = currentTime - lastFrameTime
+            // Filtrar valores extremos
+            if (instantFPS in 1f..200f) {
+                _currentFPS.value = instantFPS
 
-            // Evitar divisiones por cero y valores extremos
-            if (frameTimeNanos > 0) {
-                val instantFPS = 1_000_000_000f / frameTimeNanos.toFloat()
+                fpsHistory.add(instantFPS)
+                if (fpsHistory.size > maxHistorySize) {
+                    fpsHistory.removeAt(0)
+                }
 
-                // Filtrar valores extremos (menos de 1 FPS o más de 200 FPS)
-                if (instantFPS in 1f..200f) {
-                    _currentFPS.value = instantFPS
+                frameCount++
 
-                    // Agregar al historial
-                    fpsHistory.add(instantFPS)
-                    if (fpsHistory.size > maxHistorySize) {
-                        fpsHistory.removeAt(0)
-                    }
-
-                    frameCount++
-
-                    // Actualizar promedio cada ciertos frames
-                    if (frameCount % updateFrequency == 0 && fpsHistory.isNotEmpty()) {
-                        _averageFPS.value = fpsHistory.average().toFloat()
-                    }
+                if (frameCount % updateFrequency == 0 && fpsHistory.isNotEmpty()) {
+                    _averageFPS.value = fpsHistory.average().toFloat()
                 }
             }
         }
-
-        lastFrameTime = currentTime
     }
 
     /**

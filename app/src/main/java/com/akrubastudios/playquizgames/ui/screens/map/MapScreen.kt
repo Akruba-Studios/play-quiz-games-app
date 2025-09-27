@@ -858,8 +858,11 @@ class OptimizedOceanRenderer {
 private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
     waveTime: Float,
     canvasSize: androidx.compose.ui.geometry.Size,
-    config: OceanPerformanceConfig // NUEVO PARÁMETRO
+    config: OceanPerformanceConfig, // NUEVO PARÁMETRO
+    fpsTracker: RealFpsTracker
 ) {
+    val startTime = System.nanoTime()
+
     // Colores oceánicos (sin cambios)
     val deepOcean = Color(0xFF1B4F72)
     val mediumOcean = Color(0xFF2874A6)
@@ -971,6 +974,8 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
             size = canvasSize
         )
     }
+    val endTime = System.nanoTime() // ← AÑADIR AL FINAL
+    fpsTracker.measureOceanRenderTime(endTime - startTime)
 }
 
 // PASO 3: OceanCanvas optimizado con control de frecuencia
@@ -979,11 +984,12 @@ fun OptimizedOceanCanvasWithConfig(
     modifier: Modifier = Modifier,
     waveTime: Float = 0f,
     isActive: Boolean = true,
-    config: OceanPerformanceConfig // NUEVO PARÁMETRO
+    config: OceanPerformanceConfig, // NUEVO PARÁMETRO
+    fpsTracker: RealFpsTracker
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
         if (isActive) {
-            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config) // USAR NUEVA FUNCIÓN
+            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker) // USAR NUEVA FUNCIÓN
         } else {
             // Durante transiciones, mostrar océano estático
             drawRect(color = Color(0xFF1B4F72), size = size)
@@ -1141,27 +1147,25 @@ fun InteractiveWorldMap(
 
     // Animación optimizada del océano
     LaunchedEffect(Unit) {
-        // Iniciar benchmark automático
         oceanConfigManager.startInitialBenchmark()
 
         while (true) {
-            realFpsTracker.recordFrameStart()
             if (isAnimationActive) {
                 waveTime += 0.033f
-
-                // NUEVO: Registrar FPS real en el sistema automático cada 10 frames
-                if ((waveTime * 30).toInt() % 10 == 0) {
-                    val realFPS = realFpsTracker.currentFPS.value
-                    if (realFPS > 0) {
-                        oceanConfigManager.recordFramePerformance(realFPS)
-                    }
-                }
             }
-
-            // CAMBIAR DELAY FIJO POR CONFIGURACIÓN DINÁMICA:
-            delay(oceanConfig.frameDelayMs) // LÍNEA MODIFICADA
-
+            delay(16L) // ← DELAY FIJO para smooth animation
             if (waveTime > 1000f) waveTime -= 1000f
+        }
+    }
+
+    // CONTROL1: NUEVO LaunchedEffect para reportar FPS al ConfigManager
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000L) // Reportar cada segundo
+            val currentFPS = realFpsTracker.currentFPS.value
+            if (currentFPS > 0) {
+                oceanConfigManager.recordFramePerformance(currentFPS)
+            }
         }
     }
 
@@ -1356,7 +1360,8 @@ fun InteractiveWorldMap(
         OptimizedOceanCanvasWithConfig(
             waveTime = waveTime,
             isActive = isAnimationActive,
-            config = oceanConfig // PASAR LA CONFIGURACIÓN DINÁMICA
+            config = oceanConfig, // PASAR LA CONFIGURACIÓN DINÁMICA
+            fpsTracker = realFpsTracker
         )
 
         // CAPA 2: Mapa en canvas original
