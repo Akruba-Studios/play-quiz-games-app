@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 2M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 3M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -337,9 +337,11 @@ fun MapScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        lifecycleOwner.lifecycle.addObserver(viewModel)
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
             realFpsTracker.stopTracking()
         }
     }

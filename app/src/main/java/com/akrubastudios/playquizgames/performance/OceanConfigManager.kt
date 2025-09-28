@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL7A:
+ * Gestor central de configuración oceánica con detección automática CONTROL8A:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -231,6 +231,12 @@ class OceanConfigManager private constructor(private val context: Context) {
                     Log.w(TAG, "Benchmark observer falló - no se obtuvieron FPS válidos")
                 }
 
+            } catch (e: CancellationException) {
+                // --- INICIO DEL BLOQUE AÑADIDO ---
+                // Esto es normal, la corrutina fue cancelada a propósito.
+                Log.d(TAG, "Benchmark observer cancelado, lo cual es normal.")
+                throw e // Es buena práctica relanzar la excepción de cancelación.
+                // --- FIN DEL BLOQUE AÑADIDO ---
             } catch (e: Exception) {
                 Log.e(TAG, "Error en benchmark observer", e)
             }
