@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL4:
+ * Gestor central de configuración oceánica con detección automática CONTROL5:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -39,7 +39,7 @@ class OceanConfigManager private constructor(private val context: Context) {
         private const val DOWNGRADE_THRESHOLD_PERCENT = 0.65f  // 65% del target para bajar
         private const val UPGRADE_THRESHOLD_PERCENT = 1.40f    // 140% del target para subir
         private const val DOWNGRADE_REQUIRED_SAMPLES = 3       // De 8 mediciones para bajar
-        private const val UPGRADE_REQUIRED_SAMPLES = 8         // De 8 mediciones para subir
+        private const val UPGRADE_REQUIRED_SAMPLES = 4         // De 8 mediciones para subir
         private const val EVALUATION_SAMPLE_SIZE = 4           // Tamaño de muestra para evaluación
 
         // Detección de crisis para ajustes inmediatos
@@ -166,49 +166,66 @@ class OceanConfigManager private constructor(private val context: Context) {
     }
 
     /**
-     * Inicia el benchmark inicial para validar la configuración
+     * Observer de benchmark inicial - solo observa FPS reales sin generar datos artificiales
      */
     fun startInitialBenchmark() {
         benchmarkJob?.cancel()
         benchmarkJob = managerScope.launch {
             try {
-                Log.d(TAG, "Iniciando benchmark inicial...")
+                Log.d(TAG, "Iniciando benchmark observer (solo observación)...")
 
-                delay(2000) // Esperar a que la UI se estabilice
+                // Esperar a que la UI se estabilice y empiece el renderizado real
+                delay(3000)
 
-                var totalFrames = 0
-                var totalFrameTime = 0L
+                // Variables para observación
+                var observedSamples = 0
+                var totalObservedFPS = 0f
+                val benchmarkDurationMs = 8000L // 8 segundos de observación
                 val startTime = System.currentTimeMillis()
 
-                while (System.currentTimeMillis() - startTime < BENCHMARK_DURATION_MS) {
-                    val frameStart = System.nanoTime()
+                Log.d(TAG, "Benchmark observer iniciado - observando FPS reales por ${benchmarkDurationMs/1000}s")
 
-                    // Simular un frame (en la práctica esto será llamado desde tu Canvas)
-                    delay(currentConfig.value.frameDelayMs)
+                // Observar FPS reales cada segundo durante el benchmark
+                while (System.currentTimeMillis() - startTime < benchmarkDurationMs) {
+                    delay(1000L) // Observar cada segundo
 
-                    val frameTime = System.nanoTime() - frameStart
-                    totalFrameTime += frameTime
-                    totalFrames++
+                    // Obtener el FPS real actual del tracker (sin generarlo artificialmente)
+                    val currentRealFPS = getCurrentRecentAverageFPS() // Nueva función helper
 
-                    if (totalFrames % 10 == 0) {
-                        val currentFPS = 1_000_000_000f / (frameTime.toFloat())
-                        recordFramePerformance(currentFPS)
+                    if (currentRealFPS > 0f && currentRealFPS < 200f) { // Filtrar valores válidos
+                        totalObservedFPS += currentRealFPS
+                        observedSamples++
+
+                        Log.d(TAG, "Benchmark sample $observedSamples: ${currentRealFPS.toInt()} FPS reales")
+                    } else {
+                        Log.d(TAG, "Benchmark sample descartada: FPS inválido ($currentRealFPS)")
                     }
                 }
 
-                val averageFPS = if (totalFrames > 0) {
-                    1_000_000_000f / (totalFrameTime.toFloat() / totalFrames)
+                // Calcular resultado final
+                val finalAverageFPS = if (observedSamples > 0) {
+                    totalObservedFPS / observedSamples
                 } else {
-                    15f
+                    0f
                 }
 
-                Log.i(TAG, "Benchmark completado: ${averageFPS.toInt()} FPS promedio")
+                if (finalAverageFPS > 0) {
+                    Log.i(TAG, "Benchmark observer completado: ${finalAverageFPS.toInt()} FPS promedio (${observedSamples} muestras reales)")
 
-                // Evaluar si necesitamos ajustar la configuración
-                evaluateAndAdjustPerformance(averageFPS)
+                    // OPCIONAL: Solo evaluar si tenemos suficientes muestras válidas
+                    if (observedSamples >= 5) {
+                        Log.d(TAG, "Evaluando configuración basada en benchmark real...")
+                        // NO llamar recordFramePerformance aquí para no contaminar
+                        // Solo log para información
+                    } else {
+                        Log.w(TAG, "Benchmark insuficiente ($observedSamples muestras), saltando evaluación inicial")
+                    }
+                } else {
+                    Log.w(TAG, "Benchmark observer falló - no se obtuvieron FPS válidos")
+                }
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error en benchmark inicial", e)
+                Log.e(TAG, "Error en benchmark observer", e)
             }
         }
     }
@@ -246,6 +263,7 @@ class OceanConfigManager private constructor(private val context: Context) {
      * Esta función debe ser llamada desde tu Canvas durante el renderizado
      */
     fun recordFramePerformance(fps: Float) {
+        Log.v(TAG, "FPS medido: ${fps.toInt()} (fuente: ${Thread.currentThread().name})")
         if (fps > 0 && fps < 200) { // Filtrar valores extremos
             performanceMonitor.recordFrame(fps)
 
@@ -591,6 +609,23 @@ class OceanConfigManager private constructor(private val context: Context) {
                 } catch (e: Exception) {
                     Log.w(TAG, "Error cargando historial de rendimiento", e)
                 }
+            }
+        }
+    }
+
+    /**
+     * Obtiene el FPS promedio reciente sin afectar el historial de evaluación
+     */
+    private fun getCurrentRecentAverageFPS(): Float {
+        synchronized(performanceHistory) {
+            if (performanceHistory.isEmpty()) return 0f
+
+            // Tomar las últimas 3-5 mediciones para obtener FPS actual
+            val recentSamples = performanceHistory.takeLast(3)
+            return if (recentSamples.isNotEmpty()) {
+                recentSamples.average().toFloat()
+            } else {
+                0f
             }
         }
     }
