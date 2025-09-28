@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 2M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -325,8 +325,14 @@ fun MapScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_RESUME -> realFpsTracker.startTracking()
-                Lifecycle.Event.ON_PAUSE -> realFpsTracker.stopTracking()
+                Lifecycle.Event.ON_RESUME -> {
+                    realFpsTracker.startTracking()
+                    oceanConfigManager.resumeMonitoring()  // AGREGAR
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    realFpsTracker.stopTracking()
+                    oceanConfigManager.pauseMonitoring()   // AGREGAR
+                }
                 else -> {}
             }
         }
@@ -1159,12 +1165,15 @@ fun InteractiveWorldMap(
     }
 
     // CONTROL1: NUEVO LaunchedEffect para reportar FPS al ConfigManager
-    LaunchedEffect(Unit) {
+    // Busca el LaunchedEffect de FPS reporting y REEMPLAZA:
+    LaunchedEffect(lifecycleOwner) {  // CAMBIAR de Unit a lifecycleOwner
         while (true) {
-            delay(1000L) // Reportar cada segundo
-            val currentFPS = realFpsTracker.currentFPS.value
-            if (currentFPS > 0) {
-                oceanConfigManager.recordFramePerformance(currentFPS)
+            delay(1000L)
+            if (isAnimationActive) {  // AGREGAR esta condición
+                val currentFPS = realFpsTracker.currentFPS.value
+                if (currentFPS > 0) {
+                    oceanConfigManager.recordFramePerformance(currentFPS)
+                }
             }
         }
     }

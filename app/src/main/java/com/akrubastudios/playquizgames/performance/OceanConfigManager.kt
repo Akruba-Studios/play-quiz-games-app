@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL6:
+ * Gestor central de configuración oceánica con detección automática CONTROL7A:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -668,6 +668,19 @@ class OceanConfigManager private constructor(private val context: Context) {
             } else {
                 0f
             }
+        }
+    }
+
+    fun pauseMonitoring() {
+        Log.d(TAG, "Pausando monitoreo automático")
+        monitoringJob?.cancel()
+        _isMonitoring.value = false
+    }
+
+    fun resumeMonitoring() {
+        if (isAutoAdjustEnabled() && !_isMonitoring.value) {
+            Log.d(TAG, "Reanudando monitoreo automático")
+            startPerformanceMonitoring()
         }
     }
 
