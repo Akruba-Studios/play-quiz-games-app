@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL5:
+ * Gestor central de configuración oceánica con detección automática CONTROL6:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -37,16 +37,19 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         // Umbrales basados en porcentajes del target FPS
         private const val DOWNGRADE_THRESHOLD_PERCENT = 0.65f  // 65% del target para bajar
-        private const val UPGRADE_THRESHOLD_PERCENT = 1.40f    // 140% del target para subir
+        private const val UPGRADE_THRESHOLD_PERCENT = 1.65f      // 165% para subir (era 140%)
         private const val DOWNGRADE_REQUIRED_SAMPLES = 3       // De 8 mediciones para bajar
         private const val UPGRADE_REQUIRED_SAMPLES = 4         // De 8 mediciones para subir
         private const val EVALUATION_SAMPLE_SIZE = 4           // Tamaño de muestra para evaluación
+        private const val DOWNGRADE_HYSTERESIS_PERCENT = 0.75f   // 75% para mantener tras upgrade
+        private const val UPGRADE_HYSTERESIS_PERCENT = 1.25f     // 125% para mantener tras downgrade
 
         // Detección de crisis para ajustes inmediatos
         private const val CRISIS_THRESHOLD_PERCENT = 0.20f      // 20% del target (crisis crítica)
         private const val SEVERE_THRESHOLD_PERCENT = 0.35f      // 35% del target (crisis severa)
         private const val SEVERE_CONSECUTIVE_REQUIRED = 2        // Mediciones consecutivas para crisis severa
-
+        // Control de decisiones recientes
+        private const val RECENT_CHANGE_COOLDOWN_MS = 15000L     // 15 segundos tras cambio
 
         @Volatile
         private var INSTANCE: OceanConfigManager? = null
@@ -84,6 +87,10 @@ class OceanConfigManager private constructor(private val context: Context) {
     private var lastCrisisDetectionTime = 0L
     private var consecutiveSevereReadings = 0
     private val crisisCooldownMs = 10000L // 10 segundos entre detecciones de crisis
+
+    // Control de histéresis y cambios recientes
+    private var lastQualityChangeTime = 0L
+    private var lastQualityChangeDirection: String? = null // "UP" o "DOWN"
 
     init {
         loadPerformanceHistory()
@@ -346,12 +353,42 @@ class OceanConfigManager private constructor(private val context: Context) {
             return
         }
 
-        // Calcular umbrales normales basados en target FPS
-        val downgradeThreshold = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
-        val upgradeThreshold = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
+        // Calcular umbrales con histéresis basados en decisión previa
+        val timeSinceLastChange = currentTime - lastQualityChangeTime
+        val isInCooldown = timeSinceLastChange < RECENT_CHANGE_COOLDOWN_MS
+
+        val (downgradeThreshold, upgradeThreshold) = if (isInCooldown && lastQualityChangeDirection != null) {
+            // Aplicar histéresis - umbrales más estrictos después de cambio reciente
+            when (lastQualityChangeDirection) {
+                "UP" -> {
+                    // Acabamos de subir calidad - usar histéresis para mantenerla
+                    val hysteresisDown = currentTargetFPS * DOWNGRADE_HYSTERESIS_PERCENT
+                    val normalUp = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
+                    Pair(hysteresisDown, normalUp)
+                }
+                "DOWN" -> {
+                    // Acabamos de bajar calidad - usar histéresis para mantenerla
+                    val normalDown = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
+                    val hysteresisUp = currentTargetFPS * UPGRADE_HYSTERESIS_PERCENT
+                    Pair(normalDown, hysteresisUp)
+                }
+                else -> {
+                    // Umbrales normales
+                    val normalDown = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
+                    val normalUp = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
+                    Pair(normalDown, normalUp)
+                }
+            }
+        } else {
+            // Sin histéresis - umbrales normales
+            val normalDown = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
+            val normalUp = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
+            Pair(normalDown, normalUp)
+        }
 
         Log.d(TAG, "Evaluación normal: ${averageFPS.toInt()}FPS vs target ${currentTargetFPS.toInt()}FPS " +
-                "(bajar<${downgradeThreshold.toInt()}, subir>${upgradeThreshold.toInt()})")
+                "(bajar<${downgradeThreshold.toInt()}, subir>${upgradeThreshold.toInt()}) " +
+                "${if (isInCooldown) "[Histéresis: ${lastQualityChangeDirection}, ${(RECENT_CHANGE_COOLDOWN_MS - timeSinceLastChange) / 1000}s restantes]" else ""}")
 
         // Contar muestras que cumplen condiciones
         val samplesUnderDowngrade = evaluationHistory.count { it < downgradeThreshold }
@@ -362,8 +399,10 @@ class OceanConfigManager private constructor(private val context: Context) {
             samplesUnderDowngrade >= DOWNGRADE_REQUIRED_SAMPLES &&
                     currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
 
-                Log.i(TAG, "📉 Bajando calidad (normal): $samplesUnderDowngrade/$EVALUATION_SAMPLE_SIZE muestras bajo ${downgradeThreshold.toInt()}FPS")
+                Log.i(TAG, "Bajando calidad (normal): $samplesUnderDowngrade/$EVALUATION_SAMPLE_SIZE muestras bajo ${downgradeThreshold.toInt()}FPS")
                 adjustConfigurationTier(false)
+                lastQualityChangeTime = currentTime
+                lastQualityChangeDirection = "DOWN"
                 evaluationHistory.clear()
             }
 
@@ -371,8 +410,10 @@ class OceanConfigManager private constructor(private val context: Context) {
             samplesOverUpgrade >= UPGRADE_REQUIRED_SAMPLES &&
                     currentTier != DevicePerformanceDetector.DeviceTier.HIGH -> {
 
-                Log.i(TAG, "📈 Subiendo calidad: $samplesOverUpgrade/$EVALUATION_SAMPLE_SIZE muestras sobre ${upgradeThreshold.toInt()}FPS")
+                Log.i(TAG, "Subiendo calidad: $samplesOverUpgrade/$EVALUATION_SAMPLE_SIZE muestras sobre ${upgradeThreshold.toInt()}FPS")
                 adjustConfigurationTier(true)
+                lastQualityChangeTime = currentTime
+                lastQualityChangeDirection = "UP"
                 evaluationHistory.clear()
             }
 
