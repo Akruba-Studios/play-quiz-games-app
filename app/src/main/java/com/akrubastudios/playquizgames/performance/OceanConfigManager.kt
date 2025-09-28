@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática
+ * Gestor central de configuración oceánica con detección automática CONTROL2:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -31,9 +31,16 @@ class OceanConfigManager private constructor(private val context: Context) {
         private const val BENCHMARK_DURATION_MS = 8000L    // 8 segundos de benchmark inicial
         private const val MONITORING_INTERVAL_MS = 30000L  // Monitorear cada 30 segundos (30000)
         private const val PERFORMANCE_HISTORY_SIZE = 20     // Guardar últimas 20 mediciones
-        private const val MIN_FPS_THRESHOLD = 12           // FPS mínimo antes de downgrade
-        private const val EXCELLENT_FPS_THRESHOLD = 25     // FPS para considerar upgrade
+        // private const val MIN_FPS_THRESHOLD = 12           // FPS mínimo antes de downgrade
+        // private const val EXCELLENT_FPS_THRESHOLD = 25     // FPS para considerar upgrade
         private const val DETECTION_COOLDOWN_HOURS = 24    // Re-evaluar cada 24 horas
+
+        // Umbrales basados en porcentajes del target FPS
+        private const val DOWNGRADE_THRESHOLD_PERCENT = 0.65f  // 65% del target para bajar
+        private const val UPGRADE_THRESHOLD_PERCENT = 1.40f    // 140% del target para subir
+        private const val DOWNGRADE_REQUIRED_SAMPLES = 6       // De 8 mediciones para bajar
+        private const val UPGRADE_REQUIRED_SAMPLES = 8         // De 8 mediciones para subir
+        private const val EVALUATION_SAMPLE_SIZE = 8           // Tamaño de muestra para evaluación
 
         @Volatile
         private var INSTANCE: OceanConfigManager? = null
@@ -64,6 +71,8 @@ class OceanConfigManager private constructor(private val context: Context) {
 
     // Historial de rendimiento
     private val performanceHistory = mutableListOf<Float>()
+    // Historial específico para evaluación de ajustes
+    private val evaluationHistory = mutableListOf<Float>()
 
     init {
         loadPerformanceHistory()
@@ -246,27 +255,55 @@ class OceanConfigManager private constructor(private val context: Context) {
         if (!isAutoAdjustEnabled()) return
 
         val currentTier = getCurrentTierFromConfig()
-        val currentTargetFPS = currentConfig.value.targetFPS
+        val currentTargetFPS = currentConfig.value.targetFPS.toFloat()
 
-        Log.d(TAG, "Evaluando rendimiento: ${averageFPS.toInt()} FPS (target: $currentTargetFPS)")
+        // Agregar al historial de evaluación
+        synchronized(evaluationHistory) {
+            evaluationHistory.add(averageFPS)
+            if (evaluationHistory.size > EVALUATION_SAMPLE_SIZE) {
+                evaluationHistory.removeAt(0)
+            }
+        }
+
+        // Necesitamos suficiente historial para evaluar
+        if (evaluationHistory.size < EVALUATION_SAMPLE_SIZE) {
+            Log.d(TAG, "Insuficiente historial: ${evaluationHistory.size}/$EVALUATION_SAMPLE_SIZE")
+            return
+        }
+
+        // Calcular umbrales dinámicos basados en target FPS
+        val downgradeThreshold = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
+        val upgradeThreshold = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
+
+        Log.d(TAG, "Evaluando: ${averageFPS.toInt()}FPS vs target ${currentTargetFPS.toInt()}FPS " +
+                "(bajar<${downgradeThreshold.toInt()}, subir>${upgradeThreshold.toInt()})")
+
+        // Contar muestras que cumplen condiciones
+        val samplesUnderDowngrade = evaluationHistory.count { it < downgradeThreshold }
+        val samplesOverUpgrade = evaluationHistory.count { it > upgradeThreshold }
 
         when {
-            // Rendimiento muy bajo - bajar calidad inmediatamente
-            averageFPS < MIN_FPS_THRESHOLD && currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
-                Log.w(TAG, "Rendimiento crítico detectado, bajando calidad")
+            // Condición para BAJAR calidad
+            samplesUnderDowngrade >= DOWNGRADE_REQUIRED_SAMPLES &&
+                    currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
+
+                Log.w(TAG, "Bajando calidad: $samplesUnderDowngrade/$EVALUATION_SAMPLE_SIZE muestras bajo ${downgradeThreshold.toInt()}FPS")
                 adjustConfigurationTier(false)
+                evaluationHistory.clear() // Limpiar historial tras ajuste
             }
 
-            // Rendimiento excelente sostenido - considerar subir calidad
-            averageFPS > EXCELLENT_FPS_THRESHOLD &&
-                    averageFPS > currentTargetFPS * 1.2f &&
+            // Condición para SUBIR calidad
+            samplesOverUpgrade >= UPGRADE_REQUIRED_SAMPLES &&
                     currentTier != DevicePerformanceDetector.DeviceTier.HIGH -> {
 
-                val recentHistory = getRecentPerformanceHistory(10)
-                if (recentHistory.size >= 8 && recentHistory.all { it > EXCELLENT_FPS_THRESHOLD }) {
-                    Log.i(TAG, "Rendimiento excelente sostenido, subiendo calidad")
-                    adjustConfigurationTier(true)
-                }
+                Log.i(TAG, "Subiendo calidad: $samplesOverUpgrade/$EVALUATION_SAMPLE_SIZE muestras sobre ${upgradeThreshold.toInt()}FPS")
+                adjustConfigurationTier(true)
+                evaluationHistory.clear() // Limpiar historial tras ajuste
+            }
+
+            else -> {
+                Log.d(TAG, "Sin cambios: bajo=${samplesUnderDowngrade}/${DOWNGRADE_REQUIRED_SAMPLES}, " +
+                        "alto=${samplesOverUpgrade}/${UPGRADE_REQUIRED_SAMPLES}")
             }
         }
 
