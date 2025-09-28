@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 3M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 4M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -262,10 +262,9 @@ fun AdvancedFpsMonitor(
                             Button(
                                 onClick = {
                                     // Inyectar FPS bajos para testing
-                                    repeat(20) {
+                                    repeat(50) {
                                         oceanConfigManager.recordFramePerformance(8f)
                                     }
-                                    performanceStats = oceanConfigManager.getPerformanceStats()
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.Red.copy(alpha = 0.7f)
@@ -280,10 +279,9 @@ fun AdvancedFpsMonitor(
                             Button(
                                 onClick = {
                                     // Inyectar FPS altos para testing
-                                    repeat(20) {
-                                        oceanConfigManager.recordFramePerformance(40f)
+                                    repeat(50) {
+                                        oceanConfigManager.recordFramePerformance(70f)
                                     }
-                                    performanceStats = oceanConfigManager.getPerformanceStats()
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.Green.copy(alpha = 0.7f)
