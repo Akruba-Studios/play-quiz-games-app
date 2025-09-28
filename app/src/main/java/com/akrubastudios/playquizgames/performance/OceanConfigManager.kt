@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL2:
+ * Gestor central de configuración oceánica con detección automática CONTROL3:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -41,6 +41,12 @@ class OceanConfigManager private constructor(private val context: Context) {
         private const val DOWNGRADE_REQUIRED_SAMPLES = 6       // De 8 mediciones para bajar
         private const val UPGRADE_REQUIRED_SAMPLES = 8         // De 8 mediciones para subir
         private const val EVALUATION_SAMPLE_SIZE = 8           // Tamaño de muestra para evaluación
+
+        // Detección de crisis para ajustes inmediatos
+        private const val CRISIS_THRESHOLD_PERCENT = 0.20f      // 20% del target (crisis crítica)
+        private const val SEVERE_THRESHOLD_PERCENT = 0.35f      // 35% del target (crisis severa)
+        private const val SEVERE_CONSECUTIVE_REQUIRED = 2        // Mediciones consecutivas para crisis severa
+
 
         @Volatile
         private var INSTANCE: OceanConfigManager? = null
@@ -73,6 +79,11 @@ class OceanConfigManager private constructor(private val context: Context) {
     private val performanceHistory = mutableListOf<Float>()
     // Historial específico para evaluación de ajustes
     private val evaluationHistory = mutableListOf<Float>()
+
+    // Control de detección de crisis
+    private var lastCrisisDetectionTime = 0L
+    private var consecutiveSevereReadings = 0
+    private val crisisCooldownMs = 10000L // 10 segundos entre detecciones de crisis
 
     init {
         loadPerformanceHistory()
@@ -256,8 +267,54 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         val currentTier = getCurrentTierFromConfig()
         val currentTargetFPS = currentConfig.value.targetFPS.toFloat()
+        val currentTime = System.currentTimeMillis()
 
-        // Agregar al historial de evaluación
+        // =============================
+        // FASE 1: DETECCIÓN DE CRISIS
+        // =============================
+
+        val crisisThreshold = currentTargetFPS * CRISIS_THRESHOLD_PERCENT
+        val severeThreshold = currentTargetFPS * SEVERE_THRESHOLD_PERCENT
+
+        // Crisis crítica - bajar inmediatamente
+        if (averageFPS < crisisThreshold &&
+            currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW &&
+            currentTime - lastCrisisDetectionTime > crisisCooldownMs) {
+
+            Log.w(TAG, "🚨 CRISIS CRÍTICA: ${averageFPS.toInt()}FPS < ${crisisThreshold.toInt()}FPS - Bajando calidad inmediatamente")
+            adjustConfigurationTier(false)
+            lastCrisisDetectionTime = currentTime
+            consecutiveSevereReadings = 0
+            evaluationHistory.clear()
+            return // Salir sin evaluación normal
+        }
+
+        // Crisis severa - bajar tras mediciones consecutivas
+        if (averageFPS < severeThreshold && currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW) {
+            consecutiveSevereReadings++
+
+            if (consecutiveSevereReadings >= SEVERE_CONSECUTIVE_REQUIRED &&
+                currentTime - lastCrisisDetectionTime > crisisCooldownMs) {
+
+                Log.w(TAG, "⚠️ CRISIS SEVERA: ${consecutiveSevereReadings} mediciones bajo ${severeThreshold.toInt()}FPS - Bajando calidad")
+                adjustConfigurationTier(false)
+                lastCrisisDetectionTime = currentTime
+                consecutiveSevereReadings = 0
+                evaluationHistory.clear()
+                return // Salir sin evaluación normal
+            }
+
+            Log.d(TAG, "Crisis severa detectada: ${consecutiveSevereReadings}/$SEVERE_CONSECUTIVE_REQUIRED mediciones bajo ${severeThreshold.toInt()}FPS")
+        } else {
+            // Resetear contador si salimos de crisis severa
+            consecutiveSevereReadings = 0
+        }
+
+        // =============================
+        // FASE 2: EVALUACIÓN NORMAL
+        // =============================
+
+        // Agregar al historial de evaluación normal
         synchronized(evaluationHistory) {
             evaluationHistory.add(averageFPS)
             if (evaluationHistory.size > EVALUATION_SAMPLE_SIZE) {
@@ -267,15 +324,15 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         // Necesitamos suficiente historial para evaluar
         if (evaluationHistory.size < EVALUATION_SAMPLE_SIZE) {
-            Log.d(TAG, "Insuficiente historial: ${evaluationHistory.size}/$EVALUATION_SAMPLE_SIZE")
+            Log.d(TAG, "Historial insuficiente: ${evaluationHistory.size}/$EVALUATION_SAMPLE_SIZE muestras")
             return
         }
 
-        // Calcular umbrales dinámicos basados en target FPS
+        // Calcular umbrales normales basados en target FPS
         val downgradeThreshold = currentTargetFPS * DOWNGRADE_THRESHOLD_PERCENT
         val upgradeThreshold = currentTargetFPS * UPGRADE_THRESHOLD_PERCENT
 
-        Log.d(TAG, "Evaluando: ${averageFPS.toInt()}FPS vs target ${currentTargetFPS.toInt()}FPS " +
+        Log.d(TAG, "Evaluación normal: ${averageFPS.toInt()}FPS vs target ${currentTargetFPS.toInt()}FPS " +
                 "(bajar<${downgradeThreshold.toInt()}, subir>${upgradeThreshold.toInt()})")
 
         // Contar muestras que cumplen condiciones
@@ -283,22 +340,22 @@ class OceanConfigManager private constructor(private val context: Context) {
         val samplesOverUpgrade = evaluationHistory.count { it > upgradeThreshold }
 
         when {
-            // Condición para BAJAR calidad
+            // Condición para BAJAR calidad (evaluación normal)
             samplesUnderDowngrade >= DOWNGRADE_REQUIRED_SAMPLES &&
                     currentTier != DevicePerformanceDetector.DeviceTier.VERY_LOW -> {
 
-                Log.w(TAG, "Bajando calidad: $samplesUnderDowngrade/$EVALUATION_SAMPLE_SIZE muestras bajo ${downgradeThreshold.toInt()}FPS")
+                Log.i(TAG, "📉 Bajando calidad (normal): $samplesUnderDowngrade/$EVALUATION_SAMPLE_SIZE muestras bajo ${downgradeThreshold.toInt()}FPS")
                 adjustConfigurationTier(false)
-                evaluationHistory.clear() // Limpiar historial tras ajuste
+                evaluationHistory.clear()
             }
 
-            // Condición para SUBIR calidad
+            // Condición para SUBIR calidad (evaluación normal)
             samplesOverUpgrade >= UPGRADE_REQUIRED_SAMPLES &&
                     currentTier != DevicePerformanceDetector.DeviceTier.HIGH -> {
 
-                Log.i(TAG, "Subiendo calidad: $samplesOverUpgrade/$EVALUATION_SAMPLE_SIZE muestras sobre ${upgradeThreshold.toInt()}FPS")
+                Log.i(TAG, "📈 Subiendo calidad: $samplesOverUpgrade/$EVALUATION_SAMPLE_SIZE muestras sobre ${upgradeThreshold.toInt()}FPS")
                 adjustConfigurationTier(true)
-                evaluationHistory.clear() // Limpiar historial tras ajuste
+                evaluationHistory.clear()
             }
 
             else -> {
@@ -564,4 +621,27 @@ class OceanConfigManager private constructor(private val context: Context) {
         val computationalLoad: Float,
         val deviceInfo: String
     )
+
+    // CAMBIO 4: Método adicional para debug de crisis (OPCIONAL)
+    // ==============================================================
+    // AGREGAR esta función al final de la clase OceanConfigManager:
+    /**
+     * Obtiene información de debug sobre el sistema de crisis
+     */
+    fun getCrisisDebugInfo(): String {
+        val currentTargetFPS = currentConfig.value.targetFPS.toFloat()
+        val crisisThreshold = currentTargetFPS * CRISIS_THRESHOLD_PERCENT
+        val severeThreshold = currentTargetFPS * SEVERE_THRESHOLD_PERCENT
+        val timeSinceLastCrisis = System.currentTimeMillis() - lastCrisisDetectionTime
+
+        return """
+        Sistema de Crisis Debug:
+        - Target FPS: ${currentTargetFPS.toInt()}
+        - Crisis crítica: < ${crisisThreshold.toInt()} FPS
+        - Crisis severa: < ${severeThreshold.toInt()} FPS
+        - Lecturas severas consecutivas: $consecutiveSevereReadings/$SEVERE_CONSECUTIVE_REQUIRED
+        - Tiempo desde última crisis: ${timeSinceLastCrisis / 1000}s
+        - Cooldown restante: ${maxOf(0, (crisisCooldownMs - timeSinceLastCrisis) / 1000)}s
+    """.trimIndent()
+    }
 }
