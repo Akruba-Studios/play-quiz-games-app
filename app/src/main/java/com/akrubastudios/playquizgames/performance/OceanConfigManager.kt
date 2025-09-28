@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL3:
+ * Gestor central de configuración oceánica con detección automática CONTROL4:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -29,7 +29,7 @@ class OceanConfigManager private constructor(private val context: Context) {
 
         // Configuración de comportamiento
         private const val BENCHMARK_DURATION_MS = 8000L    // 8 segundos de benchmark inicial
-        private const val MONITORING_INTERVAL_MS = 30000L  // Monitorear cada 30 segundos (30000)
+        private const val MONITORING_INTERVAL_MS = 3000L  // Monitorear cada 3 segundos (3000)
         private const val PERFORMANCE_HISTORY_SIZE = 20     // Guardar últimas 20 mediciones
         // private const val MIN_FPS_THRESHOLD = 12           // FPS mínimo antes de downgrade
         // private const val EXCELLENT_FPS_THRESHOLD = 25     // FPS para considerar upgrade
@@ -38,9 +38,9 @@ class OceanConfigManager private constructor(private val context: Context) {
         // Umbrales basados en porcentajes del target FPS
         private const val DOWNGRADE_THRESHOLD_PERCENT = 0.65f  // 65% del target para bajar
         private const val UPGRADE_THRESHOLD_PERCENT = 1.40f    // 140% del target para subir
-        private const val DOWNGRADE_REQUIRED_SAMPLES = 6       // De 8 mediciones para bajar
+        private const val DOWNGRADE_REQUIRED_SAMPLES = 3       // De 8 mediciones para bajar
         private const val UPGRADE_REQUIRED_SAMPLES = 8         // De 8 mediciones para subir
-        private const val EVALUATION_SAMPLE_SIZE = 8           // Tamaño de muestra para evaluación
+        private const val EVALUATION_SAMPLE_SIZE = 4           // Tamaño de muestra para evaluación
 
         // Detección de crisis para ajustes inmediatos
         private const val CRISIS_THRESHOLD_PERCENT = 0.20f      // 20% del target (crisis crítica)
