@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 4M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 5M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -860,12 +860,13 @@ class OptimizedOceanRenderer {
     }
 }
 
-// PASO 2: Versión optimizada de drawOceanBackground
+// PASO 2: Versión optimizada de drawOceanBackground - Estrategia 2
 private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
     waveTime: Float,
     canvasSize: androidx.compose.ui.geometry.Size,
     config: OceanPerformanceConfig, // NUEVO PARÁMETRO
-    fpsTracker: RealFpsTracker
+    fpsTracker: RealFpsTracker,
+    reusablePath: Path
 ) {
     val startTime = System.nanoTime()
 
@@ -882,6 +883,9 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
     val noiseScale = 0.002f
     val stepSize = config.stepSize // USAR CONFIGURACIÓN DINÁMICA
     val depthVariationIntensity = config.depthIntensity // USAR CONFIGURACIÓN DINÁMICA
+
+    val shallowPoints = mutableListOf<Offset>()
+    val mediumPoints = mutableListOf<Offset>()
 
     // Precalcular valores que no cambian en el loop
     val timeOffset1 = waveTime * 0.2f
@@ -906,42 +910,78 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
             val combinedNoise = (noise1 * 0.6f + noise2 * 0.4f + 1f) / 2f
             val depthFactor = combinedNoise * depthVariationIntensity
 
-            if (depthFactor > 0.15f) {
-                val currentColor = if (depthFactor > 0.25f) {
-                    shallowOcean.copy(alpha = 0.4f)
-                } else {
-                    mediumOcean.copy(alpha = 0.7f)
-                }
-
-                drawRect(
-                    color = currentColor,
-                    topLeft = Offset(x.toFloat(), y.toFloat()),
-                    size = androidx.compose.ui.geometry.Size(stepSize.toFloat(), stepSize.toFloat())
-                )
+            if (depthFactor > 0.25f) {
+                shallowPoints.add(Offset(x.toFloat(), y.toFloat()))
+            } else {
+                mediumPoints.add(Offset(x.toFloat(), y.toFloat()))
             }
         }
     }
 
+    // 1. Calculamos el desplazamiento para la segunda capa.
+    val offsetAmount = stepSize / 2f
+    val offsetVector = Offset(offsetAmount, offsetAmount)
+
+    // 2. Preparamos las listas de puntos desplazados.
+    //    Usamos .map, que es muy eficiente para esta operación.
+    val mediumPointsOffset = mediumPoints.map { it + offsetVector }
+    val shallowPointsOffset = shallowPoints.map { it + offsetVector }
+
+    // 3. Dibujamos las capas de puntos MEDIOS (dos veces con alpha reducido).
+    //    El alpha original era 0.7f, ahora cada capa tiene 0.5f.
+    val mediumColor = mediumOcean.copy(alpha = 0.5f)
+    drawPoints(
+        points = mediumPoints,
+        pointMode = PointMode.Points,
+        color = mediumColor,
+        strokeWidth = stepSize.toFloat(), // <-- Volvemos al tamaño original
+        cap = StrokeCap.Butt
+    )
+    drawPoints(
+        points = mediumPointsOffset, // <-- Usamos la lista desplazada
+        pointMode = PointMode.Points,
+        color = mediumColor,
+        strokeWidth = stepSize.toFloat(),
+        cap = StrokeCap.Butt
+    )
+
+    // 4. Dibujamos las capas de puntos CLAROS (dos veces con alpha reducido).
+    //    El alpha original era 0.4f, ahora cada capa tiene 0.28f.
+    val shallowColor = shallowOcean.copy(alpha = 0.28f)
+    drawPoints(
+        points = shallowPoints,
+        pointMode = PointMode.Points,
+        color = shallowColor,
+        strokeWidth = stepSize.toFloat(), // <-- Volvemos al tamaño original
+        cap = StrokeCap.Butt
+    )
+    drawPoints(
+        points = shallowPointsOffset, // <-- Usamos la lista desplazada
+        pointMode = PointMode.Points,
+        color = shallowColor,
+        strokeWidth = stepSize.toFloat(),
+        cap = StrokeCap.Butt
+    )
+
     // CAPA 3: Corrientes marinas CON CONFIGURACIÓN DINÁMICA
     val currentDirection1 = waveTime * 0.5f
-    val path = androidx.compose.ui.graphics.Path()
 
     for (y in 0 until canvasSize.height.toInt() step config.currentSpacing) { // USAR CONFIGURACIÓN DINÁMICA
         val amplitude = 15f + OptimizedOceanRenderer.fastSin(y * 0.01f + waveTime * 0.4f) * 8f
         val frequency = 0.008f
 
-        path.reset()
-        path.moveTo(0f, y.toFloat())
+        reusablePath.rewind() // .rewind() es más eficiente que .reset() para reutilizar
+        reusablePath.moveTo(0f, y.toFloat())
 
         // USAR CONFIGURACIÓN DINÁMICA PARA DETALLE DE CURVAS
         for (x in 0..canvasSize.width.toInt() step config.curveDetailSpacing) {
             val waveY = y + OptimizedOceanRenderer.fastSin(x * frequency + currentDirection1) * amplitude
-            path.lineTo(x.toFloat(), waveY)
+            reusablePath.lineTo(x.toFloat(), waveY)
         }
 
         val alpha = abs(OptimizedOceanRenderer.fastSin(waveTime * 0.3f + y * 0.008f)) * 0.15f
         drawPath(
-            path = path,
+            path = reusablePath,
             color = mediumOcean.copy(alpha = alpha),
             style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
         )
@@ -993,9 +1033,11 @@ fun OptimizedOceanCanvasWithConfig(
     config: OceanPerformanceConfig, // NUEVO PARÁMETRO
     fpsTracker: RealFpsTracker
 ) {
+    val reusablePath = remember { Path() }
+
     Canvas(modifier = modifier.fillMaxSize()) {
         if (isActive) {
-            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker) // USAR NUEVA FUNCIÓN
+            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath) // USAR NUEVA FUNCIÓN
         } else {
             // Durante transiciones, mostrar océano estático
             drawRect(color = Color(0xFF1B4F72), size = size)
