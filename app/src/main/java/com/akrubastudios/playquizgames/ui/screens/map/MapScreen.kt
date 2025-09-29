@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 7M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 8M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1063,16 +1063,16 @@ fun InteractiveWorldMap(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val maxOffsetFactorX = remember(screenWidth) {
         when {
-            screenWidth < 340.dp -> 0.28f     // Zona crítica - más restrictivo
-            screenWidth < 370.dp -> 0.29f     // Zona transición
-            else -> 0.30f                     // Zona normal (actual)
+            screenWidth < 340.dp -> 0.065f     // Zona crítica - más restrictivo
+            screenWidth < 370.dp -> 0.06f     // Zona transición
+            else -> 0.05f                     // Zona normal (actual)
         }
     }
     val maxOffsetFactorY = remember(screenWidth) {
         when {
-            screenWidth < 340.dp -> 0.08f     // Zona crítica - más restrictivo
-            screenWidth < 370.dp -> 0.09f     // Zona transición
-            else -> 0.10f                     // Zona normal (actual)
+            screenWidth < 340.dp -> 0.030f     // Zona crítica - más restrictivo
+            screenWidth < 370.dp -> 0.04f     // Zona transición
+            else -> 0.02f                     // Zona normal (actual)
         }
     }
     // Estados para zoom y pan
@@ -1304,28 +1304,6 @@ fun InteractiveWorldMap(
         }
     }
 
-    // NUEVO: Animación de pulso para candados
-    /*
-    LaunchedEffect(Unit) {
-        while (true) {
-            animate(
-                initialValue = 0.3f,
-                targetValue = 0.7f,
-                animationSpec = tween(1500, easing = FastOutSlowInEasing)
-            ) { value, _ ->
-                pulseAlpha = value
-            }
-            animate(
-                initialValue = 0.7f,
-                targetValue = 0.3f,
-                animationSpec = tween(1500, easing = FastOutSlowInEasing)
-            ) { value, _ ->
-                pulseAlpha = value
-            }
-        }
-    }
-     */
-
     // Función para detectar qué país fue tocado
     fun detectCountryFromTap(
         tapOffset: Offset,
@@ -1336,22 +1314,28 @@ fun InteractiveWorldMap(
             val bitmapAspectRatio = svgBitmap.width.toFloat() / svgBitmap.height.toFloat()
             val canvasAspectRatio = canvasSize.width / canvasSize.height
 
-            val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+            val baseFitScaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
                 canvasSize.width / svgBitmap.width
             } else {
                 canvasSize.height / svgBitmap.height
             }
 
-            val scaledWidth = svgBitmap.width * scaleFactor * scale
-            val scaledHeight = svgBitmap.height * scaleFactor * scale
+            val scaledWidth = svgBitmap.width * baseFitScaleFactor
+            val scaledHeight = svgBitmap.height * baseFitScaleFactor
 
             val centerX = canvasSize.width / 2f
             val centerY = canvasSize.height / 2f
-            val left = centerX - (scaledWidth / 2f) + offset.x + (canvasSize.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en canvas
-            val top = centerY - (scaledHeight / 2f) + offset.y - (canvasSize.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en canvas
 
-            val svgX = (tapOffset.x - left) / (scaleFactor * scale)
-            val svgY = (tapOffset.y - top) / (scaleFactor * scale)
+            // Usar los MISMOS valores que tu Canvas
+            val baseLeft = centerX - (scaledWidth / 2f) + (canvasSize.width * 0.15f)
+            val baseTop = centerY - (scaledHeight / 2f) + (canvasSize.height * 0.01f)
+
+            // Aplicar transformaciones inversas
+            val transformedX = (tapOffset.x - centerX) / scale + centerX - offset.x
+            val transformedY = (tapOffset.y - centerY) / scale + centerY - offset.y
+
+            val svgX = (transformedX - baseLeft) / baseFitScaleFactor
+            val svgY = (transformedY - baseTop) / baseFitScaleFactor
 
             if (svgX < 0 || svgX >= svgBitmap.width || svgY < 0 || svgY >= svgBitmap.height) {
                 return null
@@ -1362,10 +1346,7 @@ fun InteractiveWorldMap(
             for (countryId in interactableCountries) {
                 countryPaths[countryId]?.let { path ->
                     val region = android.graphics.Region()
-                    val clipRegion = android.graphics.Region(
-                        0, 0, svgBitmap.width, svgBitmap.height
-                    )
-
+                    val clipRegion = android.graphics.Region(0, 0, svgBitmap.width, svgBitmap.height)
                     region.setPath(path, clipRegion)
 
                     if (region.contains(svgX.toInt(), svgY.toInt())) {
@@ -1426,7 +1407,7 @@ fun InteractiveWorldMap(
                 .transformable(transformableState)
                 .pointerInput(Unit) {
                     detectTapGestures { tapOffset ->
-                        if (isMapReady) {  // Solo permitir taps cuando esté listo
+                        if (isMapReady) {
                             processedSvgBitmap?.let { bitmap ->
                                 detectCountryFromTap(
                                     tapOffset,
@@ -1443,122 +1424,55 @@ fun InteractiveWorldMap(
             canvasWidth = size.width
             canvasHeight = size.height
 
-            // MODIFICADO: Renderizado condicional mejorado
             when {
-                // Mostrar el mapa solo cuando esté completamente listo
                 isMapReady && processedSvgBitmap != null -> {
                     val bitmap = processedSvgBitmap!!
 
+                    // Calcular dimensiones base una sola vez
                     val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
                     val canvasAspectRatio = size.width / size.height
 
-                    val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
+                    val baseFitScaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
                         size.width / bitmap.width
                     } else {
                         size.height / bitmap.height
                     }
 
-                    val scaledWidth = bitmap.width * scaleFactor * scale
-                    val scaledHeight = bitmap.height * scaleFactor * scale
-
+                    // Calcular posición base igual que tu código original
                     val centerX = size.width / 2f
                     val centerY = size.height / 2f
-                    val left =
-                        centerX - (scaledWidth / 2f) + offset.x + (size.width * 0.20f) // + (205/1080=0.20) +205 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
-                    val top =
-                        centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
 
+                    // Aplicar transformaciones usando Canvas transforms (hardware-accelerated)
+                    drawContext.transform.scale(
+                        scaleX = scale,
+                        scaleY = scale,
+                        pivot = Offset(centerX, centerY)
+                    )
+
+                    drawContext.transform.translate(
+                        left = offset.x,
+                        top = offset.y
+                    )
+
+                    // Posición base del bitmap usando TU lógica original
+                    val scaledWidth = bitmap.width * baseFitScaleFactor
+                    val scaledHeight = bitmap.height * baseFitScaleFactor
+                    val baseLeft = centerX - (scaledWidth / 2f) + (size.width * 0.15f)
+                    val baseTop = centerY - (scaledHeight / 2f) + (size.height * 0.01f)
+
+                    // Usar FilterQuality optimizada
                     val quality = if (transformableState.isTransformInProgress) {
-                        FilterQuality.None // Súper rápido durante el gesto
+                        FilterQuality.Low  // Mejor que None, pero más rápido que High
                     } else {
-                        FilterQuality.High // Máxima calidad cuando está estático
+                        FilterQuality.High
                     }
 
                     drawImage(
                         image = bitmap.asImageBitmap(),
-                        dstOffset = IntOffset(left.toInt(), top.toInt()),
+                        dstOffset = IntOffset(baseLeft.toInt(), baseTop.toInt()),
                         dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
                         filterQuality = quality
                     )
-
-                    // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
-                    /*
-                    countries.forEach { country ->
-                        if (pathColorMap[country.countryId] == defaultColor) {
-                            countryPaths[country.countryId]?.let { path ->
-                                // Coordenadas manuales para países problemáticos
-                                val (centerX, centerY) = when (country.countryId) {
-                                    "es" -> Pair(395f, 420f)  // España - coordenadas ajustadas manualmente
-                                    "fr" -> Pair(410f, 410f)  // Francia - coordenadas ajustadas manualmente
-                                    else -> {
-                                        // Para el resto usar cálculo automático
-                                        val bounds = android.graphics.RectF()
-                                        path.computeBounds(bounds, true)
-                                        Pair(bounds.centerX(), bounds.centerY())
-                                    }
-                                }
-
-                                // USAR LA MISMA LÓGICA EXACTA QUE EL BITMAP
-                                val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-                                val canvasAspectRatio = size.width / size.height
-
-                                val scaleFactor = if (bitmapAspectRatio > canvasAspectRatio) {
-                                    size.width / bitmap.width
-                                } else {
-                                    size.height / bitmap.height
-                                }
-
-                                val transformedX = left + (centerX * scaleFactor * scale)
-                                val transformedY = top + (centerY * scaleFactor * scale)
-
-                                val lockSize = 4.dp.toPx() * scale // 6. Tamaño del candado
-
-                                drawContext.canvas.nativeCanvas.apply {
-                                    val lockPaint = android.graphics.Paint().apply {
-                                        isAntiAlias = true
-                                        setColor(android.graphics.Color.argb(
-                                            (255 * pulseAlpha).toInt(), 220, 220, 220 // Color candados: rgb 220,220,220 = gris blanco
-                                        ))
-                                        style = android.graphics.Paint.Style.STROKE
-                                        strokeWidth = 3f * scale
-                                    }
-
-                                    // Dibujar candado simple
-                                    val lockRect = android.graphics.RectF(
-                                        transformedX - lockSize/2,
-                                        transformedY - lockSize/4,
-                                        transformedX + lockSize/2,
-                                        transformedY + lockSize/2
-                                    )
-                                    drawRoundRect(lockRect, 4f * scale, 4f * scale, lockPaint)
-
-                                    // Arco del candado
-                                    val arcRect = android.graphics.RectF(
-                                        transformedX - lockSize/3,
-                                        transformedY - lockSize/2,
-                                        transformedX + lockSize/3,
-                                        transformedY
-                                    )
-                                    drawArc(arcRect, 180f, 180f, false, lockPaint)
-                                }
-                            }
-                        }
-                    }
-                     */
-
-                    // Debug info (opcional - puedes removarlo)
-                    /*
-                    drawContext.canvas.nativeCanvas.drawText(
-                        "Scale: ${String.format("%.1f", scale)} | Países: ${pathColorMap.size}",
-                        20f,
-                        40f,
-                        android.graphics.Paint().apply {
-                            color = android.graphics.Color.BLACK
-                            textSize = 30f
-                            isAntiAlias = true
-                        }
-                    )
-                     */
                 }
             }
         }
