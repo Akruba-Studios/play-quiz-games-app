@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 8M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 9M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1061,6 +1061,20 @@ fun InteractiveWorldMap(
     modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val horizontalOffsetFactor = remember(screenWidth) {
+        when {
+            screenWidth < 370.dp -> 0.15f // Menos desplazamiento en pantallas angostas
+            screenWidth < 400.dp -> 0.15f // Intermedio
+            else -> 0.15f                 // El valor original para pantallas anchas
+        }
+    }
+    val verticalOffsetFactor = remember(screenWidth) {
+        when {
+            screenWidth < 370.dp -> 0.002f // Menos desplazamiento en pantallas angostas
+            screenWidth < 400.dp -> 0.004f // <-- VALOR INTERMEDIO AÑADIDO
+            else -> 0.01f                  // El valor original para pantallas anchas
+        }
+    }
     val maxOffsetFactorX = remember(screenWidth) {
         when {
             screenWidth < 340.dp -> 0.065f     // Zona crítica - más restrictivo
@@ -1308,7 +1322,9 @@ fun InteractiveWorldMap(
     fun detectCountryFromTap(
         tapOffset: Offset,
         svgBitmap: Bitmap,
-        canvasSize: androidx.compose.ui.geometry.Size
+        canvasSize: androidx.compose.ui.geometry.Size,
+        hOffset: Float,
+        vOffset: Float
     ): String? {
         return try {
             val bitmapAspectRatio = svgBitmap.width.toFloat() / svgBitmap.height.toFloat()
@@ -1327,8 +1343,8 @@ fun InteractiveWorldMap(
             val centerY = canvasSize.height / 2f
 
             // Usar los MISMOS valores que tu Canvas
-            val baseLeft = centerX - (scaledWidth / 2f) + (canvasSize.width * 0.15f)
-            val baseTop = centerY - (scaledHeight / 2f) + (canvasSize.height * 0.01f)
+            val baseLeft = centerX - (scaledWidth / 2f) + (canvasSize.width * hOffset)
+            val baseTop = centerY - (scaledHeight / 2f) + (canvasSize.height * vOffset)
 
             // Aplicar transformaciones inversas
             val transformedX = (tapOffset.x - centerX) / scale + centerX - offset.x
@@ -1412,7 +1428,9 @@ fun InteractiveWorldMap(
                                 detectCountryFromTap(
                                     tapOffset,
                                     bitmap,
-                                    size.toSize()
+                                    size.toSize(),
+                                    hOffset = horizontalOffsetFactor,
+                                    vOffset = verticalOffsetFactor
                                 )?.let { countryId ->
                                     onCountryClick(countryId)
                                 }
@@ -1457,8 +1475,8 @@ fun InteractiveWorldMap(
                     // Posición base del bitmap usando TU lógica original
                     val scaledWidth = bitmap.width * baseFitScaleFactor
                     val scaledHeight = bitmap.height * baseFitScaleFactor
-                    val baseLeft = centerX - (scaledWidth / 2f) + (size.width * 0.15f)
-                    val baseTop = centerY - (scaledHeight / 2f) + (size.height * 0.01f)
+                    val baseLeft = centerX - (scaledWidth / 2f) + (size.width * horizontalOffsetFactor)
+                    val baseTop = centerY - (scaledHeight / 2f) + (size.height * verticalOffsetFactor)
 
                     // Usar FilterQuality optimizada
                     val quality = if (transformableState.isTransformInProgress) {
