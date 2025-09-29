@@ -34,6 +34,7 @@ class SettingsRepository @Inject constructor(
         val SFX_VOLUME_KEY = floatPreferencesKey("sfx_volume")
         val AUTO_ADJUST_ENABLED_KEY = booleanPreferencesKey("auto_adjust_enabled")
         val USER_OVERRIDE_TIER_KEY = stringPreferencesKey("user_override_tier")
+        val OCEAN_ANIMATION_ENABLED_KEY = booleanPreferencesKey("ocean_animation_enabled")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -94,6 +95,17 @@ class SettingsRepository @Inject constructor(
             preferences[USER_OVERRIDE_TIER_KEY]?.let { DevicePerformanceDetector.DeviceTier.valueOf(it) }
         }
 
+    val oceanAnimationEnabledFlow: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            // Por defecto, la animación estará activada.
+            preferences[OCEAN_ANIMATION_ENABLED_KEY] ?: true
+        }
+
+    suspend fun saveOceanAnimationEnabled(isEnabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[OCEAN_ANIMATION_ENABLED_KEY] = isEnabled
+        }
+    }
     // ... (funciones de guardado existentes)
 
     // V AÑADE ESTA NUEVA FUNCIÓN COMPLETA V

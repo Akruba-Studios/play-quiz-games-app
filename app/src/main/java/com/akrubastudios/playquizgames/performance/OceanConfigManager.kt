@@ -73,6 +73,10 @@ class OceanConfigManager private constructor(private val context: Context) {
     private val _currentConfig = MutableStateFlow(getDefaultConfig())
     val currentConfig: StateFlow<OceanPerformanceConfig> = _currentConfig.asStateFlow()
 
+    // Bandera pública para el sistema de emergencia. Inicia en 'true' (habilitado).
+    private val _isOceanRenderingGloballyEnabled = MutableStateFlow(true)
+    val isOceanRenderingGloballyEnabled: StateFlow<Boolean> = _isOceanRenderingGloballyEnabled.asStateFlow()
+
     // Estado del sistema de monitoreo
     private val _isMonitoring = MutableStateFlow(false)
     val isMonitoring: StateFlow<Boolean> = _isMonitoring.asStateFlow()
@@ -300,6 +304,12 @@ class OceanConfigManager private constructor(private val context: Context) {
     private suspend fun evaluateAndAdjustPerformance(averageFPS: Float) {
         if (!isAutoAdjustEnabled()) return
 
+        // Si el renderizado ya fue deshabilitado por el failsafe, no hacemos nada más.
+        if (!_isOceanRenderingGloballyEnabled.value) {
+            stopPerformanceMonitoring()
+            return
+        }
+
         val currentTier = getCurrentTierFromConfig()
         val currentTargetFPS = currentConfig.value.targetFPS.toFloat()
         val currentTime = System.currentTimeMillis()
@@ -349,6 +359,15 @@ class OceanConfigManager private constructor(private val context: Context) {
         } else {
             // Resetear contador si salimos de crisis severa
             consecutiveSevereReadings = 0
+        }
+
+        // Esta lógica se activa solo si la calidad ya está en el mínimo
+        // y AÚN ASÍ el rendimiento es críticamente bajo.
+        if (currentTier == DevicePerformanceDetector.DeviceTier.VERY_LOW && averageFPS < ABSOLUTE_CRITICAL_FPS) {
+            Log.e(TAG, "🚨🚨 FAILSAFE ACTIVADO 🚨🚨 El dispositivo no puede mantener ${ABSOLUTE_CRITICAL_FPS} FPS ni en la calidad más baja. Deshabilitando la animación del océano.")
+            _isOceanRenderingGloballyEnabled.value = false
+            stopPerformanceMonitoring() // Detenemos el monitoreo para no gastar más recursos.
+            return // Salimos de la función inmediatamente.
         }
 
         // =============================

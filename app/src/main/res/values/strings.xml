@@ -208,6 +208,7 @@
     <string name="settings_force_redetection">Forzar Re-evaluación del Dispositivo</string>
     <string name="settings_force_redetection_toast">Iniciando nueva evaluación del hardware…</string>
     <string name="settings_debug_info">Información de Depuración</string>
+    <string name="settings_ocean_animation">Animación del Océano</string>
 
     <!-- RankingScreen -->
     <string name="ranking_title">Ranking Global</string>

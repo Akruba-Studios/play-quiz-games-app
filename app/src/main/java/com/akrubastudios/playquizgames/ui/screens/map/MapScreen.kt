@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 9M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 10MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -517,6 +517,7 @@ fun MapScreen(
                         oceanConfig = oceanConfig, // NUEVA LÍNEA: Pasar la configuración
                         oceanConfigManager = oceanConfigManager, // NUEVA LÍNEA: Pasar el manager
                         realFpsTracker = realFpsTracker,
+                        isOceanAnimationEnabled = uiState.isOceanVisible,
                         modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
                     )
                 }
@@ -1058,6 +1059,7 @@ fun InteractiveWorldMap(
     oceanConfig: OceanPerformanceConfig, // NUEVO PARÁMETRO
     realFpsTracker: RealFpsTracker,
     oceanConfigManager: OceanConfigManager, // NUEVO PARÁMETRO
+    isOceanAnimationEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -1409,12 +1411,19 @@ fun InteractiveWorldMap(
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
         // CAPA 1: Océano en canvas separado
-        OptimizedOceanCanvasWithConfig(
-            waveTime = waveTime,
-            isActive = isAnimationActive,
-            config = oceanConfig, // PASAR LA CONFIGURACIÓN DINÁMICA
-            fpsTracker = realFpsTracker
-        )
+        if (isOceanAnimationEnabled) {
+            OptimizedOceanCanvasWithConfig(
+                waveTime = waveTime,
+                isActive = isAnimationActive,
+                config = oceanConfig,
+                fpsTracker = realFpsTracker
+            )
+        } else {
+            // Si la animación está desactivada, dibujamos un fondo estático y barato.
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawRect(color = Color(0xFF1B4F72)) // Color base del océano
+            }
+        }
 
         // CAPA 2: Mapa en canvas original
         Canvas(

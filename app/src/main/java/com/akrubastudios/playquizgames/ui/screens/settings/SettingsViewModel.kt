@@ -32,7 +32,8 @@ data class SettingsState(
     val musicVolume: Float = 1.0f,
     val currentQualityTier: DevicePerformanceDetector.DeviceTier? = null,
     val isAutoAdjustEnabled: Boolean = true,
-    val debugInfo: String = ""
+    val debugInfo: String = "",
+    val isOceanAnimationEnabled: Boolean = true
 )
 
 @HiltViewModel
@@ -91,6 +92,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.autoAdjustEnabledFlow.collect { isEnabled ->
                 _uiState.update { it.copy(isAutoAdjustEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.oceanAnimationEnabledFlow.collect { isEnabled ->
+                _uiState.update { it.copy(isOceanAnimationEnabled = isEnabled) }
             }
         }
         viewModelScope.launch {
@@ -180,5 +186,11 @@ class SettingsViewModel @Inject constructor(
         oceanConfigManager.forceDeviceRedetection()
         // Podríamos querer refrescar la info de debug después de esto,
         // pero por ahora, solo ejecutamos la acción.
+    }
+
+    fun onOceanAnimationToggle(isEnabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.saveOceanAnimationEnabled(isEnabled)
+        }
     }
 }

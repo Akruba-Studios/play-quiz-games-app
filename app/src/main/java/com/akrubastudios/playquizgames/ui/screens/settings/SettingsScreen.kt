@@ -191,6 +191,12 @@ fun SettingsScreen(
                 onCheckedChange = { isEnabled -> viewModel.onAutoAdjustToggled(isEnabled) }
             )
 
+            SettingRow(
+                title = stringResource(R.string.settings_ocean_animation), // <-- NECESITAREMOS ESTE NUEVO STRING
+                checked = uiState.isOceanAnimationEnabled,
+                onCheckedChange = { isEnabled -> viewModel.onOceanAnimationToggle(isEnabled) }
+            )
+
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
             ClickableRow(

@@ -208,6 +208,7 @@
     <string name="settings_force_redetection">Force Device Re-Detection</string>
     <string name="settings_force_redetection_toast">Starting new hardware evaluation…</string>
     <string name="settings_debug_info">Debug Information</string>
+    <string name="settings_ocean_animation">Ocean Animation</string>
 
     <!-- RankingScreen -->
     <string name="ranking_title">Global Ranking</string>

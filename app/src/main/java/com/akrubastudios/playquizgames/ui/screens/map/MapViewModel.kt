@@ -16,6 +16,7 @@ import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
+import com.akrubastudios.playquizgames.performance.OceanConfigManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -46,7 +48,8 @@ data class MapState(
     val showFreeModeUnlockedDialog: Boolean = false,
     val showDominationRewardsSheet: Boolean = false,
     val hasProfileNotification: Boolean = false,
-    val gems: Int = 0
+    val gems: Int = 0,
+    val isOceanVisible: Boolean = true
 )
 
 @HiltViewModel
@@ -58,7 +61,8 @@ class MapViewModel @Inject constructor(
     private val application: Application,
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
-    val musicManager: MusicManager
+    val musicManager: MusicManager,
+    private val oceanConfigManager: OceanConfigManager
 ) : ViewModel(), DefaultLifecycleObserver {
 
     val currentUser = authRepository.currentUser
@@ -98,11 +102,14 @@ class MapViewModel @Inject constructor(
             // 'collect' se ejecutará cada vez que los datos del usuario cambien en Firestore.
             combine(
                 gameDataRepository.userStateFlow,
-                settingsRepository.dismissedExpeditionLevelFlow
-            ) { userData, dismissedLevel ->
+                settingsRepository.oceanAnimationEnabledFlow,
+                oceanConfigManager.isOceanRenderingGloballyEnabled
+            ) { userData, isEnabledByUser, isEnabledBySystem ->
 
-                Pair(userData, dismissedLevel)
-            }.collect { (userData, dismissedLevel) ->
+                Triple(userData, isEnabledByUser, isEnabledBySystem)
+            }.collect { (userData, isEnabledByUser, isEnabledBySystem) ->
+
+                val dismissedLevel = settingsRepository.dismissedExpeditionLevelFlow.first()
 
                 if (_uiState.value.playerLevelInfo == null) {
                     _uiState.value = _uiState.value.copy(isLoading = true)
@@ -193,6 +200,8 @@ class MapViewModel @Inject constructor(
                     }
 
                     val hasNotification = userData.pendingProfileNotifications.isNotEmpty()
+
+                    val isOceanActuallyVisible = isEnabledByUser && isEnabledBySystem
                     // --- FIN DE LA MODIFICACIÓN ---
 
                     _uiState.value = _uiState.value.copy(
@@ -212,7 +221,8 @@ class MapViewModel @Inject constructor(
                         showFreeModeUnlockedDialog = showFreeModeDialog,
                         showDominationRewardsSheet = showDominationSheet,
                         hasProfileNotification = hasNotification,
-                        gems = userData.gems
+                        gems = userData.gems,
+                        isOceanVisible = isOceanActuallyVisible
                     )
                 }
             }
