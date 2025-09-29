@@ -3,7 +3,7 @@ package com.akrubastudios.playquizgames.performance
 import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector.DeviceTier
 
 /**
- * Configuración de efectos oceánicos optimizada por gama de dispositivo
+ * Configuración de efectos oceánicos optimizada por gama de dispositivo - Control 1OPC
  */
 data class OceanPerformanceConfig(
     // Configuración básica de rendering
@@ -41,12 +41,12 @@ data class OceanPerformanceConfig(
          * Prioriza rendimiento sobre calidad visual
          */
         fun getVeryLowConfig() = OceanPerformanceConfig(
-            stepSize = 20,                    // Muy grueso para menos cálculos
-            frameDelayMs = 67L,              // 15 FPS
-            depthIntensity = 0.35f,          // Efectos sutiles
+            stepSize = 16,                    // Un poco más de detalle que el antiguo 'Low'
+            frameDelayMs = 50L,              // 20 FPS
+            depthIntensity = 0.40f,          // Efectos sutiles
 
-            currentSpacing = 80,             // Corrientes muy espaciadas
-            curveDetailSpacing = 16,         // Curvas simples
+            currentSpacing = 70,             // Corrientes muy espaciadas
+            curveDetailSpacing = 14,         // Curvas simples
 
             specularCenters = 1,             // Mínimos reflejos
             specularEnabled = true,          // Al menos uno
@@ -57,7 +57,7 @@ data class OceanPerformanceConfig(
 
             noiseCalculationInterval = 3,    // Recalcular cada 3 frames
             preCalculatedNoiseTables = true, // Usar tablas optimizadas
-            targetFPS = 15,
+            targetFPS = 20,
 
             tierName = "Gama Muy Baja",
             qualityDescription = "Optimizado para máximo rendimiento"
@@ -68,14 +68,14 @@ data class OceanPerformanceConfig(
          * Balance básico entre rendimiento y calidad
          */
         fun getLowConfig() = OceanPerformanceConfig(
-            stepSize = 14,                   // Moderadamente detallado
-            frameDelayMs = 50L,             // 20 FPS
-            depthIntensity = 0.45f,         // Efectos más visibles
+            stepSize = 12,                   // Moderadamente detallado
+            frameDelayMs = 33L,             // 30 FPS
+            depthIntensity = 0.50f,         // Efectos más visibles
 
-            currentSpacing = 60,            // Corrientes moderadas
-            curveDetailSpacing = 12,        // Curvas con más detalle
+            currentSpacing = 50,            // Corrientes moderadas
+            curveDetailSpacing = 10,        // Curvas con más detalle
 
-            specularCenters = 1,            // Un punto especular
+            specularCenters = 2,            // Un punto especular
             specularEnabled = true,
 
             atmosphereEnabled = false,       // Aún sin atmosfera
@@ -84,7 +84,7 @@ data class OceanPerformanceConfig(
 
             noiseCalculationInterval = 2,   // Recalcular cada 2 frames
             preCalculatedNoiseTables = true,
-            targetFPS = 20,
+            targetFPS = 30,
 
             tierName = "Gama Baja",
             qualityDescription = "Balance básico rendimiento-calidad"
@@ -95,12 +95,12 @@ data class OceanPerformanceConfig(
          * Calidad visual moderada con buen rendimiento
          */
         fun getMediumConfig() = OceanPerformanceConfig(
-            stepSize = 10,                  // Tu configuración actual
+            stepSize = 8,                  // Tu configuración actual
             frameDelayMs = 33L,            // 30 FPS
-            depthIntensity = 0.60f,        // Mejorada vs actual
+            depthIntensity = 0.65f,        // Mejorada vs actual
 
-            currentSpacing = 40,           // Tu configuración actual
-            curveDetailSpacing = 8,        // Tu configuración actual
+            currentSpacing = 35,           // Tu configuración actual
+            curveDetailSpacing = 6,        // Tu configuración actual
 
             specularCenters = 2,           // Tu configuración actual
             specularEnabled = true,

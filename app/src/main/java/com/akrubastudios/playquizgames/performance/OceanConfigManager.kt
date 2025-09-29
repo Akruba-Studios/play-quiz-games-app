@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL8A:
+ * Gestor central de configuración oceánica con detección automática CONTROL9-OCM:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(private val context: Context) {
@@ -48,6 +48,10 @@ class OceanConfigManager private constructor(private val context: Context) {
         private const val CRISIS_THRESHOLD_PERCENT = 0.20f      // 20% del target (crisis crítica)
         private const val SEVERE_THRESHOLD_PERCENT = 0.35f      // 35% del target (crisis severa)
         private const val SEVERE_CONSECUTIVE_REQUIRED = 2        // Mediciones consecutivas para crisis severa
+        // Umbrales absolutos para crisis, independientemente del target
+        private const val ABSOLUTE_CRITICAL_FPS = 15f
+        private const val ABSOLUTE_SEVERE_FPS = 20f
+
         // Control de decisiones recientes
         private const val RECENT_CHANGE_COOLDOWN_MS = 15000L     // 15 segundos tras cambio
 
@@ -304,8 +308,14 @@ class OceanConfigManager private constructor(private val context: Context) {
         // FASE 1: DETECCIÓN DE CRISIS
         // =============================
 
-        val crisisThreshold = currentTargetFPS * CRISIS_THRESHOLD_PERCENT
-        val severeThreshold = currentTargetFPS * SEVERE_THRESHOLD_PERCENT
+        val crisisThreshold = maxOf(
+            currentTargetFPS * CRISIS_THRESHOLD_PERCENT,
+            ABSOLUTE_CRITICAL_FPS
+        )
+        val severeThreshold = maxOf(
+            currentTargetFPS * SEVERE_THRESHOLD_PERCENT,
+            ABSOLUTE_SEVERE_FPS
+        )
 
         // Crisis crítica - bajar inmediatamente
         if (averageFPS < crisisThreshold &&
