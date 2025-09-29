@@ -150,6 +150,7 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.saveUserOverrideTier(tier)
             // 2. Apaga el ajuste automático
             settingsRepository.saveAutoAdjustEnabled(false)
+            settingsRepository.saveOceanAnimationEnabled(true)
         }
         // 3. Aplica la configuración inmediatamente
         oceanConfigManager.setUserOverrideConfig(tier)
@@ -162,6 +163,7 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.saveUserOverrideTier(null)
             // 2. Enciende el ajuste automático
             settingsRepository.saveAutoAdjustEnabled(true)
+            settingsRepository.saveOceanAnimationEnabled(true)
         }
         // 3. Devuelve el control al sistema
         oceanConfigManager.clearUserOverride()
@@ -170,6 +172,9 @@ class SettingsViewModel @Inject constructor(
 
     fun onAutoAdjustToggled(isEnabled: Boolean) {
         if (isEnabled) {
+            viewModelScope.launch {
+                settingsRepository.saveOceanAnimationEnabled(true)
+            }
             // Si el usuario lo enciende, volvemos a modo automático
             onAutomaticQualitySelected()
         } else {
@@ -191,6 +196,11 @@ class SettingsViewModel @Inject constructor(
     fun onOceanAnimationToggle(isEnabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.saveOceanAnimationEnabled(isEnabled)
+            if (!isEnabled) {
+                // Si se apaga el océano, también se apaga la calidad automática.
+                settingsRepository.saveAutoAdjustEnabled(false)
+                oceanConfigManager.setAutoAdjustEnabled(false) // Notificamos al manager
+            }
         }
     }
 }

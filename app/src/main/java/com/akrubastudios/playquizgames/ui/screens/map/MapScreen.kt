@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 11MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 12MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -309,7 +309,7 @@ fun MapScreen(
     val context = LocalContext.current // Necesitaremos el contexto para los strings
 
     // NUEVA LÍNEA: Obtener el gestor de configuración
-    val oceanConfigManager = remember { OceanConfigManager.getInstance(context) }
+    val oceanConfigManager = viewModel.oceanConfigManager
     val oceanConfig by oceanConfigManager.currentConfig.collectAsState()
 
     // NUEVO: Crear tracker de FPS real

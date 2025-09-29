@@ -64,7 +64,7 @@ class MapViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
     val musicManager: MusicManager,
-    private val oceanConfigManager: OceanConfigManager
+    val oceanConfigManager: OceanConfigManager
 ) : ViewModel(), DefaultLifecycleObserver {
 
     val currentUser = authRepository.currentUser

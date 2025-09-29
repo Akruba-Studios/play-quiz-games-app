@@ -9,9 +9,6 @@ import com.google.android.gms.ads.MobileAds
 class QuizApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Inicializar el gestor de configuración oceánica
-        // Esto se hace una sola vez al iniciar la app
-        OceanConfigManager.getInstance(this)
 
         // Inicializa el SDK de AdMob
         MobileAds.initialize(this) {}

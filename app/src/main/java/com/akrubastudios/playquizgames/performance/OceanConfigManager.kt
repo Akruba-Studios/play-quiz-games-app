@@ -3,6 +3,7 @@ package com.akrubastudios.playquizgames.performance
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,10 @@ import kotlin.math.min
  * Gestor central de configuración oceánica con detección automática CONTROL9-OCM:
  * y ajuste dinámico de rendimiento
  */
-class OceanConfigManager private constructor(private val context: Context) {
+class OceanConfigManager private constructor(
+    private val context: Context,
+    private val settingsRepository: SettingsRepository // <-- AÑADE ESTO
+) {
 
     companion object {
         private const val TAG = "OceanConfigManager"
@@ -60,9 +64,12 @@ class OceanConfigManager private constructor(private val context: Context) {
         @Volatile
         private var INSTANCE: OceanConfigManager? = null
 
-        fun getInstance(context: Context): OceanConfigManager {
+        fun getInstance(
+            context: Context,
+            settingsRepository: SettingsRepository // <-- AÑADE ESTO
+        ): OceanConfigManager {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: OceanConfigManager(context.applicationContext).also { INSTANCE = it }
+                INSTANCE ?: OceanConfigManager(context.applicationContext, settingsRepository).also { INSTANCE = it }
             }
         }
     }
@@ -372,6 +379,9 @@ class OceanConfigManager private constructor(private val context: Context) {
             Log.e(TAG, "🚨🚨 FAILSAFE ACTIVADO 🚨🚨 El dispositivo no puede mantener ${ABSOLUTE_CRITICAL_FPS} FPS ni en la calidad más baja. Deshabilitando la animación del océano.")
             _isOceanRenderingGloballyEnabled.value = false
             _failsafeEventChannel.trySend(Unit)
+            kotlinx.coroutines.GlobalScope.launch {
+                settingsRepository.saveAutoAdjustEnabled(false)
+            }
             stopPerformanceMonitoring() // Detenemos el monitoreo para no gastar más recursos.
             return // Salimos de la función inmediatamente.
         }

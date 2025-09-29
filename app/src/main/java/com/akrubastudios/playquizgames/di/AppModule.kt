@@ -146,10 +146,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOceanConfigManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        settingsRepository: SettingsRepository
     ): OceanConfigManager {
         // Hilt ahora sabe que para crear un OceanConfigManager,
         // debe llamar a getInstance() pasándole el contexto de la aplicación.
-        return OceanConfigManager.getInstance(context)
+        return OceanConfigManager.getInstance(context, settingsRepository)
     }
 }
