@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 5M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 6M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -929,37 +929,40 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
 
     // 3. Dibujamos las capas de puntos MEDIOS (dos veces con alpha reducido).
     //    El alpha original era 0.7f, ahora cada capa tiene 0.5f.
-    val mediumColor = mediumOcean.copy(alpha = 0.5f)
+
+    val brushSize = stepSize.toFloat() * 1.05f
+    val mediumColor = mediumOcean.copy(alpha = 0.6f)
+    val shallowColor = shallowOcean.copy(alpha = 0.35f)
+
     drawPoints(
         points = mediumPoints,
         pointMode = PointMode.Points,
         color = mediumColor,
-        strokeWidth = stepSize.toFloat(), // <-- Volvemos al tamaño original
+        strokeWidth = brushSize, // <-- Volvemos al tamaño original
         cap = StrokeCap.Butt
     )
     drawPoints(
         points = mediumPointsOffset, // <-- Usamos la lista desplazada
         pointMode = PointMode.Points,
         color = mediumColor,
-        strokeWidth = stepSize.toFloat(),
+        strokeWidth = brushSize,
         cap = StrokeCap.Butt
     )
 
     // 4. Dibujamos las capas de puntos CLAROS (dos veces con alpha reducido).
     //    El alpha original era 0.4f, ahora cada capa tiene 0.28f.
-    val shallowColor = shallowOcean.copy(alpha = 0.28f)
     drawPoints(
         points = shallowPoints,
         pointMode = PointMode.Points,
         color = shallowColor,
-        strokeWidth = stepSize.toFloat(), // <-- Volvemos al tamaño original
+        strokeWidth = brushSize, // <-- Volvemos al tamaño original
         cap = StrokeCap.Butt
     )
     drawPoints(
         points = shallowPointsOffset, // <-- Usamos la lista desplazada
         pointMode = PointMode.Points,
         color = shallowColor,
-        strokeWidth = stepSize.toFloat(),
+        strokeWidth = brushSize,
         cap = StrokeCap.Butt
     )
 
