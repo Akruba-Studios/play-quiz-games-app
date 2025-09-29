@@ -209,6 +209,8 @@
     <string name="settings_force_redetection_toast">Starting new hardware evaluation…</string>
     <string name="settings_debug_info">Debug Information</string>
     <string name="settings_ocean_animation">Ocean Animation</string>
+    <string name="ocean_failsafe_dialog_title">Performance Optimized</string>
+    <string name="ocean_failsafe_dialog_message">To ensure a smooth experience, we have temporarily disabled the ocean animation. You can re-enable it manually from Settings > Graphics if you wish.</string>
 
     <!-- RankingScreen -->
     <string name="ranking_title">Global Ranking</string>

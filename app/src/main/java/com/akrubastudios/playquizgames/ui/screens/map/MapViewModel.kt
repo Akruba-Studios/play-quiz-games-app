@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -49,7 +50,8 @@ data class MapState(
     val showDominationRewardsSheet: Boolean = false,
     val hasProfileNotification: Boolean = false,
     val gems: Int = 0,
-    val isOceanVisible: Boolean = true
+    val isOceanVisible: Boolean = true,
+    val showFailsafeDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -90,6 +92,13 @@ class MapViewModel @Inject constructor(
         gameDataRepository.startUserDataListener()
         // 2. Lanza la corrutina para procesar los datos
         processUserData()
+
+        viewModelScope.launch {
+            oceanConfigManager.failsafeEventFlow.collect {
+                // Cuando recibimos un evento, actualizamos el estado para mostrar el diálogo.
+                _uiState.update { it.copy(showFailsafeDialog = true) }
+            }
+        }
     }
 
     private fun processUserData() {
@@ -388,6 +397,9 @@ class MapViewModel @Inject constructor(
                 Log.e("MapViewModel", "Error al actualizar hasSeenDominationTutorial", e)
             }
         }
+    }
+    fun dismissFailsafeDialog() {
+        _uiState.update { it.copy(showFailsafeDialog = false) }
     }
 }
 

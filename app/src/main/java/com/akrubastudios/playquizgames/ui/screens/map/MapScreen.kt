@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 10MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 11MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -330,6 +330,7 @@ fun MapScreen(
                 Lifecycle.Event.ON_PAUSE -> {
                     realFpsTracker.stopTracking()
                     oceanConfigManager.pauseMonitoring()   // AGREGAR
+                    oceanConfigManager.cancelBenchmarkObserver()
                 }
                 else -> {}
             }
@@ -392,6 +393,13 @@ fun MapScreen(
 
     // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
+        LaunchedEffect(uiState.isOceanVisible) {
+            if (uiState.isOceanVisible) {
+                oceanConfigManager.startInitialBenchmark()
+            } else {
+                oceanConfigManager.cancelBenchmarkObserver()
+            }
+        }
         Scaffold(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
@@ -759,6 +767,14 @@ fun MapScreen(
             title = stringResource(R.string.gems_tutorial_title),
             text = stringResource(R.string.gems_tutorial_message),
             confirmButtonText = stringResource(R.string.dialog_button_ok)
+        )
+    }
+    if (uiState.showFailsafeDialog) {
+        AppAlertDialog(
+            onDismissRequest = { viewModel.dismissFailsafeDialog() },
+            title = stringResource(id = R.string.ocean_failsafe_dialog_title),
+            text = stringResource(id = R.string.ocean_failsafe_dialog_message),
+            confirmButtonText = stringResource(id = R.string.dialog_button_ok)
         )
     }
 }
@@ -1397,8 +1413,6 @@ fun InteractiveWorldMap(
 
     // Animación optimizada del océano
     LaunchedEffect(transformableState.isTransformInProgress, isAnimationActive) {
-        oceanConfigManager.startInitialBenchmark()
-
         while (true) {
             if (isAnimationActive && !transformableState.isTransformInProgress) {
                 waveTime += 0.033f
@@ -1421,7 +1435,7 @@ fun InteractiveWorldMap(
         } else {
             // Si la animación está desactivada, dibujamos un fondo estático y barato.
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(color = Color(0xFF1B4F72)) // Color base del océano
+                drawRect(color = Color(0xFF2874A6)) // Color base del océano
             }
         }
 

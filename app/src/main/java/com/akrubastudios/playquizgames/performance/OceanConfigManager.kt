@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlin.math.max
 import kotlin.math.min
 
@@ -76,6 +78,9 @@ class OceanConfigManager private constructor(private val context: Context) {
     // Bandera pública para el sistema de emergencia. Inicia en 'true' (habilitado).
     private val _isOceanRenderingGloballyEnabled = MutableStateFlow(true)
     val isOceanRenderingGloballyEnabled: StateFlow<Boolean> = _isOceanRenderingGloballyEnabled.asStateFlow()
+
+    private val _failsafeEventChannel = Channel<Unit>(Channel.BUFFERED)
+    val failsafeEventFlow = _failsafeEventChannel.receiveAsFlow()
 
     // Estado del sistema de monitoreo
     private val _isMonitoring = MutableStateFlow(false)
@@ -366,6 +371,7 @@ class OceanConfigManager private constructor(private val context: Context) {
         if (currentTier == DevicePerformanceDetector.DeviceTier.VERY_LOW && averageFPS < ABSOLUTE_CRITICAL_FPS) {
             Log.e(TAG, "🚨🚨 FAILSAFE ACTIVADO 🚨🚨 El dispositivo no puede mantener ${ABSOLUTE_CRITICAL_FPS} FPS ni en la calidad más baja. Deshabilitando la animación del océano.")
             _isOceanRenderingGloballyEnabled.value = false
+            _failsafeEventChannel.trySend(Unit)
             stopPerformanceMonitoring() // Detenemos el monitoreo para no gastar más recursos.
             return // Salimos de la función inmediatamente.
         }
@@ -499,10 +505,18 @@ class OceanConfigManager private constructor(private val context: Context) {
         return currentConfig.value
     }
 
+    private fun resetFailsafe() {
+        if (!_isOceanRenderingGloballyEnabled.value) {
+            Log.i(TAG, "Failsafe reseteado por acción del usuario. La animación del océano se ha vuelto a habilitar.")
+            _isOceanRenderingGloballyEnabled.value = true
+        }
+    }
+
     /**
      * Permite al usuario forzar una configuración específica
      */
     fun setUserOverrideConfig(tier: DevicePerformanceDetector.DeviceTier) {
+        resetFailsafe()
         val config = OceanPerformanceConfig.getConfigForTier(tier)
         _currentConfig.value = config
         saveUserOverrideTier(tier)
@@ -514,6 +528,7 @@ class OceanConfigManager private constructor(private val context: Context) {
      * Limpia el override del usuario y vuelve a la detección automática
      */
     fun clearUserOverride() {
+        resetFailsafe()
         clearUserOverrideTier()
         managerScope.launch {
             detectAndConfigureDevice()
@@ -541,6 +556,11 @@ class OceanConfigManager private constructor(private val context: Context) {
         monitoringJob = null
         _isMonitoring.value = false
         Log.d(TAG, "Monitoreo de rendimiento detenido")
+    }
+
+    fun cancelBenchmarkObserver() {
+        benchmarkJob?.cancel()
+        Log.d(TAG, "Benchmark observer cancelado externamente.")
     }
 
     /**
