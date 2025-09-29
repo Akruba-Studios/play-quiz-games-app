@@ -122,7 +122,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 6M
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 7M
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1196,19 +1196,6 @@ fun InteractiveWorldMap(
         }
     }
 
-    // Animación optimizada del océano
-    LaunchedEffect(Unit) {
-        oceanConfigManager.startInitialBenchmark()
-
-        while (true) {
-            if (isAnimationActive) {
-                waveTime += 0.033f
-            }
-            delay(16L) // ← DELAY FIJO para smooth animation
-            if (waveTime > 1000f) waveTime -= 1000f
-        }
-    }
-
     // CONTROL1: NUEVO LaunchedEffect para reportar FPS al ConfigManager
     // Busca el LaunchedEffect de FPS reporting y REEMPLAZA:
     LaunchedEffect(lifecycleOwner) {  // CAMBIAR de Unit a lifecycleOwner
@@ -1408,6 +1395,20 @@ fun InteractiveWorldMap(
         scale = newScale
         offset = newOffset
     }
+
+    // Animación optimizada del océano
+    LaunchedEffect(transformableState.isTransformInProgress, isAnimationActive) {
+        oceanConfigManager.startInitialBenchmark()
+
+        while (true) {
+            if (isAnimationActive && !transformableState.isTransformInProgress) {
+                waveTime += 0.033f
+            }
+            delay(16L) // ← DELAY FIJO para smooth animation
+            if (waveTime > 1000f) waveTime -= 1000f
+        }
+    }
+
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
         // CAPA 1: Océano en canvas separado
@@ -1467,11 +1468,17 @@ fun InteractiveWorldMap(
                     val top =
                         centerY - (scaledHeight / 2f) + offset.y - (size.height * 0.055f) // - (100/1812=0.055) -100 es el offset manual para centrar el mapa, tiene que ser el mismo valor en detectcountryfromtap
 
+                    val quality = if (transformableState.isTransformInProgress) {
+                        FilterQuality.None // Súper rápido durante el gesto
+                    } else {
+                        FilterQuality.High // Máxima calidad cuando está estático
+                    }
+
                     drawImage(
                         image = bitmap.asImageBitmap(),
                         dstOffset = IntOffset(left.toInt(), top.toInt()),
                         dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
-                        filterQuality = FilterQuality.High
+                        filterQuality = quality
                     )
 
                     // NUEVO: Dibujar candados con coordenadas manuales para países problemáticos
