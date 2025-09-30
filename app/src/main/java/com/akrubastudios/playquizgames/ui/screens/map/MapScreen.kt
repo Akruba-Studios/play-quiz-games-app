@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.TextView
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -446,10 +449,17 @@ fun MapScreen(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
                                             onClick = {
-                                                scope.launch {
-                                                    val message =
-                                                        context.getString(R.string.free_mode_unlock_toast)
-                                                    snackbarHostState.showSnackbar(message)
+                                                // Usamos nuestro nuevo layout reutilizable
+                                                val inflater = LayoutInflater.from(context)
+                                                val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+
+                                                val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                                textView.text = context.getString(R.string.free_mode_unlock_toast)
+
+                                                Toast(context).apply {
+                                                    duration = Toast.LENGTH_SHORT
+                                                    view = layout
+                                                    show()
                                                 }
                                             }
                                         )

@@ -1013,20 +1013,16 @@ fun QuestionProgressCircles(
                     } else {
                         // Toast personalizado con fondo negro translúcido y texto blanco
                         val inflater = LayoutInflater.from(context)
-                        val layout = inflater.inflate(
-                            android.R.layout.simple_list_item_1,
-                            null
-                        )
-                        val textView = layout.findViewById<TextView>(android.R.id.text1)
-                        textView.text = context.getString(R.string.toast_no_more_fun_facts)
-                        textView.setTextColor(android.graphics.Color.WHITE) // Texto blanco
-                        textView.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")) // Negro translúcido
-                        textView.setPadding(24, 16, 24, 16)
+                        val layout = inflater.inflate(R.layout.custom_toast_layout, null)
 
-                        val toast = Toast(context)
-                        toast.duration = Toast.LENGTH_SHORT
-                        toast.view = layout
-                        toast.show()
+                        val textView = layout.findViewById<TextView>(R.id.toast_text)
+                        textView.text = context.getString(R.string.toast_no_more_fun_facts)
+
+                        Toast(context).apply {
+                            duration = Toast.LENGTH_SHORT
+                            view = layout
+                            show()
+                        }
                     }
                 },
                 enabled = true,

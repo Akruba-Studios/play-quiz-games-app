@@ -110,7 +110,7 @@ fun GemsIndicator(
     val cardContent = @Composable {
         Card(
             modifier = modifier.clickable(
-                enabled = hasGems,
+                enabled = true,
                 onClick = onClick
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
