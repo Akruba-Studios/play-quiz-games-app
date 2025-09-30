@@ -999,7 +999,8 @@ private fun VictorySequence(
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(16.dp))

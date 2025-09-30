@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.core.SoundEffect
 import com.akrubastudios.playquizgames.core.SoundManager
@@ -58,7 +59,12 @@ fun ResultScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineLarge)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center, // <-- AÑADE ESTA LÍNEA
+            modifier = Modifier.fillMaxWidth() // <-- AÑADE ESTA LÍNEA
+        )
         Spacer(modifier = Modifier.height(32.dp))
         Text(text = stringResource(R.string.result_final_score), style = MaterialTheme.typography.titleMedium)
         Text(text = "$score XP", style = MaterialTheme.typography.displayMedium)
