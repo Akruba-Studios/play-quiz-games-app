@@ -325,6 +325,9 @@ class BossViewModel @Inject constructor(
         timerJob = viewModelScope.launch {
             for (time in initialTime downTo 0) {
                 _uiState.update { it.copy(timeRemaining = time) }
+                if (time in 1..3) {
+                    soundManager.playSound(SoundEffect.TIMER_TICK)
+                }
                 if (time == 0) {
                     // Tiempo agotado = respuesta incorrecta automática
                     _uiState.update { it.copy(isTimerRunning = false) }

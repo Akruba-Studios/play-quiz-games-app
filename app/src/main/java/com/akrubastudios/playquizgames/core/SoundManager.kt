@@ -15,7 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Define los efectos de sonido disponibles en la aplicación.
+ * Define los efectos de sonido disponibles en la aplicación. Control 1-SM
  * Usar un enum previene errores y centraliza la gestión de los sonidos.
  */
 enum class SoundEffect(val resourceId: Int) {
@@ -24,7 +24,8 @@ enum class SoundEffect(val resourceId: Int) {
     LETTER_CLICK(R.raw.sfx_letter_click),
     CLEAR_ANSWER(R.raw.sfx_clear_answer),
     STAR_APPEAR(R.raw.sfx_star_appear),
-    BUTTON_CLICK(R.raw.sfx_button_click)
+    BUTTON_CLICK(R.raw.sfx_button_click),
+    TIMER_TICK(R.raw.sfx_timer_tick)
     // Aquí añadiremos más sonidos en el futuro (ej. BUTTON_CLICK)
 }
 

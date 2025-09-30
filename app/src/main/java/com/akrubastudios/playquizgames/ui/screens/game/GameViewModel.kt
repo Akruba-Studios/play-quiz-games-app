@@ -432,6 +432,9 @@ class GameViewModel @Inject constructor(
                 delay(1000L) // Espera 1 segundo
                 timeLeft--
                 _uiState.update { it.copy(remainingTime = timeLeft) }
+                if (timeLeft in 1..3) {
+                    soundManager.playSound(SoundEffect.TIMER_TICK)
+                }
             }
 
             // Si el tiempo llega a 0, se considera una respuesta incorrecta
