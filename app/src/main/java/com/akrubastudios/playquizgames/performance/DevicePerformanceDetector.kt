@@ -146,63 +146,47 @@ class DevicePerformanceDetector(private val context: Context) {
         screenResolution: Long,
         cpuArch: String
     ): Int {
-        var score = 0
+        var score = 0.0
 
-        // RAM Score (40% del peso total) - Máximo 40 puntos
-        score += when {
-            ramGB <= 1f -> 0
-            ramGB <= 2f -> 8
-            ramGB <= 3f -> 16
-            ramGB <= 4f -> 24
-            ramGB <= 6f -> 32
-            ramGB <= 8f -> 38
-            else -> 40
+        // Puntuación de RAM (Peso: 25%) - Un poco más generoso
+        val ramScore = when {
+            ramGB < 4f -> 10.0
+            ramGB < 6f -> 18.0
+            ramGB < 8f -> 23.0 // <-- Aumento
+            else -> 25.0
         }
+        score += ramScore
 
-        // CPU Score (30% del peso total) - Máximo 30 puntos
+        // Puntuación de CPU (Peso: 25%) - Un poco más generoso
         val cpuScore = when {
-            cpuCores <= 2 -> 5
-            cpuCores <= 4 -> 15
-            cpuCores <= 6 -> 22
-            cpuCores <= 8 -> 28
-            else -> 30
+            cpuCores < 8 -> 15.0
+            cpuCores == 8 -> 23.0 // <-- Aumento
+            else -> 25.0
         }
         score += cpuScore
 
-        // Architecture Bonus/Penalty (5% del peso)
-        val archScore = when (cpuArch) {
-            "arm64", "aarch64" -> 5
-            "armv7" -> 3
-            "x86_64" -> 4
-            "x86" -> 2
-            else -> 1
-        }
-        score += archScore
-
-        // Android Version Score (10% del peso) - Máximo 10 puntos
+        // Puntuación de Versión de Android (Peso: 30%)
         val androidScore = when {
-            androidVersion >= 33 -> 10 // Android 13+
-            androidVersion >= 30 -> 8  // Android 11+
-            androidVersion >= 28 -> 6  // Android 9+
-            androidVersion >= 24 -> 4  // Android 7+
-            androidVersion >= 21 -> 2  // Android 5+
-            else -> 0
+            androidVersion >= 33 -> 30.0
+            androidVersion >= 31 -> 25.0
+            androidVersion >= 29 -> 20.0
+            else -> 10.0
         }
         score += androidScore
 
-        // Screen Resolution Penalty (15% del peso)
-        // Resoluciones más altas requieren más recursos
+        // Penalización por Resolución de Pantalla
         val resolutionPenalty = when {
-            screenResolution <= (1280L * 720L) -> 15    // HD o menor
-            screenResolution <= (1920L * 1080L) -> 12   // Full HD
-            screenResolution <= (2560L * 1440L) -> 8    // QHD
-            screenResolution <= (3840L * 2160L) -> 4    // 4K
-            else -> 0 // 4K+
+            screenResolution > (2560L * 1440L) -> -15.0
+            screenResolution > (1920L * 1080L) -> -8.0
+            else -> 0.0
         }
         score += resolutionPenalty
 
-        // Asegurar que el score esté en el rango 0-100
-        return max(0, min(100, score))
+        if (cpuArch == "arm64") {
+            score += 5.0
+        }
+
+        return max(0.0, min(100.0, score)).toInt()
     }
 
     /**
@@ -210,9 +194,9 @@ class DevicePerformanceDetector(private val context: Context) {
      */
     private fun determineDeviceTier(score: Int): DeviceTier {
         return when {
-            score <= 25 -> DeviceTier.VERY_LOW
-            score <= 50 -> DeviceTier.LOW
-            score <= 75 -> DeviceTier.MEDIUM
+            score < 35 -> DeviceTier.VERY_LOW
+            score < 55 -> DeviceTier.LOW
+            score < 80 -> DeviceTier.MEDIUM // <-- Umbral para HIGH ahora es 80
             else -> DeviceTier.HIGH
         }
     }

@@ -316,7 +316,7 @@ fun MapScreen(
     val realFpsTracker = remember { RealFpsTracker() }
 
     // PARA MOSTRAR U OCULTAR EL FPS EN PANTALLA - FPSSHOW
-    val showFpsMonitor = true  // Cambiar a false para ocultar
+    val showFpsMonitor = false  // Cambiar a false para ocultar
 
     // NUEVO: Controlar el tracking según el lifecycle
     val lifecycleOwner = LocalLifecycleOwner.current
