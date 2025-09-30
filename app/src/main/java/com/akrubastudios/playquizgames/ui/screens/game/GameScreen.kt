@@ -69,9 +69,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
@@ -130,7 +132,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Control 1-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -552,14 +554,23 @@ fun AnswerSlots(
     revealedLetterPositions: Set<Int> = emptySet(),
     modifier: Modifier = Modifier
 ) {
-    // Animaciones
-    val offsetX by animateFloatAsState(
-        targetValue = if (showIncorrectAnimation || showCorrectAnimation) {
-            // Alternamos entre -10 y 10 para crear el shake
+    // Animación de Shake para INCORRECTO (se mantiene igual)
+    val shakeOffsetX by animateFloatAsState(
+        targetValue = if (showIncorrectAnimation) {
             if ((System.currentTimeMillis() / 100) % 2 == 0L) -10f else 10f
         } else 0f,
         animationSpec = tween(100),
-        label = "shake"
+        label = "shake_incorrect"
+    )
+
+    // NUEVA Animación de Salto para CORRECTO
+    val jumpOffsetY by animateFloatAsState(
+        targetValue = if (showCorrectAnimation) -10f else 0f, // Salta 10dp hacia arriba
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "jump_correct"
     )
 
     // Animaciones de clear (shake + fade)
@@ -584,7 +595,10 @@ fun AnswerSlots(
     FlowRow(
         modifier = modifier
             .padding(top = 12.dp, bottom = 20.dp) //top 12 espacio entre el texto pregunta y el answerslot; 20 dp, el espacio del answetslots hacia abajo
-            .offset(x = if (showClearAnimation) clearOffsetX.dp else offsetX.dp)
+            .offset(
+                x = if (showClearAnimation) clearOffsetX.dp else shakeOffsetX.dp,
+                y = jumpOffsetY.dp // <-- APLICAMOS LA NUEVA ANIMACIÓN DE SALTO
+            )
             .alpha(if (showClearAnimation) clearAlpha else 1.0f)
             .clickable { onClear() },
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally), // Espacio ENTRE palabras
