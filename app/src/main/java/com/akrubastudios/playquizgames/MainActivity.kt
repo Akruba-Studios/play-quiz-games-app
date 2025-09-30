@@ -31,7 +31,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // Inyectamos el LanguageManager, que ya es un Singleton gestionado por Hilt. Control 1-MA
+    // Inyectamos el LanguageManager, que ya es un Singleton gestionado por Hilt. Control 2-MA
     // Esto es parte de nuestra arquitectura actual y está correcto.
     @Inject
     lateinit var languageManager: LanguageManager

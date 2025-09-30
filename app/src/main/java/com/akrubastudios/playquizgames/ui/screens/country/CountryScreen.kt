@@ -41,6 +41,7 @@ import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun CountryScreen(
@@ -80,6 +81,7 @@ fun CountryScreen(
             item {
                 Text(
                     text = uiState.countryName, // <-- Mucho más simple.
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.displayMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -114,7 +116,10 @@ fun CountryScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Filled.Star, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.country_button_use_boost))
+                                        Text(
+                                            stringResource(R.string.country_button_use_boost),
+                                            textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
+                                        )
                                     }
                                 }
                             }
@@ -204,7 +209,11 @@ private fun CountryProgress(current: Long, total: Long, statusText: String) {
 
 @Composable
 private fun CategoryList(categories: List<CategoryState>, onCategoryClick: (String) -> Unit) {
-    Text(stringResource(R.string.country_available_categories), style = MaterialTheme.typography.headlineSmall)
+    Text(
+        stringResource(R.string.country_available_categories),
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
+    )
     Spacer(modifier = Modifier.height(16.dp))
     categories.forEach { category ->
         Button(
