@@ -32,10 +32,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.core.SoundEffect
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
+import com.akrubastudios.playquizgames.ui.components.DialogButtonText
+import com.akrubastudios.playquizgames.ui.components.DialogText
+import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import kotlinx.coroutines.delay
 
-@Composable
+@Composable // Control 1-RS
 fun ResultScreen(
     title: String,
     score: Int,
@@ -52,6 +55,7 @@ fun ResultScreen(
     onPlayAgain: () -> Unit,
     onBackToMenu: () -> Unit,
     onBackToLevels: () -> Unit,
+    onChallengeBossNow: (countryId: String, bossLevelId: String) -> Unit,
     viewModel: ResultViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -149,6 +153,35 @@ fun ResultScreen(
             title = stringResource(R.string.xp_tutorial_title),
             text = stringResource(R.string.xp_tutorial_message),
             confirmButtonText = stringResource(R.string.dialog_button_ok_levelup)
+        )
+    }
+    // Este efecto se ejecutará cuando el estado cambie para mostrar el diálogo.
+    val pendingCountryId = uiState.pendingBossChallengeCountryId
+    val bossLevelId = uiState.bossLevelId
+
+    if (pendingCountryId != null && bossLevelId != null) {
+        val countryName = uiState.pendingBossChallengeCountryName ?: "este país"
+        AppAlertDialog(
+            onDismissRequest = { viewModel.clearPendingBossChallenge() },
+            title = { DialogTitle(text = stringResource(R.string.conquest_dialog_title)) },
+            text = { DialogText(text = stringResource(R.string.conquest_dialog_text, countryName)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Primero, limpiamos la bandera
+                        viewModel.clearPendingBossChallenge()
+                        // Luego, ejecutamos la navegación
+                        onChallengeBossNow(pendingCountryId, bossLevelId)
+                    }
+                ) {
+                    DialogButtonText(text = stringResource(R.string.conquest_dialog_button_challenge))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.clearPendingBossChallenge() }) {
+                    DialogButtonText(text = stringResource(R.string.expedition_dialog_button_later))
+                }
+            }
         )
     }
 }

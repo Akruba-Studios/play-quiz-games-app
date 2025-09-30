@@ -426,6 +426,17 @@ fun NavGraph() {
                             inclusive = false
                         )
                     }
+                },
+                onChallengeBossNow = { countryId, bossLevelId ->
+                    // Construimos la ruta a la BossScreen y navegamos.
+                    val route = Routes.BOSS_SCREEN
+                        .replace("{countryId}", countryId)
+                        .replace("{levelId}", bossLevelId)
+                    navController.navigate(route) {
+                        // Limpiamos la pila hasta el mapa para que el botón "atrás"
+                        // desde la BossScreen no vuelva a la pantalla de resultados.
+                        popUpTo(Routes.MAP_SCREEN)
+                    }
                 }
             )
         }

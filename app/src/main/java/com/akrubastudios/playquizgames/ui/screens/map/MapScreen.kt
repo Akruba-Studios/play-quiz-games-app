@@ -698,38 +698,6 @@ fun MapScreen(
         )
     }
 
-    // Diálogo para el desafío de Jefe post-conquista
-    uiState.pendingBossChallenge?.let { countryId ->
-        val countryName = uiState.countries.find { it.countryId == countryId }?.name?.get("es") ?: "este país"
-        val buttonTextColor = getButtonTextColor()
-
-        AppAlertDialog(
-            onDismissRequest = { viewModel.clearPendingBossChallenge() },
-            title = { DialogTitle(text = stringResource(R.string.conquest_dialog_title)) },
-            text = { DialogText(text = stringResource(R.string.conquest_dialog_text, countryName)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearPendingBossChallenge()
-                        val bossLevelId = uiState.countries.find { it.countryId == countryId }?.bossLevelId ?: ""
-                        if (bossLevelId.isNotEmpty()) {
-                            val route = Routes.BOSS_SCREEN
-                                .replace("{countryId}", countryId)
-                                .replace("{levelId}", bossLevelId)
-                            navController.navigate(route)
-                        }
-                    }
-                ) {
-                    DialogButtonText(text = stringResource(R.string.conquest_dialog_button_challenge))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.clearPendingBossChallenge() }) {
-                    DialogButtonText(text = stringResource(R.string.expedition_dialog_button_later))
-                }
-            }
-        )
-    }
     if (uiState.showWelcomeDialog) {
         AppAlertDialog(
             onDismissRequest = { viewModel.welcomeDialogShown() },

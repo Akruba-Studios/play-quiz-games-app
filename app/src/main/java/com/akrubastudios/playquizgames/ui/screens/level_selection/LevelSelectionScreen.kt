@@ -67,7 +67,8 @@ fun LevelSelectionScreen(
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier
                 .padding(16.dp)
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+            textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
         )
 
         // --- INICIO DEL CÓDIGO AÑADIDO: SELECTOR DE DIFICULTAD ---

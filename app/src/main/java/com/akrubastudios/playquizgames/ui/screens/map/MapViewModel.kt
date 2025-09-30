@@ -42,7 +42,6 @@ data class MapState(
     val expeditionAvailable: Boolean = false,
     val showExpeditionDialog: Boolean = false,
     val availableExpeditions: List<Pair<String, String>> = emptyList(),
-    val pendingBossChallenge: String? = null,
     val unassignedPcBoosts: Int = 0,
     val showWelcomeDialog: Boolean = false,
     val firstCountryName: String = "",
@@ -223,7 +222,6 @@ class MapViewModel @Inject constructor(
                         expeditionAvailable = expeditionTier > 0 && filteredExpeditions.isNotEmpty(),
                         showExpeditionDialog = showAutoDialog,
                         availableExpeditions = filteredExpeditions,
-                        pendingBossChallenge = userData.pendingBossChallenge,
                         unassignedPcBoosts = userData.unassignedPcBoosts,
                         showWelcomeDialog = showWelcome,
                         firstCountryName = welcomeCountryName,
@@ -250,29 +248,6 @@ class MapViewModel @Inject constructor(
                 )
             } catch (e: Exception) {
                 Log.e("MapViewModel", "Error al añadir notificación y bandera: $flagName", e)
-            }
-        }
-    }
-
-    /**
-     * Limpia la "bandera" de desafío de jefe pendiente en Firestore.
-     * Se llama después de que el usuario interactúa con el AlertDialog.
-     */
-    fun clearPendingBossChallenge() {
-        _uiState.value = _uiState.value.copy(pendingBossChallenge = null)
-        val uid = auth.currentUser?.uid
-        if (uid == null) {
-            Log.e("MapViewModel", "No se puede limpiar el desafío, usuario nulo.")
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                val userRef = db.collection("users").document(uid)
-                // Usamos FieldValue.delete() para eliminar completamente el campo del documento.
-                userRef.update("pendingBossChallenge", com.google.firebase.firestore.FieldValue.delete())
-            } catch (e: Exception) {
-                Log.e("MapViewModel", "❌ Error al limpiar la bandera pendingBossChallenge.", e)
             }
         }
     }
