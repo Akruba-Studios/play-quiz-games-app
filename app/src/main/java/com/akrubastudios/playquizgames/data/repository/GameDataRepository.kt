@@ -96,7 +96,6 @@ class GameDataRepository @Inject constructor(
     fun stopUserDataListener() {
         userListener?.remove()
         userListener = null
-        _userStateFlow.value = null
 
         // NUEVO: También detener el listener del progreso del país
         stopCountryProgressListener()

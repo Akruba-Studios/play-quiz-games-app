@@ -66,7 +66,7 @@ import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Control: 1-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -74,6 +74,12 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     navController: NavController
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.signOutEvent.collect {
+            onSignOut()
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.musicManager.play(MusicTrack.MAP)
     }

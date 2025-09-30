@@ -1306,7 +1306,7 @@ private fun calculateOptimalButtonSize(
 
     // Definir rangos de tamaño
     val minButtonSize = 38.dp
-    val maxButtonSize = 68.dp
+    val maxButtonSize = 64.dp
 
     Log.d("ButtonCalc", "effectiveWidth: $effectiveWidth, totalLetters: $totalLetters")
 

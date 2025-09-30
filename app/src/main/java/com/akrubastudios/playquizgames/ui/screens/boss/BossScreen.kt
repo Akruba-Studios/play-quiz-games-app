@@ -1351,7 +1351,7 @@ private fun calculateOptimalButtonSizeBoss(
 
     // Definir rangos de tamaño
     val minButtonSize = 36.dp
-    val maxButtonSize = 68.dp
+    val maxButtonSize = 64.dp
 
     // Encontrar el tamaño óptimo
     return findOptimalSizeBoss(
