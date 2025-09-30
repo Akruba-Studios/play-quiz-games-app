@@ -31,7 +31,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // Inyectamos el LanguageManager, que ya es un Singleton gestionado por Hilt. Control 4-MA
+    // Inyectamos el LanguageManager, que ya es un Singleton gestionado por Hilt. Control 5-MA
     // Esto es parte de nuestra arquitectura actual y está correcto.
     @Inject
     lateinit var languageManager: LanguageManager
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
         val newConfiguration = Configuration(newBase.resources.configuration)
 
         // Solo controlar el escalado de texto
-        newConfiguration.fontScale = 4.0f // cambiar a 1.0
+        newConfiguration.fontScale = 1.0f // cambiar a 1.0 u aumentar para hacer pruebas de centrado texto
         // NO TOCAR densityDpi - mantener el original para que tus cálculos de layout funcionen
 
         val newContext = newBase.createConfigurationContext(newConfiguration)

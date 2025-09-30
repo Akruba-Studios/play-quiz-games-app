@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.LanguageManager
 
@@ -39,7 +40,12 @@ fun CountrySelectionScreen(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = stringResource(R.string.country_selection_title), style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = stringResource(R.string.country_selection_title),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+            textAlign = TextAlign.Center        // <-- AÑADE ESTA LÍNEA
+        )
         Spacer(modifier = Modifier.height(32.dp))
 
         if (uiState.isLoading) {

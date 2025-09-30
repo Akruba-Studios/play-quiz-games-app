@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import com.akrubastudios.playquizgames.ui.screens.ranking.RankedUserUiItem
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -85,7 +86,10 @@ fun RankingScreen(
             Text(
                 text = stringResource(R.string.ranking_title),
                 style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                textAlign = TextAlign.Center
             )
 
             if (uiState.isLoading) {

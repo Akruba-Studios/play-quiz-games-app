@@ -101,12 +101,16 @@ fun FreeModeScreen(
             Text(
                 stringResource(R.string.free_mode_title),
                 style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                textAlign = TextAlign.Center
             )
             Text(
                 stringResource(R.string.free_mode_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(16.dp))

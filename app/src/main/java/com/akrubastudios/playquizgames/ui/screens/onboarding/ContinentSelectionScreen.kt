@@ -41,7 +41,8 @@ fun ContinentSelectionScreen(
         Text(
             text = stringResource(R.string.continent_selection_subtitle),
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 8.dp),
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(48.dp))
 

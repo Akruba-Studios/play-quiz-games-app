@@ -3,6 +3,8 @@ package com.akrubastudios.playquizgames.ui.screens.result
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,76 +56,91 @@ fun ResultScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineLarge,
-            textAlign = TextAlign.Center, // <-- AÑADE ESTA LÍNEA
-            modifier = Modifier.fillMaxWidth() // <-- AÑADE ESTA LÍNEA
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(text = stringResource(R.string.result_final_score), style = MaterialTheme.typography.titleMedium)
-        Text(text = "$score XP", style = MaterialTheme.typography.displayMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        if (!isFromBossFight && pcGained > 0) {
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
-                text = stringResource(R.string.result_conquest_points),
+                text = title,
+                style = MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center, // <-- AÑADE ESTA LÍNEA
+                modifier = Modifier.fillMaxWidth() // <-- AÑADE ESTA LÍNEA
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = stringResource(R.string.result_final_score),
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = "+$pcGained PC",
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.primary // Un color destacado
-            )
+            Text(text = "$score XP", style = MaterialTheme.typography.displayMedium)
             Spacer(modifier = Modifier.height(16.dp))
-        }
-        if (gemsGained > 0) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.result_gems_won),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Simplemente llamamos a nuestro componente reutilizable
-            GemsBalanceIndicator(
-                gems = gemsGained,
-                prefix = "+" // <-- PASAMOS EL PREFIJO AQUÍ
-            )
-        }
+            if (!isFromBossFight && pcGained > 0) {
+                Text(
+                    text = stringResource(R.string.result_conquest_points),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "+$pcGained PC",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.primary // Un color destacado
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            if (gemsGained > 0) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.result_gems_won),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                // Simplemente llamamos a nuestro componente reutilizable
+                GemsBalanceIndicator(
+                    gems = gemsGained,
+                    prefix = "+" // <-- PASAMOS EL PREFIJO AQUÍ
+                )
+            }
 
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(R.string.result_questions_summary, correctAnswers, totalQuestions)
-        )
-        // Mostramos las estrellas SOLO si NO es una batalla de jefe.
-        if (!isFromBossFight) {
-            Spacer(modifier = Modifier.height(16.dp))
-            AnimatedStars(
-                starsEarned = starsEarned,
-                previousBestStars = previousBestStars,
-                soundManager = viewModel.soundManager
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(
+                    R.string.result_questions_summary,
+                    correctAnswers,
+                    totalQuestions
+                ),
+                textAlign = TextAlign.Center
             )
-        }
-        Spacer(modifier = Modifier.height(48.dp))
-        // El botón ahora se muestra condicionalmente
-        if (showPlayAgainButton) {
-            Button(onClick = onPlayAgain) {
-                Text(text = playAgainText)
+            // Mostramos las estrellas SOLO si NO es una batalla de jefe.
+            if (!isFromBossFight) {
+                Spacer(modifier = Modifier.height(16.dp))
+                AnimatedStars(
+                    starsEarned = starsEarned,
+                    previousBestStars = previousBestStars,
+                    soundManager = viewModel.soundManager
+                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        if (!isFromBossFight) {
-            Button(onClick = onBackToLevels) {
-                Text(text = stringResource(R.string.result_button_back_to_levels))
+            Spacer(modifier = Modifier.height(48.dp))
+            // El botón ahora se muestra condicionalmente
+            if (showPlayAgainButton) {
+                Button(onClick = onPlayAgain) {
+                    Text(text = playAgainText)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        Button(onClick = onBackToMenu) {
-            Text(text = backButtonText)
+            if (!isFromBossFight) {
+                Button(onClick = onBackToLevels) {
+                    Text(text = stringResource(R.string.result_button_back_to_levels))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            Button(onClick = onBackToMenu) {
+                Text(text = backButtonText)
+            }
         }
     }
     if (uiState.showXpTutorial) {
