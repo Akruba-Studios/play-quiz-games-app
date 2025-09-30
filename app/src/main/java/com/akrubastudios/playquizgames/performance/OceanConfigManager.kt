@@ -14,7 +14,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Gestor central de configuración oceánica con detección automática CONTROL9-OCM:
+ * Gestor central de configuración oceánica con detección automática CONTROL10-OCM:
  * y ajuste dinámico de rendimiento
  */
 class OceanConfigManager private constructor(
@@ -43,9 +43,9 @@ class OceanConfigManager private constructor(
 
         // Umbrales basados en porcentajes del target FPS
         private const val DOWNGRADE_THRESHOLD_PERCENT = 0.65f  // 65% del target para bajar
-        private const val UPGRADE_THRESHOLD_PERCENT = 1.65f      // 165% para subir (era 140%)
+        private const val UPGRADE_THRESHOLD_PERCENT = 2.2f      // 220% para subir (era 165%)
         private const val DOWNGRADE_REQUIRED_SAMPLES = 3       // De 8 mediciones para bajar
-        private const val UPGRADE_REQUIRED_SAMPLES = 4         // De 8 mediciones para subir
+        private const val UPGRADE_REQUIRED_SAMPLES = 5         // De 8 mediciones para subir
         private const val EVALUATION_SAMPLE_SIZE = 4           // Tamaño de muestra para evaluación
         private const val DOWNGRADE_HYSTERESIS_PERCENT = 0.75f   // 75% para mantener tras upgrade
         private const val UPGRADE_HYSTERESIS_PERCENT = 1.25f     // 125% para mantener tras downgrade

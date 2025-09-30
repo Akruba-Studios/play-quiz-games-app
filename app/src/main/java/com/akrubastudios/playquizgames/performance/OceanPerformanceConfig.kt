@@ -95,7 +95,7 @@ data class OceanPerformanceConfig(
          * Calidad visual moderada con buen rendimiento
          */
         fun getMediumConfig() = OceanPerformanceConfig(
-            stepSize = 8,                  // Tu configuración actual
+            stepSize = 9,                  // Tu configuración actual
             frameDelayMs = 33L,            // 30 FPS
             depthIntensity = 0.65f,        // Mejorada vs actual
 
