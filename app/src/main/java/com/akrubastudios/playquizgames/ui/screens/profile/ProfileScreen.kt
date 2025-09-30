@@ -1,6 +1,9 @@
 package com.akrubastudios.playquizgames.ui.screens.profile
 
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.TextView
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,6 +48,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -362,10 +367,36 @@ private fun ActionsCard(
         Column(modifier = Modifier.padding(cardPadding)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
+            val context = LocalContext.current
             OutlinedButton(
-                onClick = onLibraryClick,
-                enabled = isLibraryEnabled, // Se habilita/deshabilita dinámicamente
-                modifier = Modifier.fillMaxWidth()
+                onClick = {
+                    if (isLibraryEnabled) {
+                        // Si está habilitado, navega a la biblioteca.
+                        onLibraryClick()
+                    } else {
+                        // Si no, muestra nuestro Toast personalizado.
+                        val inflater = LayoutInflater.from(context)
+                        val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+
+                        val textView = layout.findViewById<TextView>(R.id.toast_text)
+                        textView.text = context.getString(R.string.library_unlock_toast)
+
+                        Toast(context).apply {
+                            duration = Toast.LENGTH_LONG // Duración larga para que se pueda leer bien
+                            view = layout
+                            show()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                // Hacemos que el botón PAREZCA deshabilitado cambiando sus colores.
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = if (isLibraryEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (isLibraryEnabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                )
             ) {
                 Text(
                     stringResource(R.string.profile_button_library),

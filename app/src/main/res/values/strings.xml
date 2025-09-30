@@ -166,9 +166,11 @@
 
     <string name="profile_title">Perfil Jugador</string>
 
+    <string name="library_unlock_toast">Para desbloquear el Centro de Conocimiento, ¡Consigue 3 ⭐ en cualquier nivel!</string>
+
     <!-- Biblioteca de Fun Facts -->
     <string name="library_title">Centro de Conocimiento</string>
-    <string name="library_empty_message">¡Tu biblioteca está vacía! Domina niveles (consigue 3 ⭐) para coleccionar aquí los Datos Curiosos que descubras.</string>
+    <string name="library_empty_message">¡Tu biblioteca está vacía! Domina niveles (Consigue 3 ⭐) para coleccionar aquí los Datos Curiosos que descubras.</string>
     <string name="cd_collapse">Contraer</string>
 
     <!-- SettingsScreen -->
