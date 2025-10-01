@@ -50,6 +50,8 @@
     <string name="gems_tutorial_title">What are Gems?</string>
     <string name="gems_tutorial_message">They are your most valuable resource! Earn them by getting stars and unleash powerful aids whenever you\'re stuck on a question.</string>
 
+    <string name="ocean_quality_downgrade_toast">Ocean quality set to: \'%1$s\' to improve performance. You can disable the animation in Settings.</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>
     <string name="country_status_conquered">Country Conquered!</string>
@@ -204,6 +206,8 @@
     <string name="settings_quality_tier_low_B">Low</string>
     <string name="settings_quality_tier_medium_C">Medium</string>
     <string name="settings_quality_tier_high_D">High</string>
+    <string name="settings_quality_tier_ultra_E">Ultra</string>
+    <string name="settings_quality_tier_emergency">Emergency</string>
 
     <string name="settings_advanced_options">Advanced Options…</string>
     <string name="settings_advanced_dialog_title">Advanced Performance Settings</string>

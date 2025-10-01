@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.akrubastudios.playquizgames.R
 import kotlin.math.max
 import kotlin.math.min
 
@@ -88,6 +89,8 @@ class OceanConfigManager private constructor(
 
     private val _failsafeEventChannel = Channel<Unit>(Channel.BUFFERED)
     val failsafeEventFlow = _failsafeEventChannel.receiveAsFlow()
+    private val _qualityDowngradeEventChannel = Channel<Int>(Channel.BUFFERED)
+    val qualityDowngradeEventFlow = _qualityDowngradeEventChannel.receiveAsFlow()
 
     // Estado del sistema de monitoreo
     private val _isMonitoring = MutableStateFlow(false)
@@ -184,7 +187,7 @@ class OceanConfigManager private constructor(
             val config = OceanPerformanceConfig.getConfigForTier(savedTier)
             _currentConfig.value = config
 
-            Log.d(TAG, "Configuración cargada: ${config.tierName}")
+            Log.d(TAG, "Configuración cargada: ${config.tierNameResId}")
 
         } catch (e: Exception) {
             Log.e(TAG, "Error cargando configuración guardada", e)
@@ -504,7 +507,12 @@ class OceanConfigManager private constructor(
             saveCurrentTier(newTier)
 
             val action = if (upgrade) "subió" else "bajó"
-            Log.i(TAG, "Configuración $action automáticamente a: ${newConfig.tierName}")
+            Log.i(TAG, "Configuración $action automáticamente a: ${newConfig.tierNameResId}")
+
+            if (!upgrade) {
+                // Si la calidad bajó, enviamos el nombre del nuevo tier a través del canal.
+                _qualityDowngradeEventChannel.trySend(newConfig.tierNameResId)
+            }
         }
     }
 
@@ -531,7 +539,7 @@ class OceanConfigManager private constructor(
         _currentConfig.value = config
         saveUserOverrideTier(tier)
 
-        Log.i(TAG, "Usuario forzó configuración: ${config.tierName}")
+        Log.i(TAG, "Usuario forzó configuración: ${config.tierNameResId}")
     }
 
     /**
@@ -621,12 +629,12 @@ class OceanConfigManager private constructor(
 
     private fun getCurrentTierFromConfig(): DevicePerformanceDetector.DeviceTier {
         val config = currentConfig.value
-        return when (config.tierName) {
-            "Gama Muy Baja" -> DevicePerformanceDetector.DeviceTier.VERY_LOW
-            "Gama Baja" -> DevicePerformanceDetector.DeviceTier.LOW
-            "Gama Media" -> DevicePerformanceDetector.DeviceTier.MEDIUM
-            "Gama Alta" -> DevicePerformanceDetector.DeviceTier.HIGH
-            else -> DevicePerformanceDetector.DeviceTier.MEDIUM
+        return when (config.tierNameResId) {
+            R.string.settings_quality_tier_very_low_A -> DevicePerformanceDetector.DeviceTier.VERY_LOW
+            R.string.settings_quality_tier_low_B -> DevicePerformanceDetector.DeviceTier.LOW
+            R.string.settings_quality_tier_medium_C -> DevicePerformanceDetector.DeviceTier.MEDIUM
+            R.string.settings_quality_tier_high_D -> DevicePerformanceDetector.DeviceTier.HIGH
+            else -> DevicePerformanceDetector.DeviceTier.MEDIUM // Fallback seguro
         }
     }
 

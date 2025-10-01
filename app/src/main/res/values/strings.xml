@@ -50,6 +50,8 @@
     <string name="gems_tutorial_title">¿Qué son las Gemas?</string>
     <string name="gems_tutorial_message">¡Son tu recurso más valioso! Gánalas consiguiendo estrellas y desata poderosas ayudas cuando te encuentres atascado en una pregunta.</string>
 
+    <string name="ocean_quality_downgrade_toast">Calidad del océano ajustada a: \'%1$s\' para mejorar el rendimiento. Puedes desactivar la animación en Ajustes.</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>
@@ -204,6 +206,8 @@
     <string name="settings_quality_tier_low_B">Baja</string>
     <string name="settings_quality_tier_medium_C">Media</string>
     <string name="settings_quality_tier_high_D">Alta</string>
+    <string name="settings_quality_tier_ultra_E">Ultra</string>
+    <string name="settings_quality_tier_emergency">Emergencia</string>
 
     <string name="settings_advanced_options">Opciones Avanzadas…</string>
     <string name="settings_advanced_dialog_title">Ajustes de Rendimiento Avanzado</string>

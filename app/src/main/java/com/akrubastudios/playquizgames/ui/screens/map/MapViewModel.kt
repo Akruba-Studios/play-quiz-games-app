@@ -50,7 +50,8 @@ data class MapState(
     val hasProfileNotification: Boolean = false,
     val gems: Int = 0,
     val isOceanVisible: Boolean = true,
-    val showFailsafeDialog: Boolean = false
+    val showFailsafeDialog: Boolean = false,
+    val qualityDowngradeMessageResId: Int? = null
 )
 
 @HiltViewModel
@@ -93,9 +94,8 @@ class MapViewModel @Inject constructor(
         processUserData()
 
         viewModelScope.launch {
-            oceanConfigManager.failsafeEventFlow.collect {
-                // Cuando recibimos un evento, actualizamos el estado para mostrar el diálogo.
-                _uiState.update { it.copy(showFailsafeDialog = true) }
+            oceanConfigManager.qualityDowngradeEventFlow.collect { newTierResId ->
+                _uiState.update { it.copy(qualityDowngradeMessageResId = newTierResId) }
             }
         }
     }
@@ -373,8 +373,14 @@ class MapViewModel @Inject constructor(
             }
         }
     }
+    fun showFailsafeDialog() {
+        _uiState.update { it.copy(showFailsafeDialog = true) }
+    }
     fun dismissFailsafeDialog() {
         _uiState.update { it.copy(showFailsafeDialog = false) }
+    }
+    fun onQualityDowngradeToastShown() {
+        _uiState.update { it.copy(qualityDowngradeMessageResId = null) }
     }
 }
 

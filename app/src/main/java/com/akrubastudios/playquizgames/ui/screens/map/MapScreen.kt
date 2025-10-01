@@ -125,7 +125,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 12MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 13-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -239,7 +239,7 @@ fun AdvancedFpsMonitor(
 
                     // Información de configuración
                     Text(
-                        text = "Tier: ${currentConfig.tierName}",
+                        text = "Tier: ${currentConfig.tierNameResId}",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -283,7 +283,7 @@ fun AdvancedFpsMonitor(
                                 onClick = {
                                     // Inyectar FPS altos para testing
                                     repeat(50) {
-                                        oceanConfigManager.recordFramePerformance(70f)
+                                        oceanConfigManager.recordFramePerformance(100f)
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(
@@ -319,7 +319,7 @@ fun MapScreen(
     val realFpsTracker = remember { RealFpsTracker() }
 
     // PARA MOSTRAR U OCULTAR EL FPS EN PANTALLA - FPSSHOW
-    val showFpsMonitor = false  // Cambiar a false para ocultar
+    val showFpsMonitor = true  // Cambiar a false para ocultar
 
     // NUEVO: Controlar el tracking según el lifecycle
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -391,6 +391,38 @@ fun MapScreen(
             screenWidth < 340.dp -> 12.dp     // Zona crítica
             screenWidth < 370.dp -> 14.dp     // Zona transición
             else -> 16.dp                     // Zona normal (actual)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.oceanConfigManager.failsafeEventFlow.collect {
+            // El ViewModel sigue controlando el estado, pero la escucha
+            // se hace desde la UI, que siempre está activa.
+            viewModel.showFailsafeDialog() // <-- NECESITAREMOS ESTA NUEVA FUNCIÓN
+        }
+    }
+
+    LaunchedEffect(uiState.qualityDowngradeMessageResId) { // <-- CAMBIO AQUÍ
+        uiState.qualityDowngradeMessageResId?.let { newTierResId -> // <-- CAMBIO AQUÍ
+            // Preparamos el texto completo del Toast
+            val newTierName = context.getString(newTierResId)
+            val message = context.getString(R.string.ocean_quality_downgrade_toast, newTierName)
+
+            // Usamos nuestro Toast personalizado
+            val inflater = LayoutInflater.from(context)
+            val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+            val textView = layout.findViewById<TextView>(R.id.toast_text)
+            textView.text = message
+
+            Toast(context).apply {
+                duration = Toast.LENGTH_LONG // Larga para que el usuario pueda leerla bien
+                view = layout
+                show()
+            }
+
+            // Notificamos al ViewModel que el mensaje ya fue mostrado
+            // para que no vuelva a aparecer en la siguiente recomposición.
+            viewModel.onQualityDowngradeToastShown()
         }
     }
 

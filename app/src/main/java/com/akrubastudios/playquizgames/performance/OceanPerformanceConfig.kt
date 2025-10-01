@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.performance
 
+import androidx.annotation.StringRes
+import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector.DeviceTier
 
 /**
@@ -30,7 +32,7 @@ data class OceanPerformanceConfig(
     val targetFPS: Int,
 
     // Información de la configuración
-    val tierName: String,
+    @StringRes val tierNameResId: Int,
     val qualityDescription: String
 ) {
 
@@ -59,7 +61,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true, // Usar tablas optimizadas
             targetFPS = 20,
 
-            tierName = "Gama Muy Baja",
+            tierNameResId = R.string.settings_quality_tier_very_low_A,
             qualityDescription = "Optimizado para máximo rendimiento"
         )
 
@@ -86,7 +88,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true,
             targetFPS = 30,
 
-            tierName = "Gama Baja",
+            tierNameResId = R.string.settings_quality_tier_low_B,
             qualityDescription = "Balance básico rendimiento-calidad"
         )
 
@@ -113,7 +115,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true,
             targetFPS = 30,
 
-            tierName = "Gama Media",
+            tierNameResId = R.string.settings_quality_tier_medium_C,
             qualityDescription = "Calidad visual balanceada"
         )
 
@@ -140,7 +142,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true,
             targetFPS = 60,
 
-            tierName = "Gama Alta",
+            tierNameResId = R.string.settings_quality_tier_high_D,
             qualityDescription = "Máxima calidad visual"
         )
 
@@ -167,7 +169,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true,
             targetFPS = 60,
 
-            tierName = "Ultra",
+            tierNameResId = R.string.settings_quality_tier_ultra_E,
             qualityDescription = "Calidad cinematográfica"
         )
 
@@ -219,7 +221,7 @@ data class OceanPerformanceConfig(
             preCalculatedNoiseTables = true,
             targetFPS = 10,
 
-            tierName = "Emergencia",
+            tierNameResId = R.string.settings_quality_tier_emergency,
             qualityDescription = "Configuración de supervivencia"
         )
     }
@@ -245,7 +247,7 @@ data class OceanPerformanceConfig(
      */
     override fun toString(): String {
         return """
-            $tierName Ocean Config:
+            $tierNameResId Ocean Config:
             - Step Size: ${stepSize}px
             - Target FPS: $targetFPS (${frameDelayMs}ms delay)
             - Depth Intensity: $depthIntensity
