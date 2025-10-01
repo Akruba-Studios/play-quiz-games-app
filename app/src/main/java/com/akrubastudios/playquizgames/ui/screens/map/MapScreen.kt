@@ -125,7 +125,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 13-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 14-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -319,7 +319,7 @@ fun MapScreen(
     val realFpsTracker = remember { RealFpsTracker() }
 
     // PARA MOSTRAR U OCULTAR EL FPS EN PANTALLA - FPSSHOW
-    val showFpsMonitor = true  // Cambiar a false para ocultar
+    val showFpsMonitor = false  // Cambiar a false para ocultar
 
     // NUEVO: Controlar el tracking según el lifecycle
     val lifecycleOwner = LocalLifecycleOwner.current
