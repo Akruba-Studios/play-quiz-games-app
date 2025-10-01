@@ -28,14 +28,16 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.sp
 
-@Composable
+@Composable // Control 1-LSS
 fun LevelSelectionScreen(
     viewModel: LevelSelectionViewModel = hiltViewModel(),
     onLevelClick: (levelId: String, difficulty: String) -> Unit,
@@ -163,6 +165,29 @@ fun LevelItem(
     onLevelClick: (String) -> Unit,
     onLockedClick: () -> Unit
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    // 1. Definimos los tamaños dinámicos para fuente y estrellas
+    val levelNameFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 13.sp // Zona crítica
+            screenWidth < 370.dp -> 14.sp // Zona de transición
+            else -> 16.sp                 // Tamaño normal (bodyLarge)
+        }
+    }
+
+    val starSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 18.dp // Zona crítica
+            screenWidth < 370.dp -> 20.dp // Zona de transición
+            else -> 24.dp                 // Tamaño normal
+        }
+    }
+
+    // 2. El ancho del contenedor de estrellas AHORA es dinámico
+    val starContainerWidth = remember(starSize) {
+        (starSize * 3) + 4.dp // 3 estrellas + 4dp de espacio entre cada una
+    }
     // Usamos una Surface que actúa como nuestro contenedor principal.
     // Le damos forma, borde y un modificador clickable que SIEMPRE funciona.
     Surface(
@@ -183,6 +208,7 @@ fun LevelItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .padding(horizontal = 24.dp, vertical = 8.dp), // Padding similar al de un OutlinedButton
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -196,9 +222,11 @@ fun LevelItem(
             Text(
                 text = level.levelName,
                 color = contentColor,
-                fontWeight = if (level.isLocked) FontWeight.Normal else FontWeight.Bold
+                fontSize = levelNameFontSize,
+                fontWeight = if (level.isLocked) FontWeight.Normal else FontWeight.Bold,
+                modifier = Modifier.weight(1f)
             )
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
 
             if (level.isLocked) {
                 Icon(
@@ -207,12 +235,16 @@ fun LevelItem(
                     tint = contentColor // Usamos el mismo color atenuado.
                 )
             } else {
-                Row {
+                Row(
+                    modifier = Modifier.width(starContainerWidth), // <-- APLICAMOS ANCHO DINÁMICO
+                    horizontalArrangement = Arrangement.SpaceBetween // Mejor espaciado
+                ) {
                     (1..3).forEach { starIndex ->
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            tint = if (starIndex <= level.starsEarned) Color(0xFFFFD700) else Color.Gray
+                            tint = if (starIndex <= level.starsEarned) Color(0xFFFFD700) else Color.Gray,
+                            modifier = Modifier.size(starSize)
                         )
                     }
                 }

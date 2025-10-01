@@ -37,7 +37,7 @@
     <string name="free_mode_unlock_toast">Reach Level 5 to unlock Free Mode!</string>
 
     <string name="free_mode_unlocked_title">Free Mode Unlocked!</string>
-    <string name="free_mode_unlocked_message">Congratulations on reaching Level 5! You can now access Free Mode from the navigation bar.\n\nReplay your 3 ⭐ levels, compete for a higher score, and earn more XP.</string>
+    <string name="free_mode_unlocked_message">Congratulations on reaching Level 5! You can now access Free Mode from the navigation bar.\n\nReplay your 3 ⭐ rounds, compete for a higher score, and earn more XP.</string>
     <string name="dialog_button_awesome">Awesome!</string>
 
     <string name="domination_rewards_title">Domination Rewards!</string>
@@ -73,10 +73,10 @@
     <!-- LevelSelectionScreen -->
     <string name="difficulty_beginner">Beginner</string>
     <string name="difficulty_hard">Hard</string>
-    <string name="difficulty_hard_bonus">Hard Mode: +50% XP!</string>
+    <string name="difficulty_hard_bonus">Hard Mode: You can win +50% XP!</string>
     <string name="difficulty_beginner_tip">Beginner Mode: Great for learning!</string>
 
-    <string name="level_unlock_toast">You need 1 ⭐ on the previous level to unlock this one!</string>
+    <string name="level_unlock_toast">You need 1 ⭐ on the previous round to unlock this one!</string>
 
     <string name="level_selection_back_to_country">Back to Country</string>
 
@@ -136,8 +136,8 @@
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Free Mode</string>
-    <string name="free_mode_subtitle">Replay your 3-star levels to improve your score and earn more XP.</string>
-    <string name="free_mode_no_levels">You haven\'t earned 3 stars on any level yet.</string>
+    <string name="free_mode_subtitle">Replay your 3-star rounds to improve your score and earn more XP.</string>
+    <string name="free_mode_no_levels">You haven\'t earned 3 stars on any round yet.</string>
     <string name="free_mode_record">Record: %1$s</string> <!-- %1$s = highScore -->
     <string name="free_mode_max">Max: %1$s</string> <!-- %1$s = maxScore -->
     <string name="free_mode_beginner_max_hint">(Max in Beginner: %1$s)</string>
@@ -168,11 +168,11 @@
 
     <string name="profile_title">Player Profile</string>
 
-    <string name="library_unlock_toast">To unlock the Knowledge Center, get 3 ⭐ on any level!</string>
+    <string name="library_unlock_toast">To unlock the Knowledge Center, get 3 ⭐ on any round!</string>
 
     <!-- Fun Fact Library -->
     <string name="library_title">Knowledge Library</string>
-    <string name="library_empty_message">Your library is empty! Master levels (get 3 ⭐) to collect the Fun Facts you discover here.</string>
+    <string name="library_empty_message">Your library is empty!. Get 3 ⭐ to collect the Fun Facts you discover here.</string>
     <string name="cd_collapse">Collapse</string>
 
     <!-- SettingsScreen -->
@@ -313,10 +313,10 @@
     <string name="conquest_tutorial_message">Every Country, has a Conquest Progress bar. Your goal is to fill it to conquer %1$s and challenge its Guardian.\n\nTo get the required Conquest Points (PC), you must earn ⭐ in the different knowledge categories!</string>
 
     <string name="level_unlock_tutorial_title">Unlock Your Path!</string>
-    <string name="level_unlock_tutorial_message">To unlock the next levels, prove your knowledge by earning at least 1 ⭐.\n\nEvery level is a new challenge!</string>
+    <string name="level_unlock_tutorial_message">To unlock the next rounds, prove your knowledge by earning at least 1 ⭐.\n\nEvery round is a new challenge!</string>
 
     <string name="xp_tutorial_title">Experience Gained!</string>
-    <string name="xp_tutorial_message">Congratulations on completing the level! Every time you finish a match, the Experience Points (XP) from your correct answers are added to your total.\n\nCollect XP to Level Up and unlock great rewards!</string>
+    <string name="xp_tutorial_message">Congratulations on completing the Round! Every time you finish a match, the Experience Points (XP) from your correct answers are added to your total.\n\nCollect XP to Level Up and unlock great rewards!</string>
     <string name="dialog_button_ok_levelup">Let\'s Level Up!</string>
 
     <string name="fun_fact_tutorial_title">Need a Hint?</string>

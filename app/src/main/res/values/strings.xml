@@ -37,7 +37,7 @@
     <string name="free_mode_unlock_toast">¡Alcanza el Nivel 5 para desbloquear el Modo Libre!</string>
 
     <string name="free_mode_unlocked_title">¡Modo Libre Desbloqueado!</string>
-    <string name="free_mode_unlocked_message">¡Felicidades por alcanzar el Nivel 5! Ahora puedes acceder al Modo Libre desde la barra de navegación.\n\nVuelve a jugar tus niveles de 3 ⭐, compite por un puntaje más alto y gana más XP.</string>
+    <string name="free_mode_unlocked_message">¡Felicidades por alcanzar el Nivel 5! Ahora puedes acceder al Modo Libre desde la barra de navegación.\n\nVuelve a jugar tus rondas de 3 ⭐, compite por un puntaje más alto y gana más XP.</string>
     <string name="dialog_button_awesome">¡Genial!</string>
 
     <string name="domination_rewards_title">¡Recompensas de Dominación!</string>
@@ -73,10 +73,10 @@
     <!-- LevelSelectionScreen -->
     <string name="difficulty_beginner">Fácil</string>
     <string name="difficulty_hard">Difícil</string>
-    <string name="difficulty_hard_bonus">Modo Difícil: ¡+50% XP!</string>
+    <string name="difficulty_hard_bonus">Modo Difícil: ¡Puedes Ganar +50% XP!</string>
     <string name="difficulty_beginner_tip">Modo Fácil: ¡Ideal para aprender!</string>
 
-    <string name="level_unlock_toast">¡Necesitas 1 ⭐ en el nivel anterior para desbloquear este!</string>
+    <string name="level_unlock_toast">¡Necesitas 1 ⭐ en la ronda anterior para desbloquear este!</string>
 
     <string name="level_selection_back_to_country">Volver al País</string>
 
@@ -136,8 +136,8 @@
 
     <!-- FreeModeScreen -->
     <string name="free_mode_title">Modo Libre</string>
-    <string name="free_mode_subtitle">Repite tus niveles de 3 estrellas para mejorar tu puntaje y ganar más XP.</string>
-    <string name="free_mode_no_levels">Aún no has conseguido 3 estrellas en ningún nivel.</string>
+    <string name="free_mode_subtitle">Repite tus rondas de 3 estrellas para mejorar tu puntaje y ganar más XP.</string>
+    <string name="free_mode_no_levels">Aún no has conseguido 3 estrellas en ninguna ronda.</string>
     <string name="free_mode_record">Récord: %1$s</string> <!-- %1$s = highScore -->
     <string name="free_mode_max">Máximo: %1$s</string> <!-- %1$s = maxScore -->
     <string name="free_mode_beginner_max_hint">(Máx. en Fácil: %1$s)</string>
@@ -168,11 +168,11 @@
 
     <string name="profile_title">Perfil Jugador</string>
 
-    <string name="library_unlock_toast">Para desbloquear el Centro de Conocimiento, ¡Consigue 3 ⭐ en cualquier nivel!</string>
+    <string name="library_unlock_toast">Para desbloquear el Centro de Conocimiento, ¡Consigue 3 ⭐ en cualquier ronda de preguntas!</string>
 
     <!-- Biblioteca de Fun Facts -->
     <string name="library_title">Centro de Conocimiento</string>
-    <string name="library_empty_message">¡Tu biblioteca está vacía! Domina niveles (Consigue 3 ⭐) para coleccionar aquí los Datos Curiosos que descubras.</string>
+    <string name="library_empty_message">¡Tu biblioteca está vacía!. Consigue 3 ⭐ para coleccionar aquí los Datos Curiosos que descubras.</string>
     <string name="cd_collapse">Contraer</string>
 
     <!-- SettingsScreen -->
@@ -313,10 +313,10 @@
     <string name="conquest_tutorial_message">Cada País tiene una barra de Progreso de Conquista. Tu objetivo es llenarla para conquistar %1$s y desafiar a su Guardián.\n\nPara conseguir los Puntos de Conquista (PC) necesarios, ¡debes ganar ⭐ en las diferentes categorías de conocimiento!</string>
 
     <string name="level_unlock_tutorial_title">¡Desbloquea tu Camino!</string>
-    <string name="level_unlock_tutorial_message">Para desbloquear los niveles siguientes, demuestra tu conocimiento consiguiendo al menos 1 ⭐.\n\n¡Cada nivel es un nuevo desafío!</string>
+    <string name="level_unlock_tutorial_message">Para desbloquear las rondas siguientes, demuestra tu conocimiento consiguiendo al menos 1 ⭐.\n\n¡Cada ronda es un nuevo desafío!</string>
 
     <string name="xp_tutorial_title">¡Experiencia Ganada!</string>
-    <string name="xp_tutorial_message">¡Felicidades por completar el nivel! Cada vez que terminas una partida, los Puntos de Experiencia (XP) de tus respuestas correctas se suman a tu total global.\n\n¡Acumula XP para subir de Nivel y desbloquear grandes recompensas!</string>
+    <string name="xp_tutorial_message">¡Felicidades por completar la Ronda! Cada vez que terminas una partida, los Puntos de Experiencia (XP) de tus respuestas correctas se suman a tu total global.\n\n¡Acumula XP para subir de Nivel y desbloquear grandes recompensas!</string>
     <string name="dialog_button_ok_levelup">¡A subir de nivel!</string>
 
     <string name="fun_fact_tutorial_title">¿Necesitas una Pista?</string>
