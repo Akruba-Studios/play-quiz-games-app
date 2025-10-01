@@ -43,7 +43,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 
 object Routes {
-    // La ruta a la pantalla de resultados ahora define los parámetros que espera
+    // La ruta a la pantalla de resultados ahora define los parámetros que espera. Control 1-NG
     const val SPLASH_SCREEN = "splash"
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}/{categoryId}/{continentId}/{origin}/{previousBestStars}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}/{origin}"
@@ -275,7 +275,9 @@ fun NavGraph() {
             CountrySelectionScreen(
                 onNavigateToMap = {
                     navController.navigate(Routes.MAP_SCREEN) {
-                        popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
+                        popUpTo(0) {
+                            inclusive = true
+                        }
                     }
                 }
             )
