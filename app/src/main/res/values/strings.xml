@@ -96,7 +96,7 @@
     <string name="boss_phase_transition_2">⚡ EL GUARDIÁN SE AGITA ⚡</string>
     <string name="boss_phase_transition_3">🔥 ¡FASE FINAL DE FURIA! 🔥</string>
     <string name="boss_phase_transition_default">⭐ NUEVA FASE ⭐</string>
-    <string name="boss_victory_title">🏆 ¡VICTORIA ÉPICA! 🏆</string>
+    <string name="boss_victory_title">¡VICTORIA ÉPICA!</string>
     <string name="boss_victory_subtitle">¡Has dominado al %1$s!</string>
     <string name="boss_battle_stats_title">📊 ESTADÍSTICAS DE BATALLA</string>
     <string name="boss_battle_stats_time">⏱️ Tiempo: %1$s</string>

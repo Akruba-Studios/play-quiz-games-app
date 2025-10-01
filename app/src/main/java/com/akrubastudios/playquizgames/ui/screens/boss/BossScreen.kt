@@ -100,7 +100,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 1-BS
 // =====================================================
 
 @Composable
@@ -1010,7 +1010,8 @@ private fun VictorySequence(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -1028,29 +1029,37 @@ private fun VictorySequence(
                     ) {
                         Text(
                             stringResource(R.string.boss_battle_stats_title),
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         Spacer(Modifier.height(8.dp))
 
                         Text(
                             stringResource(R.string.boss_battle_stats_time, formatBattleTime(battleStats.totalTime)),
-                            fontSize = 12.sp,
-                            color = Color.White
+                            fontSize = 14.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         Text(
                             stringResource(R.string.boss_battle_stats_accuracy, battleStats.accuracy.toInt()),
-                            fontSize = 12.sp,
-                            color = Color.White
+                            fontSize = 14.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         Text(
                             stringResource(R.string.boss_battle_stats_streak, battleStats.longestStreak),
-                            fontSize = 12.sp,
-                            color = Color.White
+                            fontSize = 14.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
