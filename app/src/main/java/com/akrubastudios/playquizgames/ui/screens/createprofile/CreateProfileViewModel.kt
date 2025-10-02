@@ -19,13 +19,21 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
+val availableAvatars = listOf(
+    "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fcanadian.png?alt=media",
+    "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fwoman.png?alt=media",
+    "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fman.png?alt=media",
+    "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fwoman1.png?alt=media"
+)
+
 data class CreateProfileState(
     val googleName: String = "",
     val googlePhotoUrl: String = "",
     val username: String = "",
     val useGoogleData: Boolean = true,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val selectedAvatarUrl: String = availableAvatars.first()
 )
 
 @HiltViewModel
@@ -68,6 +76,10 @@ class CreateProfileViewModel @Inject constructor(
         }
     }
 
+    fun onAvatarSelected(avatarUrl: String) {
+        _uiState.update { it.copy(selectedAvatarUrl = avatarUrl) }
+    }
+
     fun onContinueClicked() {
         val state = _uiState.value
         if (!state.useGoogleData && state.username.isBlank()) {
@@ -86,10 +98,15 @@ class CreateProfileViewModel @Inject constructor(
             }
 
             try {
+                val photoUrlToSave = if (state.useGoogleData) {
+                    state.googlePhotoUrl
+                } else {
+                    state.selectedAvatarUrl
+                }
                 // Preparamos los datos a actualizar
                 val profileData = mapOf(
                     "displayName" to state.username,
-                    "photoUrl" to if (state.useGoogleData) state.googlePhotoUrl else "", // Dejamos la URL vacía si no se usa la de Google
+                    "photoUrl" to photoUrlToSave,
                     "isProfileConfirmed" to true
                 )
 

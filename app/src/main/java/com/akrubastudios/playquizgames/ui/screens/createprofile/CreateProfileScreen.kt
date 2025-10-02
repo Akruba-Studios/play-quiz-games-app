@@ -1,8 +1,12 @@
 package com.akrubastudios.playquizgames.ui.screens.createprofile
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -14,16 +18,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Control 1-CPS
 @Composable
 fun CreateProfileScreen(
     viewModel: CreateProfileViewModel = hiltViewModel(),
@@ -59,16 +71,51 @@ fun CreateProfileScreen(
 
                 // Avatar
                 AsyncImage(
-                    model = if (uiState.useGoogleData) uiState.googlePhotoUrl else R.drawable.logo_splash, // Placeholder para avatar personalizado
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(if (uiState.useGoogleData) uiState.googlePhotoUrl else uiState.selectedAvatarUrl)
+                        .crossfade(true)
+                        .error(R.drawable.logo_splash)
+                        .build(),
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(id = R.drawable.logo_splash),
-                    error = painterResource(id = R.drawable.logo_splash)
+                    contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (!uiState.useGoogleData) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(id = R.string.create_profile_avatar_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        items(availableAvatars) { avatarUrl ->
+                            val isSelected = uiState.selectedAvatarUrl == avatarUrl
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Avatar Option",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .clickable { viewModel.onAvatarSelected(avatarUrl) }
+                                    .border(
+                                        border = BorderStroke(
+                                            width = if (isSelected) 3.dp else 0.dp,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                                        ),
+                                        shape = CircleShape
+                                    ),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                }
 
                 // Checkbox
                 Row(
