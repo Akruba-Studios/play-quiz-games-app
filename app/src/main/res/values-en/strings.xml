@@ -21,6 +21,14 @@
     <string name="unknown_continent">Unknown Continent</string>
     <string name="country_selection_title">Choose your Starting Country</string>
 
+    <!-- CreateProfile -->
+    <string name="create_profile_title">Almost there! Create your profile</string>
+    <string name="create_profile_username_label">Username</string>
+    <string name="create_profile_use_google_data">Use my Google name and photo</string>
+    <string name="create_profile_avatar_title">Choose your Avatar</string>
+    <string name="create_profile_button_continue">Continue</string>
+    <string name="create_profile_error_empty_name">Username cannot be empty</string>
+
     <!-- MapScreen -->
     <string name="map_title">Knowledge Map</string>
     <string name="bottom_nav_ranking">Ranking</string>

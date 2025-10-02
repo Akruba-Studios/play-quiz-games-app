@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.delay
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun SplashScreen(
@@ -45,6 +47,14 @@ fun SplashScreen(
                 Destination.LOGIN -> Routes.LOGIN_SCREEN
                 Destination.ONBOARDING -> Routes.CONTINENT_SELECTION_SCREEN
                 Destination.MAP -> Routes.MAP_SCREEN
+                Destination.CREATE_PROFILE -> {
+                    val user = viewModel.currentUser // Obtenemos el usuario de Auth
+                    val googleName = URLEncoder.encode(user?.displayName ?: "", StandardCharsets.UTF_8.name())
+                    val googlePhotoUrl = URLEncoder.encode(user?.photoUrl?.toString() ?: "", StandardCharsets.UTF_8.name())
+                    Routes.CREATE_PROFILE_SCREEN
+                        .replace("{googleName}", googleName)
+                        .replace("{googlePhotoUrl}", googlePhotoUrl)
+                }
             }
             // Navegamos al destino final y limpiamos la pila para que
             // el usuario no pueda volver a la Splash Screen.

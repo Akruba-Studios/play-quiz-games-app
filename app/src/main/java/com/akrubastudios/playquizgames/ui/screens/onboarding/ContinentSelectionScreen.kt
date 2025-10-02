@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.onboarding
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,9 @@ fun ContinentSelectionScreen(
     // qué continente se ha seleccionado, pasándole el continentId como un String.
     onContinentSelected: (continentId: String) -> Unit
 ) {
+    // Intercepta el botón "Atrás" del sistema y no hace nada.
+    BackHandler(enabled = true) { /* No hacer nada */ }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

@@ -1,5 +1,7 @@
 package com.akrubastudios.playquizgames.domain
 
+import com.google.firebase.firestore.PropertyName
+
 data class User(
     val uid: String = "",
     val displayName: String? = null,
@@ -22,5 +24,8 @@ data class User(
     val hasTriggeredExpansionMilestone: Boolean = false,
     val masteredLevelIds: List<String> = emptyList(),
     val hasSeenFunFactTutorial: Boolean = false,
-    val gems: Int = 0
+    val gems: Int = 0,
+    @PropertyName("isProfileConfirmed")
+    @get:PropertyName("isProfileConfirmed")
+    val isProfileConfirmed: Boolean = false
 )

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.akrubastudios.playquizgames.domain.User
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.PureWhite
@@ -32,7 +33,7 @@ import com.akrubastudios.playquizgames.ui.theme.PureWhite
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
-    onSignInComplete: (isNewUser: Boolean) -> Unit
+    onSignInComplete: (user: User, isNewUser: Boolean) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -40,7 +41,7 @@ fun LoginScreen(
     // Efecto para navegar cuando el inicio de sesión es exitoso
     LaunchedEffect(key1 = uiState.signInResult) {
         uiState.signInResult?.let { result ->
-            onSignInComplete(result.isNewUser)
+            onSignInComplete(result.user, result.isNewUser)
         }
     }
 

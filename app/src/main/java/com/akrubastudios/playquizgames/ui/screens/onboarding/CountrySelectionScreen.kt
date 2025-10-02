@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.onboarding
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,9 @@ fun CountrySelectionScreen(
     viewModel: CountrySelectionViewModel = hiltViewModel(),
     onNavigateToMap: () -> Unit
 ) {
+    // Intercepta el botón "Atrás" del sistema y no hace nada.
+    BackHandler(enabled = true) { /* No hacer nada */ }
+
     val uiState by viewModel.uiState.collectAsState()
 
     Log.d("Onboarding_Debug", "Recomponiendo CountrySelectionScreen. isLoading: ${uiState.isLoading}")

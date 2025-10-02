@@ -23,6 +23,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun signInWithGoogle(idToken: String): Result<SignInResult> {
         return try {
+            Log.d("AuthRepo", "🔐 signInWithGoogle LLAMADO")
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = auth.signInWithCredential(credential).await()
             val firebaseUser = authResult.user!!
@@ -31,11 +32,13 @@ class AuthRepository @Inject constructor(
 
             // 1. Apuntamos a la colección 'users' y al documento con el uid del usuario
             val userRef = db.collection("users").document(firebaseUser.uid)
-            val document = userRef.get().await()
+            val document = userRef.get(com.google.firebase.firestore.Source.SERVER).await()
+            Log.d("AuthRepo", "Documento existe: ${document.exists()}")
 
             val user: User
             var isNewUser = false
             if (!document.exists()) {
+                Log.d("AuthRepo", "❌ Creando usuario NUEVO con isProfileConfirmed = false")
                 isNewUser = true
                 // 2. Si el usuario NO existe, lo creamos
                 user = User(
@@ -61,10 +64,12 @@ class AuthRepository @Inject constructor(
                     "hasTriggeredConquest2Milestone" to false,
                     "hasTriggeredExpansionMilestone" to false,
                     "hasSeenFunFactTutorial" to false,
-                    "gems" to 0
+                    "gems" to 0,
+                    "isProfileConfirmed" to false
                 )
                 userRef.set(newUserMap).await()
             } else {
+                Log.d("AuthRepo", "✅ Usuario ya existe, no se sobrescribe")
                 isNewUser = false // <-- Confirmamos que no es nuevo
                 user = document.toObject(User::class.java)!!
             }

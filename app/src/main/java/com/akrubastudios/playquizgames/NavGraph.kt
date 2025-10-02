@@ -23,6 +23,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.akrubastudios.playquizgames.ui.screens.boss.BossScreen
 import com.akrubastudios.playquizgames.ui.screens.country.CountryViewModel
+import com.akrubastudios.playquizgames.ui.screens.createprofile.CreateProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.freemode.FreeModeScreen
 import com.akrubastudios.playquizgames.ui.screens.game.GameViewModel
 import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelectionScreen
@@ -40,11 +42,14 @@ import com.akrubastudios.playquizgames.ui.screens.profile.library.FunFactLibrary
 import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
 import com.akrubastudios.playquizgames.ui.screens.splash.SplashScreen
 import com.google.firebase.auth.FirebaseAuth
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 object Routes {
     // La ruta a la pantalla de resultados ahora define los parámetros que espera. Control 1-NG
     const val SPLASH_SCREEN = "splash"
+    const val CREATE_PROFILE_SCREEN = "create_profile?googleName={googleName}&googlePhotoUrl={googlePhotoUrl}"
     const val RESULT_SCREEN = "result/{score}/{totalQuestions}/{correctAnswers}/{starsEarned}/{levelId}/{countryId}/{difficulty}/{isFromBossFight}/{victory}/{pcGained}/{gemsGained}/{categoryId}/{continentId}/{origin}/{previousBestStars}"
     const val GAME_SCREEN = "game/{countryId}/{levelId}/{difficulty}/{origin}"
     const val MAP_SCREEN = "map" // Renombramos MENU_SCREEN a MAP_SCREEN
@@ -237,10 +242,16 @@ fun NavGraph() {
             enterTransition = { fadeIn(animationSpec = tween(500)) }
         ) {
             LoginScreen(
-                onSignInComplete = { isNewUser ->
+                onSignInComplete = { user, isNewUser ->
                     if (isNewUser) {
+                        val googleName = URLEncoder.encode(user.displayName ?: "", StandardCharsets.UTF_8.name())
+                        val googlePhotoUrl = URLEncoder.encode(user.photoUrl ?: "", StandardCharsets.UTF_8.name())
                         // Si es nuevo, va a la pantalla de selección de continente
-                        navController.navigate(Routes.CONTINENT_SELECTION_SCREEN) {
+                        val route = Routes.CREATE_PROFILE_SCREEN
+                            .replace("{googleName}", googleName)
+                            .replace("{googlePhotoUrl}", googlePhotoUrl)
+
+                        navController.navigate(route) {
                             popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                         }
                     } else {
@@ -249,6 +260,23 @@ fun NavGraph() {
                             popUpTo(Routes.LOGIN_SCREEN) { inclusive = true }
                         }
                     }
+                }
+            )
+        }
+
+        composable(
+            route = Routes.CREATE_PROFILE_SCREEN,
+            // Añadimos los argumentos que espera la ruta
+            arguments = listOf(
+                navArgument("googleName") { defaultValue = "" },
+                navArgument("googlePhotoUrl") { defaultValue = "" }
+            )
+        ) {
+            CreateProfileScreen(
+                onProfileCreated = {
+                    navController.navigate(Routes.CONTINENT_SELECTION_SCREEN)
+                    // No es necesario limpiar la pila aquí, porque ya lo hacemos
+                    // al pasar de Login a CreateProfile.
                 }
             )
         }
