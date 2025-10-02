@@ -35,7 +35,7 @@ import androidx.compose.runtime.setValue
 import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.R
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 1-CPS
+@OptIn(ExperimentalMaterial3Api::class) // Control 2-CPS
 @Composable
 fun CreateProfileScreen(
     viewModel: CreateProfileViewModel = hiltViewModel(),
@@ -70,12 +70,14 @@ fun CreateProfileScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Avatar
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(if (uiState.useGoogleData) uiState.googlePhotoUrl else uiState.selectedAvatarUrl)
-                        .crossfade(true)
-                        .error(R.drawable.logo_splash)
-                        .build(),
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(if (uiState.useGoogleData) uiState.googlePhotoUrl else uiState.selectedAvatarUrl)
+                            .crossfade(true)
+                            .error(R.drawable.logo_splash) // Si falla la carga, se muestra el logo
+                            .build()
+                    ),
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(120.dp)
