@@ -1,9 +1,12 @@
 package com.akrubastudios.playquizgames.ui.screens.game
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
+import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.data.repository.QuizRepository
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
@@ -27,7 +30,15 @@ import com.akrubastudios.playquizgames.core.SoundEffect
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Question
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import coil.request.CachePolicy
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
@@ -38,7 +49,9 @@ class GameViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     val musicManager: MusicManager,
     private val soundManager: SoundManager,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
+    val imageLoader: ImageLoader
 ) : ViewModel() {
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
@@ -66,7 +79,51 @@ class GameViewModel @Inject constructor(
     private var currentQuestionIndex = 0
     private var previousBestStars: Int = 0
         private var reshuffleJob: Job? = null
-    // ---------------------------------------------
+
+    /**
+     * Pre-carga una única imagen de forma síncrona en un hilo de fondo.
+     * Devuelve true si la carga fue exitosa (desde red o disco).
+     */
+    private suspend fun precacheSingleImage(imageUrl: String): Boolean = withContext(Dispatchers.IO) {
+        if (imageUrl.isBlank()) return@withContext false
+
+        Log.d("GameViewModel_Precache", "ANTES de execute: $imageUrl")
+
+        val request = ImageRequest.Builder(context)
+            .data(imageUrl)
+            .diskCachePolicy(CachePolicy.ENABLED)  // ← AÑADIR
+            .memoryCachePolicy(CachePolicy.ENABLED) // ← AÑADIR
+            .build()
+
+        val result = imageLoader.execute(request)
+        if (result is coil.request.SuccessResult) {
+            Log.d("GameViewModel_Precache", "DESPUES de execute: DataSource=${result.dataSource}")
+            return@withContext true
+        }
+
+        return@withContext false
+    }
+    /**
+     * Pre-carga múltiples imágenes en paralelo.
+     * Devuelve cuando TODAS han terminado de cargar.
+     */
+    private suspend fun precacheImagesParallel(imageUrls: List<String>) = coroutineScope {
+        if (imageUrls.isEmpty()) return@coroutineScope
+
+        Log.d("GameViewModel_Precache", "🚀 Iniciando precarga paralela de ${imageUrls.size} imágenes")
+        val startTime = System.currentTimeMillis()
+
+        val jobs = imageUrls.map { url ->
+            async(Dispatchers.IO) {
+                precacheSingleImage(url)
+            }
+        }
+
+        jobs.awaitAll()
+
+        val totalTime = System.currentTimeMillis() - startTime
+        Log.d("GameViewModel_Precache", "✅ Precarga paralela completada en ${totalTime}ms")
+    }
 
     init {
         loadLevel()
@@ -74,7 +131,8 @@ class GameViewModel @Inject constructor(
 
     private fun loadLevel() {
         // Lanzamos una coroutine para llamar a nuestra función suspendida
-        viewModelScope.launch {
+        // Usamos Dispatchers.IO para que la carga de red no bloquee el hilo principal
+        viewModelScope.launch(Dispatchers.IO) {
             resetRoundState()
 
             val levelRequest = async { repository.getLevel(levelId) }
@@ -85,8 +143,28 @@ class GameViewModel @Inject constructor(
 
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
-
                 shuffledQuestions = loadedLevel.questions.shuffled()
+
+                if (shuffledQuestions.isNotEmpty()) {
+                    // Mostrar loading de precarga
+                    _uiState.update { it.copy(isPreloadingImages = true) }
+
+                    Log.d("GameViewModel_Precache", "🚀 Precargando TODAS las ${shuffledQuestions.size} imágenes...")
+                    val startTime = System.currentTimeMillis()
+
+                    // Precarga TODAS las imágenes en paralelo
+                    val allImageUrls = shuffledQuestions
+                        .map { it.imageUrl }
+                        .filter { it.isNotBlank() }
+
+                    precacheImagesParallel(allImageUrls)
+
+                    val totalTime = System.currentTimeMillis() - startTime
+                    Log.d("GameViewModel_Precache", "✅ TODAS las imágenes precargadas en ${totalTime}ms")
+
+                    // Ocultar loading
+                    _uiState.update { it.copy(isPreloadingImages = false) }
+                }
 
                 val firstQuestion = shuffledQuestions[currentQuestionIndex]
                 val lang = languageManager.languageStateFlow.value

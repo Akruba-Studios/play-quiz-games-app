@@ -28,6 +28,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import androidx.lifecycle.ProcessLifecycleOwner
+import coil.ImageLoader
+import com.akrubastudios.playquizgames.QuizApplication
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.performance.OceanConfigManager
 
@@ -141,6 +143,15 @@ object AppModule {
     @Singleton
     fun provideProcessLifecycleOwner(): LifecycleOwner { // <-- Cambia el tipo de retorno a LifecycleOwner
         return ProcessLifecycleOwner.get()
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+        // Le decimos a Hilt que para obtener un ImageLoader,
+        // debe tomar el contexto de la aplicación y llamar a la función
+        // newImageLoader() que hemos definido en nuestra clase QuizApplication.
+        return (context.applicationContext as QuizApplication).newImageLoader()
     }
 
     @Provides

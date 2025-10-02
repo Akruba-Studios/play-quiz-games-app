@@ -98,6 +98,8 @@
 
     <string name="toast_no_more_fun_facts">¡Ya usaste tu dato curioso de esta ronda!</string>
 
+    <string name="loading_images">Cargando Ronda...</string>
+
     <!-- BossScreen -->
     <string name="cd_life">Vida</string>
     <string name="cd_question_image_boss">Imagen de la pregunta del Jefe</string>

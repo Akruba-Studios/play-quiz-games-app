@@ -33,5 +33,6 @@ data class GameState(
     val isProcessingHelp: Boolean = false, // Para mostrar un loader
     val revealLetterUses: Int = 0, // Contador de usos por pregunta
     val revealedLetterPositions: Set<Int> = emptySet(), // Letras reveladas
-    val isExtraTimeUsed: Boolean = false
+    val isExtraTimeUsed: Boolean = false,
+    val isPreloadingImages: Boolean = false,
 )

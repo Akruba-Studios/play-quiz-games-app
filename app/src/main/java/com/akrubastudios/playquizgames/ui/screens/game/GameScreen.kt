@@ -130,9 +130,13 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import coil.ImageLoader
+import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 1-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 2-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -190,7 +194,25 @@ fun GameScreen(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
     ) {
-        if (uiState.isLoading) {
+        // NUEVO: Pantalla de precarga de imágenes
+        if (uiState.isPreloadingImages) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.loading_images),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        } else if (uiState.isLoading) {
             // Mantenemos el indicador de carga mientras los datos no estén listos.
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -216,6 +238,7 @@ fun GameScreen(
             // Usamos !! porque en este punto, sabemos que currentQuestion no es null
             QuestionImage(
                 imageUrl = uiState.currentQuestion!!.imageUrl,
+                imageLoader = viewModel.imageLoader,
                 // Le damos un "peso" para que ocupe una parte proporcional del espacio vertical.
                 modifier = Modifier
             )
@@ -400,6 +423,7 @@ fun TopBar(
 @Composable
 fun QuestionImage(
     imageUrl: String,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -453,10 +477,21 @@ fun QuestionImage(
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
-                model = imageUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .diskCachePolicy(CachePolicy.READ_ONLY) // ← PRIORIZA DISCO
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = imageLoader,
                 contentDescription = stringResource(R.string.cd_question_image),
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit,
+                onState = { state ->
+                    if (state is AsyncImagePainter.State.Success) {
+                        Log.d("GameScreen_Image", "Imagen cargada desde: ${state.result.dataSource} - URL: $imageUrl")
+                    }
+                }
             )
         }
     }
