@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -31,6 +32,7 @@ class ResultViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     val soundManager: SoundManager,
+    val musicManager: MusicManager,
     private val savedStateHandle: SavedStateHandle,
     private val languageManager: LanguageManager
 ) : ViewModel() {

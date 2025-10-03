@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class MusicTrack(val resourceId: Int) {
+enum class MusicTrack(val resourceId: Int) { // Control 1-MM
     MAP(R.raw.music_map),
     GAME(R.raw.music_game),
     BOSS(R.raw.music_boss),
@@ -97,13 +97,13 @@ class MusicManager @Inject constructor(
         }
     }
 
-    private fun pause() {
+    fun pause() {
         if (mediaPlayer?.isPlaying == true) {
             mediaPlayer?.pause()
         }
     }
 
-    private fun resume() {
+    fun resume() {
         if (mediaPlayer?.isPlaying == false && currentTrack != MusicTrack.NONE) {
             mediaPlayer?.start()
         }

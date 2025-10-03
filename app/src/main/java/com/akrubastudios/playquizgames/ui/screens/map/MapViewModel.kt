@@ -414,7 +414,7 @@ class MapViewModel @Inject constructor(
         _uiState.update { it.copy(showRewardDialog = false, isRewardedAdLoading = true) }
 
         // Mostramos el anuncio
-        AdManager.showRewardedAd(activity) {
+        AdManager.showRewardedAd(activity, musicManager) {
             // Este bloque se ejecuta si el usuario ve el video completo.
             viewModelScope.launch {
                 Log.d("MapViewModel", "Recompensa ganada. Creando petición en Firestore.")

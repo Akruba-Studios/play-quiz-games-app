@@ -39,6 +39,7 @@ import com.akrubastudios.playquizgames.ui.screens.level_selection.LevelSelection
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileScreen
 import com.akrubastudios.playquizgames.ui.screens.profile.ProfileViewModel
 import com.akrubastudios.playquizgames.ui.screens.profile.library.FunFactLibraryScreen
+import com.akrubastudios.playquizgames.ui.screens.result.ResultViewModel
 import com.akrubastudios.playquizgames.ui.screens.settings.SettingsScreen
 import com.akrubastudios.playquizgames.ui.screens.splash.SplashScreen
 import com.google.firebase.auth.FirebaseAuth
@@ -364,6 +365,7 @@ fun NavGraph() {
             // Extraemos los valores de los argumentos
             val view = LocalView.current
             val activity = view.context as Activity
+            val viewModel: ResultViewModel = hiltViewModel()
             val score = backStackEntry.arguments?.getInt("score") ?: 0
             val totalQuestions = backStackEntry.arguments?.getInt("totalQuestions") ?: 0
             val correctAnswers = backStackEntry.arguments?.getInt("correctAnswers") ?: 0
@@ -437,7 +439,7 @@ fun NavGraph() {
                 },
                 onBackToMenu = {
                     // --- AÑADE ESTA LÓGICA DE TEST DE ANUNCIO---
-                    AdManager.showInterstitialAd(activity)
+                    AdManager.showInterstitialAd(activity, viewModel.musicManager)
                     navController.navigate(Routes.MAP_SCREEN) {
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }

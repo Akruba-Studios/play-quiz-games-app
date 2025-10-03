@@ -62,8 +62,11 @@ object AdManager {
         // ID de unidad de anuncio de prueba para anuncios bonificados.
         // NUNCA uses anuncios reales en modo de desarrollo.
         val adUnitId = "ca-app-pub-3940256099942544/5224354917"
-
         Log.d(TAG, "Cargando anuncio bonificado...")
+
+        if (rewardedAd != null) {
+            return // Evitar recargar si ya hay uno
+        }
 
         RewardedAd.load(
             context,
@@ -92,7 +95,11 @@ object AdManager {
      * @param onRewardGranted Una función callback que se ejecutará SOLAMENTE
      * si el usuario ve el video completo y gana la recompensa.
      */
-    fun showRewardedAd(activity: Activity, onRewardGranted: () -> Unit) {
+    fun showRewardedAd(
+        activity: Activity,
+        musicManager: MusicManager, // <-- NUEVO PARÁMETRO
+        onRewardGranted: () -> Unit
+    ) {
         if (rewardedAd == null) {
             Log.w(TAG, "Anuncio bonificado no disponible. Intentando precargar...")
             // Si no hay un anuncio, lo cargamos para la próxima vez.
@@ -108,6 +115,7 @@ object AdManager {
                 Log.d(TAG, "Anuncio bonificado cerrado por el usuario.")
                 // Un anuncio bonificado solo se puede mostrar una vez.
                 // Lo ponemos en null y cargamos el siguiente para la próxima vez.
+                musicManager.resume()
                 rewardedAd = null
                 loadRewardedAd(activity)
             }
@@ -121,6 +129,7 @@ object AdManager {
             // Se llama justo cuando el anuncio se muestra.
             override fun onAdShowedFullScreenContent() {
                 Log.d(TAG, "Anuncio bonificado mostrado exitosamente.")
+                musicManager.pause()
             }
         }
 
@@ -132,7 +141,10 @@ object AdManager {
         }
     }
 
-    fun showInterstitialAd(activity: Activity) {
+    fun showInterstitialAd(
+        activity: Activity,
+        musicManager: MusicManager // <-- AÑADE ESTA LÍNEA
+    ) {
         adShowCounter++
         Log.d(TAG, "Intento de mostrar anuncio número: $adShowCounter")
 
@@ -148,6 +160,7 @@ object AdManager {
             interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     Log.d(TAG, "Anuncio cerrado por el usuario.")
+                    musicManager.resume()
                     interstitialAd = null
                     loadInterstitialAd(activity)
                 }
@@ -159,6 +172,7 @@ object AdManager {
 
                 override fun onAdShowedFullScreenContent() {
                     Log.d(TAG, "Anuncio mostrado exitosamente.")
+                    musicManager.pause()
                 }
             }
 
