@@ -57,7 +57,8 @@ data class MapState(
     val isRewardedAdLoading: Boolean = true, // Inicia en true porque cargamos el anuncio al inicio
     val isRewardCooldownActive: Boolean = false,
     val rewardCooldownSeconds: Int = 0,
-    val showRewardDialog: Boolean = false
+    val showRewardDialog: Boolean = false,
+    val isRewardFeatureUnlocked: Boolean = false
 )
 
 @HiltViewModel
@@ -218,6 +219,9 @@ class MapViewModel @Inject constructor(
                     val hasNotification = userData.pendingProfileNotifications.isNotEmpty()
 
                     val isOceanActuallyVisible = isEnabledByUser && isEnabledBySystem
+
+                    // Lógica para determinar si la función de recompensa está desbloqueada
+                    val isRewardUnlocked = userData.conqueredCountries.isNotEmpty()
                     // --- FIN DE LA MODIFICACIÓN ---
 
                     _uiState.value = _uiState.value.copy(
@@ -237,7 +241,8 @@ class MapViewModel @Inject constructor(
                         showDominationRewardsSheet = showDominationSheet,
                         hasProfileNotification = hasNotification,
                         gems = userData.gems,
-                        isOceanVisible = isOceanActuallyVisible
+                        isOceanVisible = isOceanActuallyVisible,
+                        isRewardFeatureUnlocked = isRewardUnlocked
                     )
                 }
             }

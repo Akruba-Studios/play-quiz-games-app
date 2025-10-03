@@ -617,7 +617,7 @@ class GameViewModel @Inject constructor(
         // Calculamos la recompensa MÁXIMA potencial para este resultado.
         var maxPotentialGems = 0
         if (newStars >= 2) {
-            maxPotentialGems = if (difficulty == "dificil") 3 else 2
+            maxPotentialGems = if (difficulty == "dificil") 5 else 3
         }
 
         // Otorgamos solo la diferencia neta.

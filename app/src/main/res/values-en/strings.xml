@@ -67,6 +67,7 @@
     <string name="reward_dialog_text">Watch a short video to receive <b>%1$d gems</b>. Do you want to continue?</string>
     <string name="reward_dialog_button_watch">Watch Video</string>
     <string name="reward_dialog_button_cancel">Not Now</string>
+    <string name="reward_unlock_toast">Conquer your first country to unlock Free Gems!</string>
 
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>

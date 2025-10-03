@@ -67,6 +67,7 @@
     <string name="reward_dialog_text">Mira un video corto para recibir <b>%1$d gemas</b>. ¿Deseas continuar?</string>
     <string name="reward_dialog_button_watch">Ver Video</string>
     <string name="reward_dialog_button_cancel">Ahora No</string>
+    <string name="reward_unlock_toast">¡Conquista tu primer país para desbloquear Gemas Gratis!</string>
 
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>

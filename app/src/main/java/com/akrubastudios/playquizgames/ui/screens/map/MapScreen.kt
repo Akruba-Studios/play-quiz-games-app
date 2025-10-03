@@ -120,6 +120,7 @@ import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.CyanAccent
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.delay
 import kotlin.math.sin
@@ -128,7 +129,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 15-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 16-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -656,26 +657,45 @@ fun MapScreen(
                     }
                 }
                 if (!uiState.isLoading) {
+                    val context = LocalContext.current // Necesario para el Toast
+
                     // FAB de Gemas (Izquierda)
                     FloatingActionButton(
                         onClick = {
-                            if (!uiState.isRewardCooldownActive) {
-                                viewModel.onShowRewardDialog()
+                            if (uiState.isRewardFeatureUnlocked) {
+                                // Lógica normal si está desbloqueado
+                                if (!uiState.isRewardCooldownActive) {
+                                    viewModel.onShowRewardDialog()
+                                }
+                            } else {
+                                // Lógica del Toast si está bloqueado
+                                val inflater = LayoutInflater.from(context)
+                                val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+                                val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                textView.text = context.getString(R.string.reward_unlock_toast)
+
+                                Toast(context).apply {
+                                    duration = Toast.LENGTH_LONG
+                                    view = layout
+                                    show()
+                                }
                             }
                         },
                         modifier = Modifier
-                            .align(Alignment.BottomStart) // Alineado a la esquina inferior izquierda del Box
-                            .padding(fabPadding),         // Padding simétrico
+                            .align(Alignment.BottomStart)
+                            .padding(fabPadding),
                         shape = FloatingActionButtonDefaults.shape,
                         elevation = FloatingActionButtonDefaults.elevation(),
-                        containerColor = if (uiState.isRewardCooldownActive) {
-                            Color(0xFF6E6E6E) // Un gris oscuro y sólido
-                        } else {
+                        containerColor = if (uiState.isRewardFeatureUnlocked && !uiState.isRewardCooldownActive) {
+                            // Estado ACTIVO y listo
                             MaterialTheme.colorScheme.tertiaryContainer
+                        } else {
+                            // Estado BLOQUEADO o en COOLDOWN
+                            Color(0xFF6E6E6E) // Gris oscuro sólido
                         }
                     ) {
-                        // ... (El contenido interno del botón no cambia) ...
-                        if (uiState.isRewardCooldownActive) {
+                        if (uiState.isRewardFeatureUnlocked && uiState.isRewardCooldownActive) {
+                            // Desbloqueado PERO en Cooldown: Muestra el timer
                             Text(
                                 text = "${uiState.rewardCooldownSeconds}s",
                                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -683,16 +703,32 @@ fun MapScreen(
                                 color = Color(0xFFBDBDBD)
                             )
                         } else {
+                            // Desbloqueado y listo, O permanentemente bloqueado: Muestra el icono y el "+"
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp), // Ancho reducido
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "+",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    // El color del texto también refleja el estado
+                                    color = if (uiState.isRewardFeatureUnlocked) {
+                                        DeepNavy
+                                    } else {
+                                        Color(0xFFBDBDBD) // Gris claro si está bloqueado
+                                    }
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
-                                    imageVector = GemIcon,
+                                    imageVector = GemIcon, // Tu ícono original
                                     contentDescription = stringResource(R.string.cd_get_gem_reward),
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (uiState.isRewardFeatureUnlocked) {
+                                        DeepNavy
+                                    } else {
+                                        Color(0xFFBDBDBD) // Tinta el ícono de gris si está bloqueado
+                                    }
                                 )
                             }
                         }
