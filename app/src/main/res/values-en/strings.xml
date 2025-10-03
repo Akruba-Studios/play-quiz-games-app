@@ -68,6 +68,7 @@
     <string name="reward_dialog_button_watch">Watch Video</string>
     <string name="reward_dialog_button_cancel">Not Now</string>
     <string name="reward_unlock_toast">Conquer your first country to unlock Free Gems!</string>
+    <string name="reward_cooldown_toast">Reloading new gems!</string>
 
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>

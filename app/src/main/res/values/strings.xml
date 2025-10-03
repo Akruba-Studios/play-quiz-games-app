@@ -68,6 +68,7 @@
     <string name="reward_dialog_button_watch">Ver Video</string>
     <string name="reward_dialog_button_cancel">Ahora No</string>
     <string name="reward_unlock_toast">¡Conquista tu primer país para desbloquear Gemas Gratis!</string>
+    <string name="reward_cooldown_toast">¡Recargando nuevas gemas!</string>
 
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>

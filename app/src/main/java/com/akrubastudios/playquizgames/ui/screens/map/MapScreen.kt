@@ -129,7 +129,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 16-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 17-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -663,12 +663,25 @@ fun MapScreen(
                     FloatingActionButton(
                         onClick = {
                             if (uiState.isRewardFeatureUnlocked) {
-                                // Lógica normal si está desbloqueado
+                                // CASO 1: La función está DESBLOQUEADA
                                 if (!uiState.isRewardCooldownActive) {
+                                    // Y NO está en cooldown -> Muestra el diálogo
                                     viewModel.onShowRewardDialog()
+                                } else {
+                                    // Y SÍ está en cooldown -> Muestra el Toast de recarga
+                                    val inflater = LayoutInflater.from(context)
+                                    val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+                                    val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                    textView.text = context.getString(R.string.reward_cooldown_toast) // <-- Nuevo string
+
+                                    Toast(context).apply {
+                                        duration = Toast.LENGTH_SHORT
+                                        view = layout
+                                        show()
+                                    }
                                 }
                             } else {
-                                // Lógica del Toast si está bloqueado
+                                // CASO 2: La función está BLOQUEADA -> Muestra el Toast de instrucción
                                 val inflater = LayoutInflater.from(context)
                                 val layout = inflater.inflate(R.layout.custom_toast_layout, null)
                                 val textView = layout.findViewById<TextView>(R.id.toast_text)
