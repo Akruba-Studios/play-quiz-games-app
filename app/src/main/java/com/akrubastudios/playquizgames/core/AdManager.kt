@@ -9,12 +9,16 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
 object AdManager {
     private const val TAG = "AdManager"
     private var interstitialAd: InterstitialAd? = null
     private var adShowCounter = 0
     private const val AD_FREQUENCY = 3
+    // Variable para almacenar el anuncio bonificado cargado
+    private var rewardedAd: RewardedAd? = null
 
     fun loadInterstitialAd(context: Context) {
         // Para producción, usa tu ID real de anuncio
@@ -48,6 +52,84 @@ object AdManager {
                 }
             }
         )
+    }
+
+    /**
+     * Carga un anuncio bonificado en memoria.
+     * Debe llamarse al iniciar la pantalla donde se mostrará el anuncio.
+     */
+    fun loadRewardedAd(context: Context) {
+        // ID de unidad de anuncio de prueba para anuncios bonificados.
+        // NUNCA uses anuncios reales en modo de desarrollo.
+        val adUnitId = "ca-app-pub-3940256099942544/5224354917"
+
+        Log.d(TAG, "Cargando anuncio bonificado...")
+
+        RewardedAd.load(
+            context,
+            adUnitId,
+            AdRequest.Builder().build(),
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    rewardedAd = ad
+                    Log.d(TAG, "✅ Anuncio bonificado cargado exitosamente.")
+                }
+
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    rewardedAd = null
+                    Log.e(TAG, "❌ Error al cargar anuncio bonificado:")
+                    Log.e(TAG, "   Código: ${adError.code}")
+                    Log.e(TAG, "   Mensaje: ${adError.message}")
+                }
+            }
+        )
+    }
+
+    /**
+     * Muestra el anuncio bonificado si está cargado.
+     *
+     * @param activity La Activity actual sobre la cual se mostrará el anuncio.
+     * @param onRewardGranted Una función callback que se ejecutará SOLAMENTE
+     * si el usuario ve el video completo y gana la recompensa.
+     */
+    fun showRewardedAd(activity: Activity, onRewardGranted: () -> Unit) {
+        if (rewardedAd == null) {
+            Log.w(TAG, "Anuncio bonificado no disponible. Intentando precargar...")
+            // Si no hay un anuncio, lo cargamos para la próxima vez.
+            loadRewardedAd(activity)
+            // Aquí podrías notificar a la UI que no hay anuncio disponible.
+            return
+        }
+
+        // Configura los callbacks para los eventos del anuncio
+        rewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            // Se llama cuando el usuario cierra el anuncio.
+            override fun onAdDismissedFullScreenContent() {
+                Log.d(TAG, "Anuncio bonificado cerrado por el usuario.")
+                // Un anuncio bonificado solo se puede mostrar una vez.
+                // Lo ponemos en null y cargamos el siguiente para la próxima vez.
+                rewardedAd = null
+                loadRewardedAd(activity)
+            }
+
+            // Se llama si hubo un error al mostrar el anuncio.
+            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                Log.e(TAG, "Error al mostrar anuncio bonificado: ${adError.message}")
+                rewardedAd = null
+            }
+
+            // Se llama justo cuando el anuncio se muestra.
+            override fun onAdShowedFullScreenContent() {
+                Log.d(TAG, "Anuncio bonificado mostrado exitosamente.")
+            }
+        }
+
+        // Muestra el anuncio y maneja la recompensa.
+        rewardedAd?.show(activity) { rewardItem ->
+            Log.d(TAG, "Recompensa ganada. Tipo: ${rewardItem.type}, Cantidad: ${rewardItem.amount}")
+            // Ejecutamos la función que nos pasaron para otorgar la recompensa.
+            onRewardGranted()
+        }
     }
 
     fun showInterstitialAd(activity: Activity) {

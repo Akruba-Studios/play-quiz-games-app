@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
 import android.R.attr.path
+import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -96,6 +97,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -112,6 +114,7 @@ import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
+import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
@@ -125,7 +128,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 14-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 15-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -652,6 +655,65 @@ fun MapScreen(
                         }
                     }
                 }
+                if (!uiState.isLoading) {
+                    // FAB de Gemas (Izquierda)
+                    FloatingActionButton(
+                        onClick = {
+                            if (!uiState.isRewardCooldownActive) {
+                                viewModel.onShowRewardDialog()
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart) // Alineado a la esquina inferior izquierda del Box
+                            .padding(fabPadding),         // Padding simétrico
+                        shape = FloatingActionButtonDefaults.shape,
+                        elevation = FloatingActionButtonDefaults.elevation(),
+                        containerColor = if (uiState.isRewardCooldownActive) {
+                            Color(0xFF6E6E6E) // Un gris oscuro y sólido
+                        } else {
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        }
+                    ) {
+                        // ... (El contenido interno del botón no cambia) ...
+                        if (uiState.isRewardCooldownActive) {
+                            Text(
+                                text = "${uiState.rewardCooldownSeconds}s",
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFBDBDBD)
+                            )
+                        } else {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = GemIcon,
+                                    contentDescription = stringResource(R.string.cd_get_gem_reward),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // FAB de Expediciones (avión) (Derecha)
+                    if (uiState.expeditionAvailable) {
+                        FloatingActionButton(
+                            onClick = { viewModel.requestExpeditionDialog() },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd) // Alineado a la esquina inferior derecha del Box
+                                .padding(fabPadding),       // Padding simétrico
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Flight,
+                                contentDescription = stringResource(R.string.cd_start_expedition)
+                            )
+                        }
+                    }
+                }
                 // NUEVO: Monitor de FPS superpuesto
                 if (showFpsMonitor) {
                     /*
@@ -675,24 +737,26 @@ fun MapScreen(
                     )
                     // --- FIN DE LA MODIFICACIÓN ---
                 }
-
-                // El icono del avión (botón flotante) se muestra si una expedición está disponible.
-                if (uiState.expeditionAvailable) {
-                    FloatingActionButton(
-                        onClick = { viewModel.requestExpeditionDialog() }, // Al hacer clic, abre el diálogo
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd) // Lo posiciona en la esquina inferior derecha
-                            .padding(fabPadding),
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Flight,
-                            contentDescription = stringResource(R.string.cd_start_expedition)
-                        )
-                    }
-                }
             }
         }
+    }
+    if (uiState.showRewardDialog) {
+        val activity = LocalContext.current as Activity
+        AppAlertDialog(
+            onDismissRequest = { viewModel.onDismissRewardDialog() },
+            title = { DialogTitle(text = stringResource(R.string.reward_dialog_title)) }, // Nuevo string
+            text = { DialogText(text = stringResource(R.string.reward_dialog_text, 5)) }, // Nuevo string, pasándole el 5
+            confirmButton = {
+                TextButton(onClick = { viewModel.onClaimRewardConfirmed(activity) }) {
+                    DialogButtonText(text = stringResource(R.string.reward_dialog_button_watch)) // Nuevo string
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onDismissRewardDialog() }) {
+                    DialogButtonText(text = stringResource(R.string.reward_dialog_button_cancel)) // Nuevo string
+                }
+            }
+        )
     }
     // SEGUNDO DIÁLOGO COMPLEJO - VERSIÓN MEJORADA CON BOTONES PERSONALIZADOS
     if (uiState.showExpeditionDialog) {

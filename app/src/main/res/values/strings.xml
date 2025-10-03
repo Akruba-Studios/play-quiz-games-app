@@ -60,6 +60,14 @@
 
     <string name="ocean_quality_downgrade_toast">Calidad del océano ajustada a: \'%1$s\' para mejorar el rendimiento. Puedes desactivar la animación en Ajustes.</string>
 
+    <!-- Anuncios Bonificados -->
+    <string name="reward_button_text">+ Gemas</string>
+    <string name="cd_get_gem_reward">Obtener Recompensa de Gemas</string>
+    <string name="reward_dialog_title">¡Gana Gemas Gratis!</string>
+    <string name="reward_dialog_text">Mira un video corto para recibir <b>%1$d gemas</b>. ¿Deseas continuar?</string>
+    <string name="reward_dialog_button_watch">Ver Video</string>
+    <string name="reward_dialog_button_cancel">Ahora No</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Progreso de Conquista</string>
     <string name="country_status_conquered">¡País Conquistado!</string>

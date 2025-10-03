@@ -60,6 +60,14 @@
 
     <string name="ocean_quality_downgrade_toast">Ocean quality set to: \'%1$s\' to improve performance. You can disable the animation in Settings.</string>
 
+    <!-- Rewarded Ads -->
+    <string name="reward_button_text">+ Gems</string>
+    <string name="cd_get_gem_reward">Get Gem Reward</string>
+    <string name="reward_dialog_title">Earn Free Gems!</string>
+    <string name="reward_dialog_text">Watch a short video to receive <b>%1$d gems</b>. Do you want to continue?</string>
+    <string name="reward_dialog_button_watch">Watch Video</string>
+    <string name="reward_dialog_button_cancel">Not Now</string>
+
     <!-- CountryScreen -->
     <string name="country_progress_conquest">Conquest Progress</string>
     <string name="country_status_conquered">Country Conquered!</string>

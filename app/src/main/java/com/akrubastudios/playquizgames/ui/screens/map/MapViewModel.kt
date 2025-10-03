@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.app.Activity
 import android.app.Application
 import android.content.res.Configuration
 import android.util.Log
@@ -8,6 +9,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -51,7 +53,11 @@ data class MapState(
     val gems: Int = 0,
     val isOceanVisible: Boolean = true,
     val showFailsafeDialog: Boolean = false,
-    val qualityDowngradeMessageResId: Int? = null
+    val qualityDowngradeMessageResId: Int? = null,
+    val isRewardedAdLoading: Boolean = true, // Inicia en true porque cargamos el anuncio al inicio
+    val isRewardCooldownActive: Boolean = false,
+    val rewardCooldownSeconds: Int = 0,
+    val showRewardDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -98,6 +104,8 @@ class MapViewModel @Inject constructor(
                 _uiState.update { it.copy(qualityDowngradeMessageResId = newTierResId) }
             }
         }
+        // Precargamos un anuncio bonificado al iniciar la pantalla del mapa.
+        AdManager.loadRewardedAd(application)
     }
 
     private fun processUserData() {
@@ -381,6 +389,90 @@ class MapViewModel @Inject constructor(
     }
     fun onQualityDowngradeToastShown() {
         _uiState.update { it.copy(qualityDowngradeMessageResId = null) }
+    }
+    // --- INICIO DE LAS NUEVAS FUNCIONES PARA ANUNCIOS BONIFICADOS ---
+
+    /**
+     * Se llama desde la UI para mostrar el diálogo de confirmación.
+     */
+    fun onShowRewardDialog() {
+        _uiState.update { it.copy(showRewardDialog = true) }
+    }
+
+    /**
+     * Se llama desde la UI para cerrar el diálogo de confirmación.
+     */
+    fun onDismissRewardDialog() {
+        _uiState.update { it.copy(showRewardDialog = false) }
+    }
+
+    /**
+     * Se llama cuando el usuario confirma que quiere ver el anuncio.
+     */
+    fun onClaimRewardConfirmed(activity: Activity) {
+        // Ocultamos el diálogo y mostramos un estado de carga en el botón
+        _uiState.update { it.copy(showRewardDialog = false, isRewardedAdLoading = true) }
+
+        // Mostramos el anuncio
+        AdManager.showRewardedAd(activity) {
+            // Este bloque se ejecuta si el usuario ve el video completo.
+            viewModelScope.launch {
+                Log.d("MapViewModel", "Recompensa ganada. Creando petición en Firestore.")
+                createGemRewardRequest() // Creamos la petición segura en Firestore
+                startCooldownTimer()   // Iniciamos el contador de 60 segundos
+            }
+        }
+
+        // Volvemos a cargar el siguiente anuncio para que esté listo.
+        // Damos un pequeño delay para no interferir con el anuncio que se está mostrando.
+        viewModelScope.launch {
+            delay(1000L) // Espera 1 segundo
+            AdManager.loadRewardedAd(application)
+            // Cuando el nuevo anuncio termine de cargar (o falle), ocultamos el loader.
+            // La UI reaccionará al estado de `rewardedAd` en `AdManager`.
+            _uiState.update { it.copy(isRewardedAdLoading = false) }
+        }
+    }
+
+    /**
+     * Crea un documento en Firestore para que el trigger del backend lo procese.
+     */
+    private fun createGemRewardRequest() {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Log.e("MapViewModel", "Usuario nulo, no se puede crear la petición de gemas.")
+            return
+        }
+
+        // El token de verificación se obtendría del SDK de AdMob y se enviaría aquí.
+        // Para nuestro flujo actual con un trigger en modo DEV, un placeholder es suficiente.
+        val rewardRequest = hashMapOf(
+            "userId" to uid,
+            "timestamp" to FieldValue.serverTimestamp(),
+            "verificationToken" to "placeholder_for_dev"
+        )
+
+        db.collection("gem_reward_requests").add(rewardRequest)
+            .addOnSuccessListener {
+                Log.d("MapViewModel", "✅ Petición de recompensa de gemas creada con éxito.")
+            }
+            .addOnFailureListener { e ->
+                Log.e("MapViewModel", "❌ Error al crear la petición de recompensa de gemas.", e)
+            }
+    }
+
+    /**
+     * Inicia un temporizador de 60 segundos durante el cual no se puede pedir otra recompensa.
+     */
+    private fun startCooldownTimer() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRewardCooldownActive = true) }
+            for (i in 60 downTo 1) {
+                _uiState.update { it.copy(rewardCooldownSeconds = i) }
+                delay(1000L)
+            }
+            _uiState.update { it.copy(isRewardCooldownActive = false, rewardCooldownSeconds = 0) }
+        }
     }
 }
 
