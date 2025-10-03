@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.PlayQuizGames" parent="Theme.Material3.DayNight.NoActionBar">
         <!--
             Aquí podrías definir colores para la barra de estado o de navegación del sistema si quisieras,
             pero por ahora, con esto es suficiente para que Compose tome el control.
+            Esta línea le dice al sistema operativo (especialmente a capas
+            como MIUI de Xiaomi) que no intente invertir los colores de la app
+            automáticamente, ya que la app gestiona sus propios temas.
+            Esto soluciona el problema de que los colores oscuros se vean
+            como magenta en modo oscuro en algunos dispositivos. CONTROL 1-THEMES
         -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 </resources>
