@@ -7,14 +7,14 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * Representa una partícula individual en el sistema - Control: 3-PS
+ * Representa una partícula individual en el sistema - Control: 4-PS
  */
 data class AmbientParticle(
     var x: Float,
     var y: Float,
     var velocityX: Float,
     var velocityY: Float,
-    val color: Color,
+    var color: Color,
     val size: Float,
     var alpha: Float,
     val seed: Int // Para movimiento único
@@ -36,6 +36,28 @@ class ParticleSystemManager(
     // Densidad base ajustada por fase
     private val baseParticleCount = 30
     private val sizeMultiplier = 2.5f  // Para aumentar tamaño particulas
+
+    // Multiplicadores de agresividad por fase
+    private val speedMultiplier = when(phase) {
+        1 -> 1.0f
+        2 -> 1.4f
+        3 -> 1.8f
+        else -> 1.0f
+    }
+
+    private val sizePhaseMultiplier = when(phase) {
+        1 -> 1.0f
+        2 -> 1.25f
+        3 -> 1.5f
+        else -> 1.0f
+    }
+
+    private val alphaMultiplier = when(phase) {
+        1 -> 1.0f      // Alpha normal (0.3-0.7)
+        2 -> 1.15f     // Un poco más opaco
+        3 -> 1.35f     // Mucho más opaco y molesto
+        else -> 1.0f
+    }
     private val phaseMultiplier = when(phase) {
         1 -> 1.0f
         2 -> 1.3f
@@ -59,7 +81,7 @@ class ParticleSystemManager(
 
     private fun createRandomParticle(): AmbientParticle {
         val angle = random.nextFloat() * 2 * Math.PI
-        val speed = style.speed * (0.3f + random.nextFloat() * 0.7f)
+        val speed = style.speed * speedMultiplier * (0.3f + random.nextFloat() * 0.7f)
 
         return AmbientParticle(
             x = random.nextFloat() * canvasWidth,
@@ -67,8 +89,8 @@ class ParticleSystemManager(
             velocityX = (cos(angle) * speed).toFloat(),
             velocityY = (sin(angle) * speed).toFloat(),
             color = colors.random(random),
-            size = style.size * (0.5f + random.nextFloat() * 0.5f) * sizeMultiplier, // Usa el multiplicador para agrandar particulas
-            alpha = 0.3f + random.nextFloat() * 0.4f,
+            size = style.size * (0.5f + random.nextFloat() * 0.5f) * sizeMultiplier * sizePhaseMultiplier, // Usa el multiplicador para agrandar particulas
+            alpha = ((0.3f + random.nextFloat() * 0.4f) * alphaMultiplier).coerceIn(0.1f, 0.9f),
             seed = random.nextInt()
         )
     }
@@ -84,7 +106,7 @@ class ParticleSystemManager(
 
             // Efecto de oscilación sutil usando seed
             val oscillation = sin((System.currentTimeMillis() / 1000.0 + particle.seed) * 0.5) * 0.5f
-            particle.alpha = (0.3f + oscillation * 0.3f).toFloat().coerceIn(0.1f, 0.7f)
+            particle.alpha = ((0.3f + oscillation * 0.3f) * alphaMultiplier).toFloat().coerceIn(0.1f, 0.9f)
 
             // Wrapping en los bordes
             if (particle.x < -50f) particle.x = canvasWidth + 50f
@@ -139,7 +161,7 @@ class ParticleSystemManager(
         // Actualizar colores gradualmente (30% de las partículas)
         val particlesToRecolor = (particles.size * 0.3f).toInt()
         particles.shuffled().take(particlesToRecolor).forEach { particle ->
-            particle.color.let { newColors.random(random) }
+            particle.color = newColors.random(random)
         }
     }
 }
