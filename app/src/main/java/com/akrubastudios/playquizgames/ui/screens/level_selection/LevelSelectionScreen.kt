@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -39,8 +41,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
+import kotlin.math.abs
 
-@Composable // Control 2-LSS
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable // Control 3-LSS
 fun LevelSelectionScreen(
     viewModel: LevelSelectionViewModel = hiltViewModel(),
     onLevelClick: (levelId: String, difficulty: String) -> Unit,
@@ -62,10 +66,33 @@ fun LevelSelectionScreen(
         viewModel.loadLevels()
     }
 
+    // --- LÓGICA DE GESTOS DE DESLIZAMIENTO ---
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val dragThreshold = 70.dp // Distancia mínima para que el swipe se registre
+
     ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { dragAmount = 0f },
+                        onDragEnd = {
+                            if (abs(dragAmount) > dragThreshold.toPx()) {
+                                if (dragAmount > 0) {
+                                    // Deslizar hacia la derecha -> Seleccionar "Fácil"
+                                    viewModel.onDifficultyChange("principiante")
+                                } else {
+                                    // Deslizar hacia la izquierda -> Seleccionar "Difícil"
+                                    viewModel.onDifficultyChange("dificil")
+                                }
+                            }
+                        }
+                    ) { change, drag ->
+                        dragAmount += drag.x
+                        change.consume()
+                    }
+                }
         ) {
             // Aquí podrías añadir un botón de "Atrás"
             Text(
@@ -224,7 +251,7 @@ fun LevelItem(
                         MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                     } else {
                         // Color sólido si está DESBLOQUEADO
-                        MaterialTheme.colorScheme.background.copy(alpha = 0.8f) // 0.8f - 80% de Opacidad
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.6f) // 0.8f - 80% de Opacidad
                     }
                 )
                 .padding(horizontal = 24.dp, vertical = 8.dp),
