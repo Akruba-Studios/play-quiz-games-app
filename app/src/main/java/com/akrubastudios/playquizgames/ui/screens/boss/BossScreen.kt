@@ -101,7 +101,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 2-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 3-BS
 // =====================================================
 
 @Composable
@@ -616,61 +616,6 @@ private fun LetterBankFixed(
             }
         }
     }
-}
-
-@Composable
-private fun DynamicBackground(
-    phase: Int,
-    shakeEffect: Boolean
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "backgroundTransition")
-
-    val shakeOffset by animateFloatAsState(
-        targetValue = if (shakeEffect) 20f else 0f,
-        animationSpec = tween(durationMillis = 100),
-        label = "shake"
-    )
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = if (phase == 3) 0.8f else 0.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    val backgroundBrush = when (phase) {
-        1 -> Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFF1E3A8A).copy(alpha = 0.7f),
-                Color(0xFF3B82F6).copy(alpha = 0.5f)
-            )
-        )
-        2 -> Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFF59E0B).copy(alpha = pulseAlpha),
-                Color(0xFFEF4444).copy(alpha = 0.6f)
-            )
-        )
-        3 -> Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFDC2626).copy(alpha = pulseAlpha),
-                Color(0xFF7F1D1D).copy(alpha = 0.8f)
-            )
-        )
-        else -> Brush.verticalGradient(
-            colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .offset(x = shakeOffset.dp, y = shakeOffset.dp)
-            .background(backgroundBrush)
-    )
 }
 
 // =====================================================

@@ -239,40 +239,6 @@ class BossViewModel @Inject constructor(
         }
     }
 
-    private fun generateGuardianTheme(countryId: String): GuardianTheme {
-        // FORZAR idioma de la app, no del sistema
-        val appLanguage = languageManager.languageStateFlow.value
-        val locale = Locale(appLanguage)
-        val config = Configuration(application.resources.configuration)
-        config.setLocale(locale)
-        val localizedResources = application.createConfigurationContext(config).resources
-
-        Log.d("BossViewModel", "Generando tema con idioma: $appLanguage")
-
-        val (nameRes, emoji, dialoguePrefix) = when (countryId.lowercase()) {
-            "mexico" -> Triple(R.string.guardian_name_mexico, "⚡", "guardian_dialogue_mexico")
-            "japan" -> Triple(R.string.guardian_name_japan, "⚔️", "guardian_dialogue_japan")
-            "egypt" -> Triple(R.string.guardian_name_egypt, "☥", "guardian_dialogue_egypt")
-            "france" -> Triple(R.string.guardian_name_france, "⚜️", "guardian_dialogue_france")
-            else -> Triple(R.string.guardian_name_default, "⭐", "guardian_dialogue_default")
-        }
-
-        val dialogues = (1..3).map { phase ->
-            val arrayId = localizedResources.getIdentifier("${dialoguePrefix}_phase$phase", "array", application.packageName)
-            if (arrayId != 0) {
-                localizedResources.getStringArray(arrayId).toList()
-            } else {
-                emptyList()
-            }
-        }
-
-        return GuardianTheme(
-            name = localizedResources.getString(nameRes),
-            emoji = emoji,
-            dialogues = dialogues
-        )
-    }
-
     private fun updateDialogue() {
         val phaseIndex = uiState.value.currentPhase - 1
         val possibleDialogues = uiState.value.guardianTheme.dialogues.getOrNull(phaseIndex) ?: emptyList()
