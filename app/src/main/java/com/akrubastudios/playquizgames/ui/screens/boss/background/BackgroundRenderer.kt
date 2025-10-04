@@ -137,7 +137,6 @@ private fun BackgroundCanvas(
         val canvasHeight = size.height
 
         // Inicializar sistema de partículas si no existe
-        android.util.Log.d("ParticleDebug", "Canvas redraw: particleSystem=${particleSystem == null}, phase=$currentPhase")
         if (particleSystem == null) {
             particleSystem = ParticleSystemManager(
                 canvasWidth = canvasWidth,
