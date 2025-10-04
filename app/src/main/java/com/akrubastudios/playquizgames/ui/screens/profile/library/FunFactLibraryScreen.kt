@@ -2,6 +2,7 @@ package com.akrubastudios.playquizgames.ui.screens.profile.library
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.AppConstants
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,27 +73,32 @@ fun FunFactLibraryScreen(
             )
         }
     ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.continents.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(paddingValues).padding(32.dp), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(R.string.library_empty_message),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(uiState.continents) { continent ->
-                    ContinentCard(continent = continent)
+        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+            if (uiState.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.continents.isEmpty()) {
+                Box(
+                    Modifier.fillMaxSize().padding(paddingValues).padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_empty_message),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(uiState.continents) { continent ->
+                        ContinentCard(continent = continent)
+                    }
                 }
             }
         }
@@ -104,12 +112,18 @@ private fun ContinentCard(continent: LibraryContinentItem) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.7f), // 0.8f - 80% de Opacidad
+                shape = MaterialTheme.shapes.medium
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+        ),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column {
             Row(

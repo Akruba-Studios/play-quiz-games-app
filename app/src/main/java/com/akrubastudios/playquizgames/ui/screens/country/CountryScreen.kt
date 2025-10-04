@@ -66,7 +66,7 @@ fun CountryScreen(
     ScreenBackground(
         backgroundUrl = uiState.country?.backgroundImageUrl ?: "",
         imageAlpha = 1.0f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
-        scrimAlpha = 0.0f   // 0.0 - 0% opaco, sin velo en absoluto
+        scrimAlpha = 0.7f   // 0.7 - 70% opaco en el velo
     ) {
         if (uiState.isScreenLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

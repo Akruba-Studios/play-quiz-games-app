@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -343,6 +344,11 @@ private fun ProfileHeader(name: String, imageUrl: String?, imageSize: Dp) {
             contentDescription = "Foto de Perfil",
             modifier = Modifier
                 .size(imageSize)
+                .border(
+                    width = 2.dp, // Grosor del borde, puedes ajustarlo
+                    color = MaterialTheme.colorScheme.outline, // Color del tema para bordes
+                    shape = CircleShape // Asegura que el borde también sea circular
+                )
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
@@ -358,7 +364,7 @@ private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int, cardPa
             .fillMaxWidth()
             // Técnica para poner un fonde opaco sobre la card con transparencias
             .background(
-                color = MaterialTheme.colorScheme.background, // <-- USA EL COLOR DEL TEMA DIRECTAMENTE
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
                 shape = MaterialTheme.shapes.medium
             ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -389,7 +395,7 @@ private fun ActionsCard(
             .fillMaxWidth()
             // ¡LA SOLUCIÓN ESTÁ AQUÍ!
             .background(
-                color = MaterialTheme.colorScheme.background, // <-- USA EL COLOR DEL TEMA DIRECTAMENTE
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
                 shape = MaterialTheme.shapes.medium
             ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -497,7 +503,7 @@ private fun MilestoneCard(
             .fillMaxWidth()
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .background(
-                color = MaterialTheme.colorScheme.background, // LightGray en claro, DeepNavy en oscuro
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
                 shape = MaterialTheme.shapes.medium
             ),
         colors = CardDefaults.cardColors(

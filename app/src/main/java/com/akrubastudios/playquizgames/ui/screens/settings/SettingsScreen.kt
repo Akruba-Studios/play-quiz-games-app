@@ -54,7 +54,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,121 +100,123 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // --- INICIO DE LA CORRECCIÓN ---
-            // 1. Obtenemos el texto del string UNA SOLA VEZ aquí, en el contexto Composable.
-            val featureNotAvailableText = stringResource(R.string.feature_not_available)
-            val creditsText = stringResource(R.string.credits_toast_text)
-            // --- FIN DE LA CORRECCIÓN ---
-
-            // <-- NUEVO: Sección de Idioma -->
-            SectionTitle(stringResource(R.string.settings_language_section))
-            LanguageSettingRow(
-                // Mostramos el nombre completo del idioma actual
-                currentLanguage = languageCodeToName(uiState.currentLanguageCode),
-                onClick = { showLanguageDialog = true } // Al hacer clic, mostramos el diálogo
-            )
-
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // Sección de Sonido
-            SectionTitle(stringResource(R.string.settings_sound_section))
-            SettingRow(
-                title = stringResource(R.string.settings_music),
-                checked = uiState.isMusicEnabled,
-                // 2. Usamos la variable de texto que ya hemos obtenido.
-                onCheckedChange = { isEnabled -> viewModel.onMusicToggle(isEnabled) }
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Slider(
-                    value = uiState.musicVolume,
-                    onValueChange = { newVolume -> viewModel.onVolumeChange(newVolume) },
-                    enabled = uiState.isMusicEnabled,
-                    modifier = Modifier.weight(1f) // El Slider ocupa el espacio restante
+                // --- INICIO DE LA CORRECCIÓN ---
+                // 1. Obtenemos el texto del string UNA SOLA VEZ aquí, en el contexto Composable.
+                val featureNotAvailableText = stringResource(R.string.feature_not_available)
+                val creditsText = stringResource(R.string.credits_toast_text)
+                // --- FIN DE LA CORRECCIÓN ---
+
+                // <-- NUEVO: Sección de Idioma -->
+                SectionTitle(stringResource(R.string.settings_language_section))
+                LanguageSettingRow(
+                    // Mostramos el nombre completo del idioma actual
+                    currentLanguage = languageCodeToName(uiState.currentLanguageCode),
+                    onClick = { showLanguageDialog = true } // Al hacer clic, mostramos el diálogo
                 )
-                // Texto que muestra el porcentaje
-                Text(
-                    text = "${(uiState.musicVolume * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.width(40.dp) // Ancho fijo para evitar que el layout "salte"
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+                // Sección de Sonido
+                SectionTitle(stringResource(R.string.settings_sound_section))
+                SettingRow(
+                    title = stringResource(R.string.settings_music),
+                    checked = uiState.isMusicEnabled,
+                    // 2. Usamos la variable de texto que ya hemos obtenido.
+                    onCheckedChange = { isEnabled -> viewModel.onMusicToggle(isEnabled) }
                 )
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Slider(
+                        value = uiState.musicVolume,
+                        onValueChange = { newVolume -> viewModel.onVolumeChange(newVolume) },
+                        enabled = uiState.isMusicEnabled,
+                        modifier = Modifier.weight(1f) // El Slider ocupa el espacio restante
+                    )
+                    // Texto que muestra el porcentaje
+                    Text(
+                        text = "${(uiState.musicVolume * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.width(40.dp) // Ancho fijo para evitar que el layout "salte"
+                    )
+                }
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-            SettingRow(
-                title = stringResource(R.string.settings_sfx),
-                checked = uiState.areSfxEnabled,
-                onCheckedChange = { isEnabled -> viewModel.onSfxToggle(isEnabled) }
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Slider(
-                    value = uiState.sfxVolume,
-                    onValueChange = { newVolume -> viewModel.onSfxVolumeChange(newVolume) },
-                    enabled = uiState.areSfxEnabled,
-                    modifier = Modifier.weight(1f)
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                SettingRow(
+                    title = stringResource(R.string.settings_sfx),
+                    checked = uiState.areSfxEnabled,
+                    onCheckedChange = { isEnabled -> viewModel.onSfxToggle(isEnabled) }
                 )
-                Text(
-                    text = "${(uiState.sfxVolume * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.width(40.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Slider(
+                        value = uiState.sfxVolume,
+                        onValueChange = { newVolume -> viewModel.onSfxVolumeChange(newVolume) },
+                        enabled = uiState.areSfxEnabled,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${(uiState.sfxVolume * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.width(40.dp)
+                    )
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+                // --- INICIO DE LA NUEVA SECCIÓN DE GRÁFICOS ---
+                SectionTitle(stringResource(R.string.settings_graphics_section))
+
+                // Fila para seleccionar la calidad
+                ClickableRow(
+                    title = stringResource(R.string.settings_graphics_quality),
+                    value = tierToDisplayName(tier = uiState.currentQualityTier), // Muestra el tier actual
+                    onClick = { showQualityDialog = true }
                 )
-            }
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+                // Fila para el toggle de ajuste automático
+                SettingRow(
+                    title = stringResource(R.string.settings_auto_adjust),
+                    checked = uiState.isAutoAdjustEnabled,
+                    onCheckedChange = { isEnabled -> viewModel.onAutoAdjustToggled(isEnabled) }
+                )
 
-            // --- INICIO DE LA NUEVA SECCIÓN DE GRÁFICOS ---
-            SectionTitle(stringResource(R.string.settings_graphics_section))
+                SettingRow(
+                    title = stringResource(R.string.settings_ocean_animation), // <-- NECESITAREMOS ESTE NUEVO STRING
+                    checked = uiState.isOceanAnimationEnabled,
+                    onCheckedChange = { isEnabled -> viewModel.onOceanAnimationToggle(isEnabled) }
+                )
 
-            // Fila para seleccionar la calidad
-            ClickableRow(
-                title = stringResource(R.string.settings_graphics_quality),
-                value = tierToDisplayName(tier = uiState.currentQualityTier), // Muestra el tier actual
-                onClick = { showQualityDialog = true }
-            )
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-            // Fila para el toggle de ajuste automático
-            SettingRow(
-                title = stringResource(R.string.settings_auto_adjust),
-                checked = uiState.isAutoAdjustEnabled,
-                onCheckedChange = { isEnabled -> viewModel.onAutoAdjustToggled(isEnabled) }
-            )
+                ClickableRow(
+                    title = stringResource(R.string.settings_advanced_options),
+                    onClick = { showAdvancedDialog = true }
+                )
 
-            SettingRow(
-                title = stringResource(R.string.settings_ocean_animation), // <-- NECESITAREMOS ESTE NUEVO STRING
-                checked = uiState.isOceanAnimationEnabled,
-                onCheckedChange = { isEnabled -> viewModel.onOceanAnimationToggle(isEnabled) }
-            )
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-            ClickableRow(
-                title = stringResource(R.string.settings_advanced_options),
-                onClick = { showAdvancedDialog = true }
-            )
-
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // Sección Legal y Créditos
-            SectionTitle(stringResource(R.string.settings_info_section))
-            ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
-                Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show()
-            }
-            ClickableRow(title = stringResource(R.string.settings_credits)) {
-                Toast.makeText(context, creditsText, Toast.LENGTH_LONG).show()
+                // Sección Legal y Créditos
+                SectionTitle(stringResource(R.string.settings_info_section))
+                ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
+                    Toast.makeText(context, featureNotAvailableText, Toast.LENGTH_SHORT).show()
+                }
+                ClickableRow(title = stringResource(R.string.settings_credits)) {
+                    Toast.makeText(context, creditsText, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
@@ -423,7 +427,8 @@ private fun LanguageSettingRow(currentLanguage: String, onClick: () -> Unit) {
         Text(
             text = currentLanguage,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.secondary
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -492,7 +497,8 @@ private fun ClickableRow(title: String, value: String, onClick: () -> Unit) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.secondary
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.Bold
         )
     }
 }

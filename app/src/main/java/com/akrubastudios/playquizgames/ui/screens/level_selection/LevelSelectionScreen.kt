@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,6 +37,8 @@ import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
+import com.akrubastudios.playquizgames.core.AppConstants
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @Composable // Control 1-LSS
 fun LevelSelectionScreen(
@@ -59,90 +62,92 @@ fun LevelSelectionScreen(
         viewModel.loadLevels()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        // Aquí podrías añadir un botón de "Atrás"
-        Text(
-            text = uiState.categoryName,
-            style = MaterialTheme.typography.headlineLarge,
+    ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+        Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
-            textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
-        )
-
-        // --- INICIO DEL CÓDIGO AÑADIDO: SELECTOR DE DIFICULTAD ---
-        // 1. Usamos una lista de IDs para la lógica. No se traduce.
-        val difficultyIds = listOf("principiante", "dificil")
-        // 2. El índice se calcula comparando con la lista de IDs.
-        val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
-
-        TabRow(
-            selectedTabIndex = selectedIndex,
-            modifier = Modifier.fillMaxWidth()
+                .fillMaxSize()
         ) {
-            // 3. Iteramos sobre los IDs.
-            difficultyIds.forEachIndexed { index, id ->
-                Tab(
-                    selected = selectedIndex == index,
-                    onClick = { viewModel.onDifficultyChange(id) },
-                    // 4. Obtenemos el texto traducido DENTRO del Tab.
-                    text = {
-                        val textRes =
-                            if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                        Text(text = stringResource(textRes))
-                    }
-                )
-            }
-        }
+            // Aquí podrías añadir un botón de "Atrás"
+            Text(
+                text = uiState.categoryName,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
+            )
 
-        // NUEVO: Pequeño texto explicativo del bono
-        Text(
-            text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
-                R.string.difficulty_beginner_tip
-            ),
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        )
+            // --- INICIO DEL CÓDIGO AÑADIDO: SELECTOR DE DIFICULTAD ---
+            // 1. Usamos una lista de IDs para la lógica. No se traduce.
+            val difficultyIds = listOf("principiante", "dificil")
+            // 2. El índice se calcula comparando con la lista de IDs.
+            val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
 
-        if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                items(uiState.levels) { level ->
-                    LevelItem(
-                        level = level,
-                        onLevelClick = { onLevelClick(it, selectedDifficulty) },
-                        onLockedClick = {
-                            // --- LÓGICA DEL TOAST PERSONALIZADO ---
-                            val inflater = LayoutInflater.from(context)
-                            val layout = inflater.inflate(R.layout.custom_toast_layout, null)
-
-                            val textView = layout.findViewById<TextView>(R.id.toast_text)
-                            textView.text = context.getString(R.string.level_unlock_toast)
-
-                            Toast(context).apply {
-                                duration = Toast.LENGTH_SHORT
-                                view = layout
-                                show()
-                            }
-                            // --- FIN DE LA LÓGICA DEL TOAST ---
+            TabRow(
+                selectedTabIndex = selectedIndex,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 3. Iteramos sobre los IDs.
+                difficultyIds.forEachIndexed { index, id ->
+                    Tab(
+                        selected = selectedIndex == index,
+                        onClick = { viewModel.onDifficultyChange(id) },
+                        // 4. Obtenemos el texto traducido DENTRO del Tab.
+                        text = {
+                            val textRes =
+                                if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                            Text(text = stringResource(textRes))
                         }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                item {
-                    Spacer(modifier = Modifier.height(24.dp)) // Un poco de espacio
-                    Button(
-                        onClick = onBackClick, // ¡Simplemente llama a la función que ya existe!
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.level_selection_back_to_country))
+            }
+
+            // NUEVO: Pequeño texto explicativo del bono
+            Text(
+                text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
+                    R.string.difficulty_beginner_tip
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            )
+
+            if (uiState.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                    items(uiState.levels) { level ->
+                        LevelItem(
+                            level = level,
+                            onLevelClick = { onLevelClick(it, selectedDifficulty) },
+                            onLockedClick = {
+                                // --- LÓGICA DEL TOAST PERSONALIZADO ---
+                                val inflater = LayoutInflater.from(context)
+                                val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+
+                                val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                textView.text = context.getString(R.string.level_unlock_toast)
+
+                                Toast(context).apply {
+                                    duration = Toast.LENGTH_SHORT
+                                    view = layout
+                                    show()
+                                }
+                                // --- FIN DE LA LÓGICA DEL TOAST ---
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(24.dp)) // Un poco de espacio
+                        Button(
+                            onClick = onBackClick, // ¡Simplemente llama a la función que ya existe!
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.level_selection_back_to_country))
+                        }
                     }
                 }
             }
@@ -198,6 +203,15 @@ fun LevelItem(
             } else {
                 onLevelClick(level.levelId)
             }
+        },
+        modifier = if (!level.isLocked) {
+            Modifier.background(
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
+                    shape = MaterialTheme.shapes.medium
+                )
+        } else {
+            // Si está bloqueado, no aplicamos ningún fondo extra
+            Modifier
         },
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),

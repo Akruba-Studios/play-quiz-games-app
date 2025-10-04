@@ -1,6 +1,7 @@
 package com.akrubastudios.playquizgames.ui.screens.ranking
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,8 +30,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import java.text.NumberFormat
 import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,31 +81,33 @@ fun RankingScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding) // <-- Usamos el padding del Scaffold
-        ) {
-            Text(
-                text = stringResource(R.string.ranking_title),
-                style = MaterialTheme.typography.headlineLarge,
+        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
-                textAlign = TextAlign.Center
-            )
+                    .fillMaxSize()
+                    .padding(innerPadding) // <-- Usamos el padding del Scaffold
+            ) {
+                Text(
+                    text = stringResource(R.string.ranking_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                    textAlign = TextAlign.Center
+                )
 
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                ) {
-                    items(uiState.rankingList) { user ->
-                        RankedUserItem(user = user)
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    ) {
+                        items(uiState.rankingList) { user ->
+                            RankedUserItem(user = user)
+                        }
                     }
                 }
             }
@@ -115,10 +120,15 @@ fun RankedUserItem(user: RankedUserUiItem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
+                shape = MaterialTheme.shapes.medium
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier.padding(12.dp),

@@ -5,6 +5,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,9 +51,12 @@ import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicTrack
-@OptIn(ExperimentalMaterial3Api::class)
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
+
+@OptIn(ExperimentalMaterial3Api::class) // Control 1-FMS
 @Composable
 fun FreeModeScreen(
     viewModel: FreeModeViewModel = hiltViewModel(),
@@ -93,92 +97,94 @@ fun FreeModeScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding) // Aplica el padding
-        ) {
-            Text(
-                stringResource(R.string.free_mode_title),
-                style = MaterialTheme.typography.headlineLarge,
+        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+            Column(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
-                textAlign = TextAlign.Center
-            )
-            Text(
-                stringResource(R.string.free_mode_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 1. Usamos una lista de IDs para la lógica.
-            val difficultyIds = listOf("principiante", "dificil")
-            // 2. El índice se calcula correctamente.
-            val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
-
-            TabRow(
-                selectedTabIndex = selectedIndex,
-                modifier = Modifier.fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(innerPadding) // Aplica el padding
             ) {
-                // 3. Iteramos sobre los IDs.
-                difficultyIds.forEachIndexed { index, id ->
-                    Tab(
-                        selected = selectedIndex == index,
-                        onClick = { viewModel.onDifficultyChange(id) },
-                        // 4. Obtenemos el texto traducido DENTRO del Tab.
-                        text = {
-                            val textRes =
-                                if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
-                            Text(text = stringResource(textRes))
-                        }
-                    )
-                }
-            }
-            Text(
-                text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
-                    R.string.difficulty_beginner_tip
-                ),
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            )
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Text(
+                    stringResource(R.string.free_mode_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    stringResource(R.string.free_mode_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 1. Usamos una lista de IDs para la lógica.
+                val difficultyIds = listOf("principiante", "dificil")
+                // 2. El índice se calcula correctamente.
+                val selectedIndex = difficultyIds.indexOf(selectedDifficulty)
+
+                TabRow(
+                    selectedTabIndex = selectedIndex,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.masteredLevels.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        stringResource(R.string.free_mode_no_levels),
-                        modifier = Modifier.padding(32.dp)
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(uiState.masteredLevels) { level ->
-                        MasteredLevelItem(
-                            level = level,
-                            selectedDifficulty = selectedDifficulty,
-                            onPlayClick = {
-                                // Usamos un countryId genérico o vacío, ya que en este modo
-                                // no afecta la recompensa de PC.
-                                onNavigateToGame(level.levelId, "freemode", selectedDifficulty)
+                    // 3. Iteramos sobre los IDs.
+                    difficultyIds.forEachIndexed { index, id ->
+                        Tab(
+                            selected = selectedIndex == index,
+                            onClick = { viewModel.onDifficultyChange(id) },
+                            // 4. Obtenemos el texto traducido DENTRO del Tab.
+                            text = {
+                                val textRes =
+                                    if (id == "principiante") R.string.difficulty_beginner else R.string.difficulty_hard
+                                Text(text = stringResource(textRes))
                             }
                         )
+                    }
+                }
+                Text(
+                    text = if (selectedDifficulty == "dificil") stringResource(R.string.difficulty_hard_bonus) else stringResource(
+                        R.string.difficulty_beginner_tip
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                )
+                if (uiState.isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.masteredLevels.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            stringResource(R.string.free_mode_no_levels),
+                            modifier = Modifier.padding(32.dp)
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.masteredLevels) { level ->
+                            MasteredLevelItem(
+                                level = level,
+                                selectedDifficulty = selectedDifficulty,
+                                onPlayClick = {
+                                    // Usamos un countryId genérico o vacío, ya que en este modo
+                                    // no afecta la recompensa de PC.
+                                    onNavigateToGame(level.levelId, "freemode", selectedDifficulty)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -193,10 +199,17 @@ fun MasteredLevelItem(
     onPlayClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            // ¡LA SOLUCIÓN ESTÁ AQUÍ!
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
+                shape = MaterialTheme.shapes.medium
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
