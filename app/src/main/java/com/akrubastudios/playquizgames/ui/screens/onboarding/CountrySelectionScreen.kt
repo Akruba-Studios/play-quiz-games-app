@@ -17,7 +17,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @Composable
 fun CountrySelectionScreen(
@@ -40,33 +42,43 @@ fun CountrySelectionScreen(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    ScreenBackground(
+        backgroundUrl = AppConstants.ONBOARDING_BACKGROUND_URL,
+        imageAlpha = 0.6f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
+        scrimAlpha = 0.75f   // 0.7 - 70% opaco en el velo
     ) {
-        Text(
-            text = stringResource(R.string.country_selection_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
-            textAlign = TextAlign.Center        // <-- AÑADE ESTA LÍNEA
-        )
-        Spacer(modifier = Modifier.height(32.dp))
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.country_selection_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.fillMaxWidth(), // <-- AÑADE ESTA LÍNEA
+                textAlign = TextAlign.Center        // <-- AÑADE ESTA LÍNEA
+            )
+            Spacer(modifier = Modifier.height(32.dp))
 
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(uiState.countries) { country ->
-                    Button(
-                        onClick = {
-                            Log.d("Onboarding_Debug", "Botón presionado para: ${country.countryId}")
-                            viewModel.onCountrySelected(country.countryId) },
-                        modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
-                    ) {
-                        Text(text = country.name)
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(uiState.countries) { country ->
+                        Button(
+                            onClick = {
+                                Log.d(
+                                    "Onboarding_Debug",
+                                    "Botón presionado para: ${country.countryId}"
+                                )
+                                viewModel.onCountrySelected(country.countryId)
+                            },
+                            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 4.dp)
+                        ) {
+                            Text(text = country.name)
+                        }
                     }
                 }
             }

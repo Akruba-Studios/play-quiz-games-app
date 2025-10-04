@@ -2,6 +2,7 @@ package com.akrubastudios.playquizgames.ui.screens.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,12 @@ import com.akrubastudios.playquizgames.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import com.akrubastudios.playquizgames.core.AppConstants
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.theme.PlayQuizGamesTheme
 
 @Composable
@@ -30,50 +37,72 @@ fun ContinentSelectionScreen(
     // Intercepta el botón "Atrás" del sistema y no hace nada.
     BackHandler(enabled = true) { /* No hacer nada */ }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp), // Un padding más generoso para esta pantalla
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    ScreenBackground(
+        backgroundUrl = AppConstants.ONBOARDING_BACKGROUND_URL,
+        imageAlpha = 0.6f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
+        scrimAlpha = 0.75f   // 0.7 - 70% opaco en el velo
     ) {
-        Text(
-            text = stringResource(R.string.continent_selection_title),
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = stringResource(R.string.continent_selection_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 8.dp),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Botón para Sudamérica
-        Button(
-            onClick = { onContinentSelected("south_america") },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp), // Un padding más generoso para esta pantalla
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stringResource(R.string.continent_south_america))
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+            // Título centrado
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                TextWithBorder(
+                    text = stringResource(R.string.continent_selection_title),
+                    style = MaterialTheme.typography.headlineMedium.copy(textAlign = TextAlign.Center),
+                    borderColor = Color.White,
+                    borderWidth = 4f
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            // Subtítulo centrado
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TextWithBorder(
+                    text = stringResource(R.string.continent_selection_subtitle),
+                    style = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
+                    borderColor = Color.White,
+                    borderWidth = 3f
+                )
+            }
+            Spacer(modifier = Modifier.height(48.dp))
 
-        // Botón para Europa
-        Button(
-            onClick = { onContinentSelected("europe") },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
-        ) {
-            Text(stringResource(R.string.continent_europe))
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+            // Botón para Sudamérica
+            Button(
+                onClick = { onContinentSelected("south_america") },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                Text(stringResource(R.string.continent_south_america))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón para Norteamérica
-        Button(
-            onClick = { onContinentSelected("north_america") },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
-        ) {
-            Text(stringResource(R.string.continent_north_america))
+            // Botón para Europa
+            Button(
+                onClick = { onContinentSelected("europe") },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                Text(stringResource(R.string.continent_europe))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Botón para Norteamérica
+            Button(
+                onClick = { onContinentSelected("north_america") },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
+            ) {
+                Text(stringResource(R.string.continent_north_america))
+            }
         }
     }
 }
@@ -84,5 +113,30 @@ fun ContinentSelectionScreen(
 fun ContinentSelectionScreenPreview() {
     PlayQuizGamesTheme {
         ContinentSelectionScreen(onContinentSelected = {})
+    }
+}
+@Composable
+private fun TextWithBorder(
+    text: String,
+    style: TextStyle,
+    borderColor: Color,
+    borderWidth: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier) {
+        Text(
+            text = text,
+            style = style.copy(
+                drawStyle = Stroke(
+                    width = borderWidth,
+                    join = StrokeJoin.Round
+                )
+            ),
+            color = borderColor
+        )
+        Text(
+            text = text,
+            style = style
+        )
     }
 }
