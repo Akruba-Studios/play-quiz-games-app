@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
-@Composable // Control 1-LSS
+@Composable // Control 2-LSS
 fun LevelSelectionScreen(
     viewModel: LevelSelectionViewModel = hiltViewModel(),
     onLevelClick: (levelId: String, difficulty: String) -> Unit,
@@ -195,38 +195,42 @@ fun LevelItem(
     }
     // Usamos una Surface que actúa como nuestro contenedor principal.
     // Le damos forma, borde y un modificador clickable que SIEMPRE funciona.
+    val itemShape = MaterialTheme.shapes.medium
+
     Surface(
         onClick = {
-            // Decidimos qué lambda llamar basado en si el nivel está bloqueado.
             if (level.isLocked) {
                 onLockedClick()
             } else {
                 onLevelClick(level.levelId)
             }
         },
-        modifier = if (!level.isLocked) {
-            Modifier.background(
-                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
-                    shape = MaterialTheme.shapes.medium
-                )
-        } else {
-            // Si está bloqueado, no aplicamos ningún fondo extra
-            Modifier
-        },
-        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier, // Limpiamos el modifier de aquí
+        shape = itemShape,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        // Hacemos que el color de fondo parezca un botón deshabilitado si está bloqueado.
-        color = if (level.isLocked) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
+        // El color del Surface ahora es siempre transparente,
+        // porque el fondo lo controlará la Row interna.
+        color = Color.Transparent
     ) {
-        // El contenido interno es una Row, que es lo que tienen los Buttons.
+        // El contenido interno es una Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .padding(horizontal = 24.dp, vertical = 8.dp), // Padding similar al de un OutlinedButton
+                // ¡LA SOLUCIÓN ESTÁ AQUÍ!
+                .background(
+                    color = if (level.isLocked) {
+                        // Color semitransparente si está bloqueado
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                    } else {
+                        // Color sólido si está DESBLOQUEADO
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.8f) // 0.8f - 80% de Opacidad
+                    }
+                )
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Hacemos que el texto parezca deshabilitado si está bloqueado.
+            // Hacemos que el contenido parezca deshabilitado si está bloqueado.
             val contentColor = if (level.isLocked) {
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             } else {
@@ -246,12 +250,12 @@ fun LevelItem(
                 Icon(
                     Icons.Default.Lock,
                     contentDescription = stringResource(R.string.cd_locked),
-                    tint = contentColor // Usamos el mismo color atenuado.
+                    tint = contentColor
                 )
             } else {
                 Row(
-                    modifier = Modifier.width(starContainerWidth), // <-- APLICAMOS ANCHO DINÁMICO
-                    horizontalArrangement = Arrangement.SpaceBetween // Mejor espaciado
+                    modifier = Modifier.width(starContainerWidth),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     (1..3).forEach { starIndex ->
                         Icon(
