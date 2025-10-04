@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.domain.QuizLevelPackage
+import com.akrubastudios.playquizgames.domain.models.CountryVisualTheme
+import com.akrubastudios.playquizgames.domain.models.GuardianData
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
@@ -86,5 +88,128 @@ class QuizRepository @Inject constructor(
             Log.d(TAG, "Nivel '$levelId': Validación de datos exitosa.")
         }
         return isValid
+    }
+    /**
+     * AÑADIR ESTA FUNCIÓN A LA CLASE QuizRepository EXISTENTE
+     */
+    suspend fun getCountryVisualTheme(countryId: String): CountryVisualTheme? {
+        return try {
+            val document = db.collection("countries")
+                .document(countryId)
+                .get()
+                .await()
+
+            if (document.exists()) {
+                val data = document.data ?: return null
+
+                // Parsear guardianData
+                val guardianDataMap = data["guardianData"] as? Map<*, *>
+                val guardianData = if (guardianDataMap != null) {
+                    parseGuardianData(guardianDataMap)
+                } else {
+                    // Fallback si no existen datos de guardián
+                    GuardianData(
+                        name = mapOf(
+                            "es" to "Guardián Ancestral",
+                            "en" to "Ancestral Guardian"
+                        ),
+                        dialogues = createDefaultDialogues()
+                    )
+                }
+
+                CountryVisualTheme(
+                    countryId = countryId,
+                    visualArchetype = data["visualArchetype"] as? String ?: "default",
+                    accentColor = data["accentColor"] as? String ?: "#D4AF37",
+                    guardianData = guardianData
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("QuizRepository", "Error loading visual theme for $countryId", e)
+            null
+        }
+    }
+
+    /**
+     * Parsea los datos del guardián desde Firebase
+     */
+    private fun parseGuardianData(guardianDataMap: Map<*, *>): GuardianData {
+        val nameMap = guardianDataMap["name"] as? Map<*, *>
+        val dialoguesMap = guardianDataMap["dialogues"] as? Map<*, *>
+
+        val name = mapOf(
+            "es" to (nameMap?.get("es") as? String ?: "Guardián"),
+            "en" to (nameMap?.get("en") as? String ?: "Guardian")
+        )
+
+        val dialogues = mutableMapOf<String, Map<String, List<String>>>()
+
+        if (dialoguesMap != null) {
+            for (phase in listOf("phase1", "phase2", "phase3")) {
+                val phaseMap = dialoguesMap[phase] as? Map<*, *>
+                if (phaseMap != null) {
+                    val esDialogues = (phaseMap["es"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+                    val enDialogues = (phaseMap["en"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+
+                    dialogues[phase] = mapOf(
+                        "es" to esDialogues,
+                        "en" to enDialogues
+                    )
+                }
+            }
+        }
+
+        // Si no hay diálogos, usar defaults
+        if (dialogues.isEmpty()) {
+            dialogues.putAll(createDefaultDialogues())
+        }
+
+        return GuardianData(name = name, dialogues = dialogues)
+    }
+
+    /**
+     * Crea diálogos por defecto si no existen en Firebase
+     */
+    private fun createDefaultDialogues(): Map<String, Map<String, List<String>>> {
+        return mapOf(
+            "phase1" to mapOf(
+                "es" to listOf(
+                    "Bienvenido, viajero...",
+                    "¿Crees que puedes vencerme?",
+                    "Demuestra tu sabiduría..."
+                ),
+                "en" to listOf(
+                    "Welcome, traveler...",
+                    "Do you think you can defeat me?",
+                    "Prove your wisdom..."
+                )
+            ),
+            "phase2" to mapOf(
+                "es" to listOf(
+                    "¡Interesante! Pero no será suficiente...",
+                    "Muéstrame más de tu poder...",
+                    "La batalla apenas comienza..."
+                ),
+                "en" to listOf(
+                    "Interesting! But it won't be enough...",
+                    "Show me more of your power...",
+                    "The battle has just begun..."
+                )
+            ),
+            "phase3" to mapOf(
+                "es" to listOf(
+                    "¡Imposible! ¿Cómo...?",
+                    "¡No me rendiré tan fácilmente!",
+                    "¡Este es mi último aliento!"
+                ),
+                "en" to listOf(
+                    "Impossible! How...?",
+                    "I won't give up so easily!",
+                    "This is my last breath!"
+                )
+            )
+        )
     }
 }

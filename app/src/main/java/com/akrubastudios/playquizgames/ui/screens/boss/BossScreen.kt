@@ -82,6 +82,7 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import com.akrubastudios.playquizgames.ui.screens.boss.background.DynamicBossBackground
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
@@ -100,7 +101,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 1-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 2-BS
 // =====================================================
 
 @Composable
@@ -744,11 +745,22 @@ fun BossScreen(
         }
     } else {
         Box(Modifier.fillMaxSize()) {
-            // Fondo dinámico por fases
-            DynamicBackground(
-                phase = uiState.currentPhase,
-                shakeEffect = uiState.showShakeEffect
-            )
+            // Fondo dinámico mejorado con tema del país
+            val visualTheme = uiState.visualTheme
+            if (visualTheme != null) {
+                DynamicBossBackground(
+                    visualTheme = visualTheme,
+                    currentPhase = uiState.currentPhase,
+                    shakeEffect = uiState.showShakeEffect
+                )
+            } else {
+                // Fallback: fondo simple mientras carga
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.9f))
+                )
+            }
 
             // Contenido principal con scroll
             Column(

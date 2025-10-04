@@ -24,6 +24,9 @@ import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.SoundEffect
 import com.akrubastudios.playquizgames.core.SoundManager
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
+import com.akrubastudios.playquizgames.domain.models.ParsedVisualTheme
+import com.akrubastudios.playquizgames.domain.models.toParsed
+import com.akrubastudios.playquizgames.ui.screens.boss.background.ArchetypeRegistry
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
@@ -85,7 +88,8 @@ data class BossState(
     val revealedLetterPositions: Set<Int> = emptySet(),
     val showCorrectEffect: Boolean = false,
     val showIncorrectEffect: Boolean = false,
-    val showClearAnimation: Boolean = false
+    val showClearAnimation: Boolean = false,
+    val visualTheme: ParsedVisualTheme? = null
 )
 
 @HiltViewModel
@@ -109,6 +113,8 @@ class BossViewModel @Inject constructor(
         const val HELP_REVEAL_LETTER_COST_INCREMENT = 1 // costo gemas cheat revelar letras incremental
         const val HELP_SHOW_HINT_COST = 7 // Costo gemas cheat mostrar pista o hint
     }
+
+    private val archetypeRegistry = ArchetypeRegistry()
 
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
@@ -150,33 +156,73 @@ class BossViewModel @Inject constructor(
         viewModelScope.launch {
             levelPackage = quizRepository.getLevel(levelId)
             val userData = gameDataRepository.getUserData()
-            if (levelPackage != null) {
+
+            // NUEVO: Cargar tema visual desde Firebase
+            val countryVisualTheme = quizRepository.getCountryVisualTheme(countryId)
+            val parsedTheme = countryVisualTheme?.toParsed(archetypeRegistry)
+
+            if (levelPackage != null && parsedTheme != null) {
                 shuffledQuestions = levelPackage!!.questions.shuffled()
-                val theme = generateGuardianTheme(countryId)
+
+                // Usar datos del guardián desde Firebase
+                val guardianName = parsedTheme.guardianData.name
+                val guardianDialogues = parsedTheme.guardianData.dialogues
+
                 val lang = languageManager.languageStateFlow.value
+                val phase1Dialogues = guardianDialogues["phase1"]?.get(lang) ?: emptyList()
+
+                val theme = GuardianTheme(
+                    name = guardianName[lang] ?: guardianName["es"] ?: "Guardian",
+                    emoji = getGuardianEmoji(countryId),
+                    dialogues = listOf(
+                        guardianDialogues["phase1"]?.get(lang) ?: emptyList(),
+                        guardianDialogues["phase2"]?.get(lang) ?: emptyList(),
+                        guardianDialogues["phase3"]?.get(lang) ?: emptyList()
+                    )
+                )
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         levelName = levelPackage!!.levelName[lang] ?: levelPackage!!.levelName["es"] ?: "Guardian Challenge",
                         totalQuestions = shuffledQuestions.size,
                         guardianTheme = theme,
-                        currentDialogue = theme.dialogues[0].random(),
+                        currentDialogue = phase1Dialogues.randomOrNull() ?: "",
                         battleStats = BattleStats(),
-                        currentGems = userData?.gems ?: 0
+                        currentGems = userData?.gems ?: 0,
+                        visualTheme = parsedTheme
                     )
                 }
                 prepareNextQuestion()
+            } else {
+                // Fallback si no se pueden cargar los datos
+                Log.e("BossViewModel", "Error: No se pudo cargar levelPackage o visualTheme")
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
     private fun updateDialoguesForNewLanguage() {
         Log.d("BossViewModel", "Actualizando diálogos por cambio de idioma")
-        val newTheme = generateGuardianTheme(countryId)
-        Log.d("BossViewModel", "Nuevo diálogo: ${newTheme.dialogues[0].firstOrNull()}")
-        val currentPhase = uiState.value.currentPhase
 
-        // Mantener el índice actual del diálogo
+        val visualTheme = uiState.value.visualTheme ?: return
+        val newLang = languageManager.languageStateFlow.value
+
+        val guardianName = visualTheme.guardianData.name[newLang]
+            ?: visualTheme.guardianData.name["es"]
+            ?: "Guardian"
+
+        val guardianDialogues = visualTheme.guardianData.dialogues
+        val newTheme = GuardianTheme(
+            name = guardianName,
+            emoji = getGuardianEmoji(countryId),
+            dialogues = listOf(
+                guardianDialogues["phase1"]?.get(newLang) ?: emptyList(),
+                guardianDialogues["phase2"]?.get(newLang) ?: emptyList(),
+                guardianDialogues["phase3"]?.get(newLang) ?: emptyList()
+            )
+        )
+
+        val currentPhase = uiState.value.currentPhase
         val currentDialogueIndex = uiState.value.dialogueIndexInPhase
         val newDialogue = if (currentPhase > 0 && currentPhase <= newTheme.dialogues.size) {
             val phaseDialogues = newTheme.dialogues[currentPhase - 1]
@@ -887,5 +933,19 @@ class BossViewModel @Inject constructor(
                     // cierre el diálogo del Fun Fact.
                 }
             }
+    }
+    private fun getGuardianEmoji(countryId: String): String {
+        return when (countryId.lowercase()) {
+            "mexico", "gt" -> "⚡"
+            "jp" -> "⚔️"
+            "eg" -> "☥"
+            "fr" -> "⚜️"
+            "br" -> "🌿"
+            "ar", "cl", "uy" -> "⭐"
+            "it", "es", "gr" -> "🏛️"
+            "se", "no" -> "❄️"
+            "ca", "us" -> "🦅"
+            else -> "👑"
+        }
     }
 }
