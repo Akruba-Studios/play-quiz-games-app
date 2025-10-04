@@ -19,7 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 /**
- * Componente principal que renderiza el fondo dinámico completo
+ * Componente principal que renderiza el fondo dinámico completo: Control 1-BR
  */
 @Composable
 fun DynamicBossBackground(
@@ -59,11 +59,19 @@ fun DynamicBossBackground(
 
     // Pulso para fases 2 y 3
     val infiniteTransition = rememberInfiniteTransition(label = "backgroundPulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = if (currentPhase >= 2) 0.7f else 0.3f,
+    val pulseIntensity by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = when(currentPhase) {
+            1 -> 1.0f      // Sin pulso
+            2 -> 0.55f     // Oscurece 45%
+            3 -> 0.35f     // Oscurece 65% - casi negro
+            else -> 1.0f
+        },
         animationSpec = infiniteRepeatable(
-            animation = tween(1000),
+            animation = tween(
+                durationMillis = if (currentPhase == 3) 400 else 800,
+                easing = LinearEasing  // Sin suavizado, más brusco
+            ),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"
@@ -81,8 +89,16 @@ fun DynamicBossBackground(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            backgroundTopColor.copy(alpha = pulseAlpha),
-                            backgroundBottomColor
+                            backgroundTopColor.copy(
+                                red = (backgroundTopColor.red * pulseIntensity).coerceIn(0f, 1f),
+                                green = (backgroundTopColor.green * pulseIntensity).coerceIn(0f, 1f),
+                                blue = (backgroundTopColor.blue * pulseIntensity).coerceIn(0f, 1f)
+                            ),
+                            backgroundBottomColor.copy(
+                                red = (backgroundBottomColor.red * pulseIntensity).coerceIn(0f, 1f),
+                                green = (backgroundBottomColor.green * pulseIntensity).coerceIn(0f, 1f),
+                                blue = (backgroundBottomColor.blue * pulseIntensity).coerceIn(0f, 1f)
+                            )
                         )
                     )
                 )
@@ -153,7 +169,7 @@ private fun BackgroundCanvas(
             intensity = when(currentPhase) {
                 1 -> 0.3f
                 2 -> 0.5f
-                3 -> 0.7f
+                3 -> 0.65f
                 else -> 0.3f
             }
         )
@@ -161,17 +177,16 @@ private fun BackgroundCanvas(
 
     // Loop de actualización de partículas
     LaunchedEffect(currentPhase, phaseColors) {
-        // Ajustar sistema de partículas cuando cambia la fase
         particleSystem?.adjustForPhase(currentPhase, phaseColors.particleColors)
 
         while (isActive) {
-            val currentTime = System.currentTimeMillis()
-            val deltaTime = (currentTime - lastFrameTime) / 1000f
-            lastFrameTime = currentTime
+            withFrameMillis { frameTimeMillis ->
+                val currentTime = frameTimeMillis
+                val deltaTime = (currentTime - lastFrameTime) / 1000f
+                lastFrameTime = currentTime
 
-            particleSystem?.update(deltaTime)
-
-            delay(16L) // ~60 FPS
+                particleSystem?.update(deltaTime)
+            }
         }
     }
 }
@@ -182,14 +197,14 @@ private fun BackgroundCanvas(
 private fun DrawScope.drawVignette(vignetteColor: Color, intensity: Float) {
     val centerX = size.width / 2f
     val centerY = size.height / 2f
-    val maxRadius = maxOf(size.width, size.height) * 0.8f
+    val maxRadius = maxOf(size.width, size.height) * 0.6f  // Más pequeño = más oscuro
 
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
                 Color.Transparent,
-                vignetteColor.copy(alpha = intensity * 0.5f),
-                vignetteColor.copy(alpha = intensity)
+                vignetteColor.copy(alpha = intensity * 0.8f),  // Era 0.5f
+                vignetteColor.copy(alpha = (intensity * 1.2f).coerceIn(0f, 1f))  // Era 1.0f
             ),
             center = Offset(centerX, centerY),
             radius = maxRadius
