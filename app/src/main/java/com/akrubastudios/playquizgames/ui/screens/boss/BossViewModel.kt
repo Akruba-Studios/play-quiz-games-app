@@ -934,7 +934,7 @@ class BossViewModel @Inject constructor(
                 }
             }
     }
-    private fun getGuardianEmoji(countryId: String): String {
+    private fun getGuardianEmoji(countryId: String): String { // Revisar bien todos los paises que esten codificados y luego arreglar el bossheaderfixed para llamarlos
         return when (countryId.lowercase()) {
             "mexico", "gt" -> "⚡"
             "jp" -> "⚔️"

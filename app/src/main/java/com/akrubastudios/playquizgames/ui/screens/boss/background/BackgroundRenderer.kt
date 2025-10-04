@@ -126,13 +126,18 @@ private fun BackgroundCanvas(
 ) {
     // Estado del sistema de partículas
     var particleSystem by remember { mutableStateOf<ParticleSystemManager?>(null) }
-    var lastFrameTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var lastFrameTime by remember { mutableLongStateOf(0L) }
+
+    var invalidate by remember { mutableIntStateOf(0) }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
+        invalidate
+
         val canvasWidth = size.width
         val canvasHeight = size.height
 
         // Inicializar sistema de partículas si no existe
+        android.util.Log.d("ParticleDebug", "Canvas redraw: particleSystem=${particleSystem == null}, phase=$currentPhase")
         if (particleSystem == null) {
             particleSystem = ParticleSystemManager(
                 canvasWidth = canvasWidth,
@@ -181,11 +186,11 @@ private fun BackgroundCanvas(
 
         while (isActive) {
             withFrameMillis { frameTimeMillis ->
-                val currentTime = frameTimeMillis
-                val deltaTime = (currentTime - lastFrameTime) / 1000f
-                lastFrameTime = currentTime
+                val deltaTime = if (lastFrameTime == 0L) 0.016f else (frameTimeMillis - lastFrameTime) / 1000f
+                lastFrameTime = frameTimeMillis
 
                 particleSystem?.update(deltaTime)
+                invalidate++
             }
         }
     }

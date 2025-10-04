@@ -7,7 +7,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * Representa una partícula individual en el sistema - Control: 1-PS
+ * Representa una partícula individual en el sistema - Control: 2-PS
  */
 data class AmbientParticle(
     var x: Float,
@@ -48,6 +48,7 @@ class ParticleSystemManager(
 
     init {
         initializeParticles()
+        android.util.Log.d("ParticleDebug", "INIT Fase=$phase, Partículas=${particles.size}, Style.speed=${style.speed}, Style.density=${style.density}")
     }
 
     private fun initializeParticles() {
@@ -60,6 +61,10 @@ class ParticleSystemManager(
     private fun createRandomParticle(): AmbientParticle {
         val angle = random.nextFloat() * 2 * Math.PI
         val speed = style.speed * (0.3f + random.nextFloat() * 0.7f)
+
+        val vX = (cos(angle) * speed).toFloat()
+        val vY = (sin(angle) * speed).toFloat()
+        android.util.Log.d("ParticleDebug", "Nueva partícula: speed=$speed, vX=$vX, vY=$vY")
 
         return AmbientParticle(
             x = random.nextFloat() * canvasWidth,
@@ -77,6 +82,8 @@ class ParticleSystemManager(
      * Actualiza todas las partículas para el siguiente frame
      */
     fun update(deltaTime: Float) {
+        android.util.Log.d("ParticleDebug", "UPDATE Fase=$phase, deltaTime=$deltaTime, Partículas=${particles.size}, Primera vX=${particles.firstOrNull()?.velocityX}")
+
         particles.forEach { particle ->
             // Actualizar posición
             particle.x += particle.velocityX * deltaTime * 60f
@@ -111,6 +118,8 @@ class ParticleSystemManager(
      * Ajusta la cantidad de partículas si cambia la fase
      */
     fun adjustForPhase(newPhase: Int, newColors: List<Color>) {
+        android.util.Log.d("ParticleDebug", "ADJUST de Fase=$phase a newPhase=$newPhase")
+
         val newMultiplier = when(newPhase) {
             1 -> 1.0f
             2 -> 1.3f
