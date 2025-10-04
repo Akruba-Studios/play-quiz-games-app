@@ -47,8 +47,8 @@ object PatternGenerator {
      * Patrón de zigzag (escalones andinos/mesoamericanos)
      */
     private fun DrawScope.drawZigzagPattern(color: Color, seed: Int, density: Float) {
-        val stepSize = 60f / density
-        val amplitude = 40f
+        val stepSize = 90f / density // Antes 60, ahora se agranda al 50%
+        val amplitude = 60f // Antes 40, ahora se agranda al 50%
         val path = Path()
 
         var y = -amplitude
@@ -84,8 +84,8 @@ object PatternGenerator {
      * Patrón de ondas (costero, atlántico)
      */
     private fun DrawScope.drawWavesPattern(color: Color, seed: Int, density: Float) {
-        val wavelength = 80f / density
-        val amplitude = 30f
+        val wavelength = 120f / density // Antes 80, ahora se agranda al 50%
+        val amplitude = 45f // Antes 30, ahora se agranda al 50%
         val path = Path()
 
         var y = -amplitude * 2
@@ -115,7 +115,7 @@ object PatternGenerator {
      * Patrón de cuadrícula (urbano, norteamericano)
      */
     private fun DrawScope.drawGridPattern(color: Color, seed: Int, density: Float) {
-        val gridSize = 100f / density
+        val gridSize = 150f / density // Antes 100, ahora se agranda al 50%
         val random = java.util.Random(seed.toLong())
 
         // Líneas verticales
@@ -152,7 +152,7 @@ object PatternGenerator {
         val centerX = size.width / 2f
         val centerY = size.height / 2f
         val maxRadius = maxOf(size.width, size.height) * 0.7f
-        val radiusStep = 80f / density
+        val radiusStep = 120f / density // Antes 80, ahora se agranda al 50%
         val segments = 12 + (seed % 8)
 
         var radius = radiusStep
@@ -187,7 +187,7 @@ object PatternGenerator {
      * Patrón diagonal (nórdico, cruz)
      */
     private fun DrawScope.drawDiagonalPattern(color: Color, seed: Int, density: Float) {
-        val spacing = 80f / density
+        val spacing = 120f / density // Antes 80, ahora se agranda al 50%
         val random = java.util.Random(seed.toLong())
 
         // Diagonales hacia abajo-derecha
@@ -222,7 +222,7 @@ object PatternGenerator {
      */
     private fun DrawScope.drawMosaicPattern(color: Color, seed: Int, density: Float) {
         val random = java.util.Random(seed.toLong())
-        val cellSize = 60f / density
+        val cellSize = 90f / density // Antes 60, ahora se agranda al 50%
         val cols = (size.width / cellSize).toInt()
         val rows = (size.height / cellSize).toInt()
 

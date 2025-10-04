@@ -7,7 +7,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * Representa una partícula individual en el sistema
+ * Representa una partícula individual en el sistema - Control: 1-PS
  */
 data class AmbientParticle(
     var x: Float,
@@ -35,6 +35,7 @@ class ParticleSystemManager(
 
     // Densidad base ajustada por fase
     private val baseParticleCount = 30
+    private val sizeMultiplier = 2.5f  // Para aumentar tamaño particulas
     private val phaseMultiplier = when(phase) {
         1 -> 1.0f
         2 -> 1.3f
@@ -66,7 +67,7 @@ class ParticleSystemManager(
             velocityX = (cos(angle) * speed).toFloat(),
             velocityY = (sin(angle) * speed).toFloat(),
             color = colors.random(random),
-            size = style.size * (0.5f + random.nextFloat() * 0.5f),
+            size = style.size * (0.5f + random.nextFloat() * 0.5f) * sizeMultiplier, // Usa el multiplicador para agrandar particulas
             alpha = 0.3f + random.nextFloat() * 0.4f,
             seed = random.nextInt()
         )
