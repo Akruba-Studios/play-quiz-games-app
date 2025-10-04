@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
@@ -29,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,8 +45,9 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import kotlinx.coroutines.delay
+import androidx.compose.ui.text.TextStyle
 
-@Composable // Control 2-RS
+@Composable // Control 3-RS
 fun ResultScreen(
     title: String,
     score: Int,
@@ -81,24 +85,44 @@ fun ResultScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineLarge,
-                    textAlign = TextAlign.Center, // <-- AÑADE ESTA LÍNEA
-                    modifier = Modifier.fillMaxWidth() // <-- AÑADE ESTA LÍNEA
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextWithBorder(
+                        text = title,
+                        style = MaterialTheme.typography.headlineLarge, // Ya no necesita el .copy()
+                        borderColor = Color.White,
+                        borderWidth = 4f
+                        // El modifier.fillMaxWidth() se quita de aquí
+                    )
+                }
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = stringResource(R.string.result_final_score),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextWithBorder(
+                        text = stringResource(R.string.result_final_score),
+                        style = MaterialTheme.typography.titleMedium,
+                        borderColor = Color.White,
+                        borderWidth = 3f // Un borde un poco más sutil para un texto más pequeño
+                    )
+                }
                 Text(text = "$score XP", style = MaterialTheme.typography.displayMedium)
                 Spacer(modifier = Modifier.height(16.dp))
                 if (!isFromBossFight && pcGained > 0) {
-                    Text(
-                        text = stringResource(R.string.result_conquest_points),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextWithBorder(
+                            text = stringResource(R.string.result_conquest_points),
+                            style = MaterialTheme.typography.titleMedium,
+                            borderColor = Color.White,
+                            borderWidth = 3f
+                        )
+                    }
                     Text(
                         text = "+$pcGained PC",
                         style = MaterialTheme.typography.displaySmall,
@@ -109,10 +133,17 @@ fun ResultScreen(
                 }
                 if (gemsGained > 0) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.result_gems_won),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextWithBorder(
+                            text = stringResource(R.string.result_gems_won),
+                            style = MaterialTheme.typography.titleMedium,
+                            borderColor = Color.White,
+                            borderWidth = 3f
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     // Simplemente llamamos a nuestro componente reutilizable
                     GemsBalanceIndicator(
@@ -126,14 +157,21 @@ fun ResultScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = stringResource(
-                        R.string.result_questions_summary,
-                        correctAnswers,
-                        totalQuestions
-                    ),
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextWithBorder(
+                        text = stringResource(
+                            R.string.result_questions_summary,
+                            correctAnswers,
+                            totalQuestions
+                        ),
+                        style = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                        borderColor = Color.White,
+                        borderWidth = 3f
+                    )
+                }
                 // Mostramos las estrellas SOLO si NO es una batalla de jefe.
                 if (!isFromBossFight) {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -266,5 +304,36 @@ private fun AnimatedStars(
                 )
             }
         }
+    }
+}
+/**
+ * Un Composable que dibuja un Text con un borde o contorno.
+ */
+@Composable
+private fun TextWithBorder(
+    text: String,
+    style: TextStyle,
+    borderColor: Color,
+    borderWidth: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier) {
+        // CAPA 1: El borde (texto dibujado solo con contorno)
+        Text(
+            text = text,
+            style = style.copy(
+                drawStyle = Stroke(
+                    width = borderWidth,
+                    join = StrokeJoin.Round, // Esquinas redondeadas para un look más suave
+                )
+            ),
+            color = borderColor
+        )
+        // CAPA 2: El relleno (texto normal encima)
+        Text(
+            text = text,
+            style = style,
+            // El color del relleno se toma del 'style'
+        )
     }
 }
