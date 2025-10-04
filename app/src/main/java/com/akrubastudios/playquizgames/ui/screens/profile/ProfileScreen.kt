@@ -41,8 +41,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.graphics.graphicsLayer
@@ -55,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.Routes
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -62,11 +65,13 @@ import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class) // Control: 1-PS
+@OptIn(ExperimentalMaterial3Api::class) // Control: 2-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -174,120 +179,126 @@ fun ProfileScreen(
         }
     ) { innerPadding ->
 
-        if (uiState.isLoading) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding), // Aplicar padding
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.user == null || uiState.levelInfo == null) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding), // Aplicar padding
-                contentAlignment = Alignment.Center
-            ) {
-                Text(stringResource(R.string.profile_error_loading))
-            }
-        } else {
-            val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-            val horizontalPadding = remember(screenWidth) {
-                when {
-                    screenWidth < 340.dp -> 8.dp      // Pantallas muy angostas
-                    screenWidth < 370.dp -> 10.dp     // Pantallas angostas
-                    else -> 10.dp                     // Pantallas normales
+        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+            if (uiState.isLoading) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding), // Aplicar padding
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-            }
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding), // Aplicar padding
-                contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                item {
-                    val imageSize = remember(screenWidth) {
-                        when {
-                            screenWidth < 340.dp -> 80.dp
-                            screenWidth < 370.dp -> 90.dp
-                            else -> 100.dp
-                        }
+            } else if (uiState.user == null || uiState.levelInfo == null) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding), // Aplicar padding
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(stringResource(R.string.profile_error_loading))
+                }
+            } else {
+                val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                val horizontalPadding = remember(screenWidth) {
+                    when {
+                        screenWidth < 340.dp -> 8.dp      // Pantallas muy angostas
+                        screenWidth < 370.dp -> 10.dp     // Pantallas angostas
+                        else -> 10.dp                     // Pantallas normales
                     }
-                    ProfileHeader(
-                        name = uiState.user?.displayName
-                            ?: stringResource(R.string.default_player_name),
-                        imageUrl = uiState.user?.photoUrl,
-                        imageSize = imageSize
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    val spacerWidth = remember(screenWidth) {
-                        when {
-                            screenWidth < 340.dp -> 8.dp
-                            screenWidth < 370.dp -> 12.dp
-                            else -> 15.dp
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Indicador de Nivel (usamos un Box con peso para que ocupe el espacio disponible)
-                        Box(modifier = Modifier.weight(1f)) {
-                            uiState.levelInfo?.let { levelInfo ->
-                                PlayerLevelIndicator(
-                                    levelInfo = levelInfo,
-                                    boostCount = uiState.user?.unassignedPcBoosts ?: 0
-                                )
+                }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding), // Aplicar padding
+                    contentPadding = PaddingValues(
+                        horizontal = horizontalPadding,
+                        vertical = 16.dp
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    item {
+                        val imageSize = remember(screenWidth) {
+                            when {
+                                screenWidth < 340.dp -> 80.dp
+                                screenWidth < 370.dp -> 90.dp
+                                else -> 100.dp
                             }
                         }
-
-                        Spacer(modifier = Modifier.width(spacerWidth)) // Espacio entre playerlevelindicator y gemsindicator
-
-                        // Indicador de Gemas
-                        GemsIndicator(
-                            gems = uiState.user?.gems ?: 0,
-                            onClick = { showGemsTutorialDialog = true }
+                        ProfileHeader(
+                            name = uiState.user?.displayName
+                                ?: stringResource(R.string.default_player_name),
+                            imageUrl = uiState.user?.photoUrl,
+                            imageSize = imageSize
                         )
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        val spacerWidth = remember(screenWidth) {
+                            when {
+                                screenWidth < 340.dp -> 8.dp
+                                screenWidth < 370.dp -> 12.dp
+                                else -> 15.dp
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Indicador de Nivel (usamos un Box con peso para que ocupe el espacio disponible)
+                            Box(modifier = Modifier.weight(1f)) {
+                                uiState.levelInfo?.let { levelInfo ->
+                                    PlayerLevelIndicator(
+                                        levelInfo = levelInfo,
+                                        boostCount = uiState.user?.unassignedPcBoosts ?: 0
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(spacerWidth)) // Espacio entre playerlevelindicator y gemsindicator
+
+                            // Indicador de Gemas
+                            GemsIndicator(
+                                gems = uiState.user?.gems ?: 0,
+                                onClick = { showGemsTutorialDialog = true }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
 
-                item {
-                    StatisticsCard(
-                        totalXp = uiState.user?.totalXp ?: 0,
-                        conquered = uiState.user?.conqueredCountries?.size ?: 0,
-                        dominated = uiState.user?.dominatedCountries?.size ?: 0,
-                        cardPadding = horizontalPadding
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-
-                item {
-                    uiState.nextMilestone?.let { milestone ->
-                        // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
-                        MilestoneCard(
-                            milestone = milestone,
-                            cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
-                            scale = animatedScale,
+                    item {
+                        StatisticsCard(
+                            totalXp = uiState.user?.totalXp ?: 0,
+                            conquered = uiState.user?.conqueredCountries?.size ?: 0,
+                            dominated = uiState.user?.dominatedCountries?.size ?: 0,
                             cardPadding = horizontalPadding
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
-                }
 
-                item {
-                    ActionsCard(
-                        onSignOutClick = { showSignOutDialog = true },
-                        onSettingsClick = onSettingsClick,
-                        onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
-                        isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty() ?: false,
-                        cardPadding = horizontalPadding
-                    )
+                    item {
+                        uiState.nextMilestone?.let { milestone ->
+                            // --- LA ANIMACIÓN SE APLICA AQUÍ, EN LA TARJETA DE HITOS ---
+                            MilestoneCard(
+                                milestone = milestone,
+                                cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
+                                scale = animatedScale,
+                                cardPadding = horizontalPadding
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+
+                    item {
+                        ActionsCard(
+                            onSignOutClick = { showSignOutDialog = true },
+                            onSettingsClick = onSettingsClick,
+                            onLibraryClick = { navController.navigate(Routes.FUN_FACT_LIBRARY_SCREEN) },
+                            isLibraryEnabled = uiState.user?.masteredLevelIds?.isNotEmpty()
+                                ?: false,
+                            cardPadding = horizontalPadding
+                        )
+                    }
                 }
             }
         }
@@ -343,8 +354,15 @@ private fun ProfileHeader(name: String, imageUrl: String?, imageSize: Dp) {
 @Composable
 private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int, cardPadding: Dp) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        modifier = Modifier
+            .fillMaxWidth()
+            // ¡LA SOLUCIÓN ESTÁ AQUÍ!
+            .background(
+                color = MaterialTheme.colorScheme.background, // <-- USA EL COLOR DEL TEMA DIRECTAMENTE
+                shape = MaterialTheme.shapes.medium
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(cardPadding)) {
             Text(stringResource(R.string.profile_stats_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -367,8 +385,15 @@ private fun ActionsCard(
     cardPadding: Dp
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        modifier = Modifier
+            .fillMaxWidth()
+            // ¡LA SOLUCIÓN ESTÁ AQUÍ!
+            .background(
+                color = MaterialTheme.colorScheme.background, // <-- USA EL COLOR DEL TEMA DIRECTAMENTE
+                shape = MaterialTheme.shapes.medium
+            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(cardPadding)) {
             Text(stringResource(R.string.profile_account_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -463,15 +488,22 @@ private fun formatNumber(number: Long): String {
 private fun MilestoneCard(
     milestone: Milestone,
     modifier: Modifier = Modifier,
-    cardColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    cardColor: Color,
     scale: Float = 1f,
     cardPadding: Dp
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer(scaleX = scale, scaleY = scale),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .background(
+                color = MaterialTheme.colorScheme.background, // LightGray en claro, DeepNavy en oscuro
+                shape = MaterialTheme.shapes.medium
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = cardColor // Usamos el color animado que viene del LaunchedEffect
+        ),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(cardPadding)) {
             Text(
