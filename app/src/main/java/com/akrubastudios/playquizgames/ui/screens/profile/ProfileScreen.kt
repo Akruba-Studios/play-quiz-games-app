@@ -356,7 +356,7 @@ private fun StatisticsCard(totalXp: Long, conquered: Int, dominated: Int, cardPa
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            // ¡LA SOLUCIÓN ESTÁ AQUÍ!
+            // Técnica para poner un fonde opaco sobre la card con transparencias
             .background(
                 color = MaterialTheme.colorScheme.background, // <-- USA EL COLOR DEL TEMA DIRECTAMENTE
                 shape = MaterialTheme.shapes.medium

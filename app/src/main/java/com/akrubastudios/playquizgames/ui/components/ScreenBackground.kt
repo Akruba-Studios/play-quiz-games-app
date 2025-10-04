@@ -11,38 +11,43 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 
 /**
- * Un Composable que dibuja una imagen de fondo que ocupa toda la pantalla.
- * El contenido principal se dibuja encima.
+ * Un Composable que dibuja una imagen de fondo configurable. Control 1-SB
  *
  * @param backgroundUrl La URL de la imagen a cargar.
+ * @param imageAlpha La opacidad de la imagen de fondo (de 0.0f a 1.0f).
+ * @param scrimAlpha La opacidad del "velo" de color que se superpone a la imagen (de 0.0f a 1.0f).
+ *                   Un valor de 0.0f significa que no hay velo.
  * @param content El contenido de la pantalla que se mostrará sobre el fondo.
  */
 @Composable
 fun ScreenBackground(
     backgroundUrl: String,
+    imageAlpha: Float = 0.7f, // Valor + grande, Imagen mas clara
+    scrimAlpha: Float = 0.7f, // Valor * grande, Velo mas opaco
     content: @Composable () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // CAPA 1: La imagen de fondo. La hacemos un poco más visible (ej. 40% opaca)
+        // CAPA 1: La imagen de fondo, ahora con opacidad configurable
         if (backgroundUrl.isNotBlank()) {
             AsyncImage(
                 model = backgroundUrl,
                 contentDescription = "Background image",
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(0.4f), // valor mas grande, mas claro la imagen
+                    .alpha(imageAlpha), // <-- USA EL PARÁMETRO
                 contentScale = ContentScale.Crop
             )
         }
 
-        // CAPA 2: El "Velo". Una capa del color de fondo principal de la app,
-        // pero semitransparente. Esto suaviza la imagen de abajo.
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f)) // valor mas grande, mas opaco el velo
-        )
+        // CAPA 2: El "Velo", ahora con opacidad configurable
+        if (scrimAlpha > 0.0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = scrimAlpha)) // <-- USA EL PARÁMETRO
+            )
+        }
 
         // CAPA 3: El contenido principal de la pantalla
         content()

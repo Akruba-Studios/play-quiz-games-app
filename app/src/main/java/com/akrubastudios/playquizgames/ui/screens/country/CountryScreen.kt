@@ -42,6 +42,7 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @Composable
 fun CountryScreen(
@@ -62,121 +63,140 @@ fun CountryScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.isScreenLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else if (uiState.country == null) {
-        // Estado de error si el país no se pudo cargar
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.country_error_loading))
-        }
-    } else {
-        // Usamos una LazyColumn para contenido que podría ser largo
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                Text(
-                    text = uiState.countryName, // <-- Mucho más simple.
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displayMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+    ScreenBackground(
+        backgroundUrl = uiState.country?.backgroundImageUrl ?: "",
+        imageAlpha = 1.0f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
+        scrimAlpha = 0.0f   // 0.0 - 0% opaco, sin velo en absoluto
+    ) {
+        if (uiState.isScreenLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        } else if (uiState.country == null) {
+            // Estado de error si el país no se pudo cargar
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.country_error_loading))
+            }
+        } else {
+            // Usamos una LazyColumn para contenido que podría ser largo
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    Text(
+                        text = uiState.countryName, // <-- Mucho más simple.
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.displayMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
-            // --- LÓGICA DE UI BASADA EN EL ESTADO DEL PAÍS ---
-            when (uiState.countryStatus) {
-                CountryStatus.AVAILABLE -> {
-                    item {
-                        CountryProgress(
-                            current = uiState.currentPc,
-                            total = uiState.pcRequired,
-                            statusText = stringResource(R.string.country_progress_conquest)
-                        )
-                        // Mostramos el botón solo si la condición se cumple.
-                        if (uiState.canApplyBoost) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = onApplyBoostClick,
-                                enabled = !uiState.isApplyingBoost,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            ) {
-                                if (uiState.isApplyingBoost) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp
+                // --- LÓGICA DE UI BASADA EN EL ESTADO DEL PAÍS ---
+                when (uiState.countryStatus) {
+                    CountryStatus.AVAILABLE -> {
+                        item {
+                            CountryProgress(
+                                current = uiState.currentPc,
+                                total = uiState.pcRequired,
+                                statusText = stringResource(R.string.country_progress_conquest)
+                            )
+                            // Mostramos el botón solo si la condición se cumple.
+                            if (uiState.canApplyBoost) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = onApplyBoostClick,
+                                    enabled = !uiState.isApplyingBoost,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
-                                } else {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Filled.Star, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            stringResource(R.string.country_button_use_boost),
-                                            textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
+                                ) {
+                                    if (uiState.isApplyingBoost) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
                                         )
+                                    } else {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Filled.Star, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                stringResource(R.string.country_button_use_boost),
+                                                textAlign = TextAlign.Center // <-- AÑADE ESTA LÍNEA
+                                            )
+                                        }
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            CategoryList(
+                                categories = uiState.availableCategories,
+                                onCategoryClick = onPlayCategoryClick
+                            )
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        CategoryList(
-                            categories = uiState.availableCategories,
-                            onCategoryClick = onPlayCategoryClick
-                        )
                     }
-                }
-                CountryStatus.CONQUERED -> {
-                    item {
-                        CountryProgress(
-                            current = uiState.pcRequired,
-                            total = uiState.pcRequired,
-                            statusText = stringResource(R.string.country_status_conquered)
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
-                        ChallengeBossButton(
-                            bossLevelId = uiState.country?.bossLevelId ?: "",
-                            onChallengeClick = onChallengeBossClick
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        StudyTopics(topics = uiState.studyTopics)
-                    }
-                }
-                CountryStatus.DOMINATED -> {
-                    item {
-                        CountryProgress(
-                            current = uiState.pcRequired,
-                            total = uiState.pcRequired,
-                            statusText = stringResource(R.string.country_status_dominated)
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(stringResource(R.string.country_all_content_unlocked), style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        CategoryList(
-                            categories = uiState.availableCategories,
-                            onCategoryClick = onPlayCategoryClick
-                        )
-                    }
-                }
-                CountryStatus.LOCKED -> {
-                    item {
-                        Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.cd_locked), modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(R.string.country_status_locked_title), style = MaterialTheme.typography.headlineSmall)
-                        Text(stringResource(R.string.country_status_locked_subtitle))
-                    }
-                }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(onClick = onBackClick) {
-                    Text(stringResource(R.string.country_back_to_map))
+                    CountryStatus.CONQUERED -> {
+                        item {
+                            CountryProgress(
+                                current = uiState.pcRequired,
+                                total = uiState.pcRequired,
+                                statusText = stringResource(R.string.country_status_conquered)
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            ChallengeBossButton(
+                                bossLevelId = uiState.country?.bossLevelId ?: "",
+                                onChallengeClick = onChallengeBossClick
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            StudyTopics(topics = uiState.studyTopics)
+                        }
+                    }
+
+                    CountryStatus.DOMINATED -> {
+                        item {
+                            CountryProgress(
+                                current = uiState.pcRequired,
+                                total = uiState.pcRequired,
+                                statusText = stringResource(R.string.country_status_dominated)
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                stringResource(R.string.country_all_content_unlocked),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            CategoryList(
+                                categories = uiState.availableCategories,
+                                onCategoryClick = onPlayCategoryClick
+                            )
+                        }
+                    }
+
+                    CountryStatus.LOCKED -> {
+                        item {
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = stringResource(R.string.cd_locked),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                stringResource(R.string.country_status_locked_title),
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Text(stringResource(R.string.country_status_locked_subtitle))
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Button(onClick = onBackClick) {
+                        Text(stringResource(R.string.country_back_to_map))
+                    }
                 }
             }
         }
