@@ -41,6 +41,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
+import com.akrubastudios.playquizgames.ui.components.TextWithBorder
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
@@ -227,31 +228,5 @@ fun CreateProfileScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TextWithBorder(
-    text: String,
-    style: TextStyle,
-    borderColor: Color,
-    borderWidth: Float,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier) {
-        Text(
-            text = text,
-            style = style.copy(
-                drawStyle = Stroke(
-                    width = borderWidth,
-                    join = StrokeJoin.Round
-                )
-            ),
-            color = borderColor
-        )
-        Text(
-            text = text,
-            style = style
-        )
     }
 }

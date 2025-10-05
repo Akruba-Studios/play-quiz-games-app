@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 /**
  * Un Composable que dibuja una imagen de fondo configurable. Control 1-SB
@@ -31,11 +33,16 @@ fun ScreenBackground(
         // CAPA 1: La imagen de fondo, ahora con opacidad configurable
         if (backgroundUrl.isNotBlank()) {
             AsyncImage(
-                model = backgroundUrl,
+                // Construimos una petición explícita a Coil
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(backgroundUrl)
+                    .crossfade(true) // Añade una transición suave
+                    .size(coil.size.Size.ORIGINAL) // Le decimos a Coil que optimice para el tamaño del contenedor
+                    .build(),
                 contentDescription = "Background image",
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(imageAlpha), // <-- USA EL PARÁMETRO
+                    .alpha(imageAlpha), // El alpha se mantiene aquí
                 contentScale = ContentScale.Crop
             )
         }

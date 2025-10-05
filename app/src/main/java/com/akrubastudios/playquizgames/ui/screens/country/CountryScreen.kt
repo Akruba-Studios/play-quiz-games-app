@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import com.akrubastudios.playquizgames.ui.screens.country.CountryStatus
@@ -43,6 +44,7 @@ import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
+import com.akrubastudios.playquizgames.ui.components.TextWithBorder
 
 @Composable
 fun CountryScreen(
@@ -213,18 +215,33 @@ fun CountryScreen(
 
 @Composable
 private fun CountryProgress(current: Long, total: Long, statusText: String) {
-    Text(text = statusText, style = MaterialTheme.typography.titleMedium)
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        TextWithBorder(
+            text = statusText,
+            style = MaterialTheme.typography.titleMedium,
+            borderColor = Color.White,
+            borderWidth = 3f
+        )
+    }
     Spacer(modifier = Modifier.height(8.dp))
     LinearProgressIndicator(
         progress = { current.toFloat() / total.toFloat() },
         modifier = Modifier.fillMaxWidth(0.8f).height(8.dp),
         strokeCap = StrokeCap.Round
     )
-    Text(
-        text = "$current / $total PC",
-        style = MaterialTheme.typography.bodySmall,
-        modifier = Modifier.padding(top = 4.dp)
-    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        TextWithBorder(
+            text = "$current / $total PC",
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            borderColor = Color.White,
+            borderWidth = 2f // Un borde más fino para el texto más pequeño
+        )
+    }
 }
 
 @Composable

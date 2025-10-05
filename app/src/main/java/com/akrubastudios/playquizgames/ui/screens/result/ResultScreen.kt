@@ -46,8 +46,9 @@ import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import kotlinx.coroutines.delay
 import androidx.compose.ui.text.TextStyle
+import com.akrubastudios.playquizgames.ui.components.TextWithBorder
 
-@Composable // Control 3-RS
+@Composable // Control 4-RS
 fun ResultScreen(
     title: String,
     score: Int,
@@ -304,36 +305,5 @@ private fun AnimatedStars(
                 )
             }
         }
-    }
-}
-/**
- * Un Composable que dibuja un Text con un borde o contorno.
- */
-@Composable
-private fun TextWithBorder(
-    text: String,
-    style: TextStyle,
-    borderColor: Color,
-    borderWidth: Float,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier) {
-        // CAPA 1: El borde (texto dibujado solo con contorno)
-        Text(
-            text = text,
-            style = style.copy(
-                drawStyle = Stroke(
-                    width = borderWidth,
-                    join = StrokeJoin.Round, // Esquinas redondeadas para un look más suave
-                )
-            ),
-            color = borderColor
-        )
-        // CAPA 2: El relleno (texto normal encima)
-        Text(
-            text = text,
-            style = style,
-            // El color del relleno se toma del 'style'
-        )
     }
 }
