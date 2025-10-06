@@ -25,7 +25,12 @@ enum class SoundEffect(val resourceId: Int) {
     CLEAR_ANSWER(R.raw.sfx_clear_answer),
     STAR_APPEAR(R.raw.sfx_star_appear),
     BUTTON_CLICK(R.raw.sfx_button_click),
-    TIMER_TICK(R.raw.sfx_timer_tick)
+    TIMER_TICK(R.raw.sfx_timer_tick),
+    BOSS_EVIL_LAUGH(R.raw.sfx_boss_evil_laugh),
+    HELP_EXTRA_TIME(R.raw.sfx_help_extra_time),
+    HELP_REMOVE_LETTERS(R.raw.sfx_help_remove_letters),
+    HELP_REVEAL_LETTER(R.raw.sfx_help_reveal_letter),
+    HELP_SHOW_HINT(R.raw.sfx_help_show_hint)
     // Aquí añadiremos más sonidos en el futuro (ej. BUTTON_CLICK)
 }
 

@@ -637,6 +637,7 @@ class GameViewModel @Inject constructor(
 
         // Comprobamos si el botón está lógicamente activo
         if (!state.isFunFactUsedInRound || state.areFunFactsUnlockedForLevel) {
+            soundManager.playSound(SoundEffect.HELP_SHOW_HINT)
             timerJob?.cancel() // Pausamos el tiempo en ambos casos
 
             if (!state.hasSeenFunFactTutorial) {
@@ -716,6 +717,7 @@ class GameViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_REVEAL_LETTER)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {
@@ -789,6 +791,7 @@ class GameViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_EXTRA_TIME)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {

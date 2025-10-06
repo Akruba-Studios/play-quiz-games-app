@@ -492,6 +492,13 @@ class BossViewModel @Inject constructor(
             } else {
                 soundManager.playSound(SoundEffect.INCORRECT_ANSWER)
                 val newMistakes = state.playerMistakes + 1
+                // Si con este nuevo error al jugador solo le queda 1 vida, suena la risa con delay.
+                if (newMistakes == state.maxMistakes - 1) {
+                    viewModelScope.launch {
+                        delay(1500L) // Espera 1.5 segundos
+                        soundManager.playSound(SoundEffect.BOSS_EVIL_LAUGH)
+                    }
+                }
                 _uiState.update {
                     it.copy(
                         playerMistakes = newMistakes,
@@ -637,6 +644,7 @@ class BossViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_EXTRA_TIME)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {
@@ -698,6 +706,7 @@ class BossViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_REMOVE_LETTERS)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {
@@ -765,6 +774,7 @@ class BossViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_REVEAL_LETTER)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {
@@ -851,6 +861,7 @@ class BossViewModel @Inject constructor(
         }
 
         _uiState.update { it.copy(isProcessingHelp = true) }
+        soundManager.playSound(SoundEffect.HELP_SHOW_HINT)
 
         val uid = auth.currentUser?.uid
         if (uid == null) {

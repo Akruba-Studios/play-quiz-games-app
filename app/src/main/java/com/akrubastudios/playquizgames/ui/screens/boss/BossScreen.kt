@@ -101,7 +101,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 3-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 4-BS
 // =====================================================
 
 @Composable
@@ -406,7 +406,7 @@ private fun AnswerSlotsFixed(
                                 containerColor = when {
                                     charToShow == ' ' -> LightGray
                                     isRevealedLetter -> Color(0xFF4CAF50) // Verde para letras reveladas
-                                    else -> SkyBlue // Letras Normales
+                                    else -> DarkGoldAccent // Letras Normales
                                 }
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -574,7 +574,7 @@ private fun LetterBankFixed(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 8.dp)
             .background(
-                color = Color.Black.copy(alpha = 0.7f),
+                color = Color.Black.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(8.dp)
             )
             .border(
@@ -601,7 +601,7 @@ private fun LetterBankFixed(
                     .padding(horizontal = 2.dp) // <-- AGREGAR ESTA LÍNEA
                     .size(buttonSize),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isUsed) Color.Gray else SkyBlue,
+                    containerColor = if (isUsed) Color.Gray else DarkGoldAccent,
                     disabledContainerColor = Color.Gray
                 ),
                 enabled = !isUsed,
