@@ -106,7 +106,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 8-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 9-BS
 // =====================================================
 
 @Composable
@@ -602,20 +602,25 @@ private fun AdaptiveDialogueText(
 ) {
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val maxLines = 1 // Máximo 1 línea
-    val initialFontSize = 14f // Tamaño inicial
+    val maxLines = 1
+    val initialFontSize = 20f // ✅ Aumentado de 14f a 20f
+    val minFontSize = 6f // ✅ También minimo para comentarios muy largos
     val baseTextStyle = MaterialTheme.typography.bodyMedium
 
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = with(density) { this@BoxWithConstraints.maxWidth.toPx().toInt() }
 
         val optimalFontSize = remember(text, maxWidthPx) {
-            var currentFontSize = initialFontSize
-            val minFontSize = 6f // Tamaño mínimo
+            var low = minFontSize
+            var high = initialFontSize
+            var result = minFontSize
 
-            while (currentFontSize >= minFontSize) {
+            // Búsqueda binaria
+            while (high - low > 0.5f) {
+                val mid = (low + high) / 2f
+
                 val textStyle = baseTextStyle.copy(
-                    fontSize = currentFontSize.sp,
+                    fontSize = mid.sp,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -626,13 +631,14 @@ private fun AdaptiveDialogueText(
                 )
 
                 if (textLayoutResult.lineCount <= maxLines) {
-                    break
+                    result = mid
+                    low = mid // ✅ Cabe, intenta más grande
+                } else {
+                    high = mid // ❌ No cabe, intenta más pequeño
                 }
-
-                currentFontSize *= 0.80f
             }
 
-            max(currentFontSize, minFontSize)
+            result
         }
 
         Text(
