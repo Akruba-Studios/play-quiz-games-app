@@ -129,7 +129,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 17-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 18-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1006,7 +1006,9 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
     canvasSize: androidx.compose.ui.geometry.Size,
     config: OceanPerformanceConfig, // NUEVO PARÁMETRO
     fpsTracker: RealFpsTracker,
-    reusablePath: Path
+    reusablePath: Path,
+    shallowPoints: MutableList<Offset>, // <-- AÑADIR
+    mediumPoints: MutableList<Offset>
 ) {
     val startTime = System.nanoTime()
 
@@ -1024,8 +1026,8 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
     val stepSize = config.stepSize // USAR CONFIGURACIÓN DINÁMICA
     val depthVariationIntensity = config.depthIntensity // USAR CONFIGURACIÓN DINÁMICA
 
-    val shallowPoints = mutableListOf<Offset>()
-    val mediumPoints = mutableListOf<Offset>()
+    shallowPoints.clear()
+    mediumPoints.clear()
 
     // Precalcular valores que no cambian en el loop
     val timeOffset1 = waveTime * 0.2f
@@ -1177,10 +1179,12 @@ fun OptimizedOceanCanvasWithConfig(
     fpsTracker: RealFpsTracker
 ) {
     val reusablePath = remember { Path() }
+    val shallowPoints = remember { mutableListOf<Offset>() }
+    val mediumPoints = remember { mutableListOf<Offset>() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         if (isActive) {
-            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath) // USAR NUEVA FUNCIÓN
+            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath, shallowPoints, mediumPoints) // USAR NUEVA FUNCIÓN
         } else {
             // Durante transiciones, mostrar océano estático
             drawRect(color = Color(0xFF1B4F72), size = size)
