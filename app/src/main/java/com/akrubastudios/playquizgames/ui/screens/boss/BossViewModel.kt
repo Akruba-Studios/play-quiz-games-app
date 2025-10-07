@@ -911,18 +911,41 @@ class BossViewModel @Inject constructor(
                 }
             }
     }
-    private fun getGuardianEmoji(countryId: String): String { // Revisar bien todos los paises que esten codificados y luego arreglar el bossheaderfixed para llamarlos
+    private fun getGuardianEmoji(countryId: String): String {
         return when (countryId.lowercase()) {
-            "mexico", "gt" -> "⚡"
-            "jp" -> "⚔️"
-            "eg" -> "☥"
-            "fr" -> "⚜️"
-            "br" -> "🌿"
-            "ar", "cl", "uy" -> "⭐"
-            "it", "es", "gr" -> "🏛️"
-            "se", "no" -> "❄️"
-            "ca", "us" -> "🦅"
-            else -> "👑"
+            "ar" -> "⭐"  // Argentina - Estrella (Sol de Mayo)
+            "bo" -> "🏔️"  // Bolivia - Montañas Andinas
+            "br" -> "🌿"  // Brasil - Selva Amazónica
+            "cl" -> "⭐"  // Chile - Estrella (de la bandera)
+            "co" -> "☕"  // Colombia - Café
+            "ec" -> "🌋"  // Ecuador - Volcanes
+            "py" -> "🌟"  // Paraguay - Estrella
+            "pe" -> "🦙"  // Perú - Llama/Inca
+            "uy" -> "☀️"  // Uruguay - Sol
+            "ve" -> "⚡"  // Venezuela - Energía/Rayo
+            "gy" -> "💎"  // Guyana - Diamantes/Esmeralda
+            "sr" -> "🌈"  // Surinam - Diversidad/Arcoíris
+            "es" -> "🏛️"  // España - Arquitectura histórica
+            "fr" -> "⚜️"  // Francia - Flor de Lis
+            "it" -> "🏛️"  // Italia - Arquitectura romana
+            "de" -> "⚡"  // Alemania - Poder/Trueno
+            "gb" -> "👑"  // Reino Unido - Corona
+            "pt" -> "⛵"  // Portugal - Navegación
+            "gr" -> "🏛️"  // Grecia - Olimpo
+            "nl" -> "🌷"  // Países Bajos - Tulipanes (o usa 💧 Diques)
+            "ch" -> "⚙️"  // Suiza - Precisión/Acero
+            "se" -> "❄️"  // Suecia - Hielo nórdico
+            "ca" -> "🍁"  // Canadá - Hoja de arce
+            "us" -> "🦅"  // Estados Unidos - Águila
+            "mx" -> "🐆"  // México - Jaguar
+            "cu" -> "🥁"  // Cuba - Tambor/Música
+            "pa" -> "🌉"  // Panamá - Canal/Estrecho
+            "cr" -> "🌳"  // Costa Rica - Bosques
+            "jm" -> "⚡"  // Jamaica - Energía/Velocidad
+            "gt" -> "🗿"  // Guatemala - Jade Maya
+            "do" -> "🏝️"  // República Dominicana - Caribe
+            "sv" -> "🌋"  // El Salvador - Volcanes
+            else -> "👑"  // Fallback genérico
         }
     }
 }

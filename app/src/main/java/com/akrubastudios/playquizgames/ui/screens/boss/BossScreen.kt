@@ -102,12 +102,13 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 5-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 6-BS
 // =====================================================
 
 @Composable
 private fun BossHeaderFixed(
     guardianName: String,
+    guardianEmoji: String,
     health: Float,
     mistakes: Int,
     maxMistakes: Int,
@@ -195,7 +196,7 @@ private fun BossHeaderFixed(
                 val yellowColor = Color(0xFFFFD700)
                 val currentColor = androidx.compose.ui.graphics.lerp(goldColor, yellowColor, gradientShift)
                 Text(
-                    text = guardianName.uppercase(),
+                    text = "$guardianEmoji ${guardianName.uppercase()}",
                     style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), // o el tamaño que quieras
                     fontWeight = FontWeight.Bold,
                     color = currentColor,
@@ -744,6 +745,7 @@ fun BossScreen(
                 // 1. HEADER DEL BOSS
                 BossHeaderFixed(
                     guardianName = uiState.guardianTheme.name,
+                    guardianEmoji = uiState.guardianTheme.emoji,
                     health = uiState.bossHealth,
                     mistakes = uiState.playerMistakes,
                     maxMistakes = uiState.maxMistakes,
