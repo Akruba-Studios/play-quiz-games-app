@@ -109,7 +109,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 13-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 14-BS
 // =====================================================
 
 // Helper para tuplas
@@ -252,6 +252,61 @@ private fun BossHeaderFixed(
         else -> Color.Red
     }
 
+    // Detectar cuando el boss recibe daño
+    var lastHealth by remember { mutableStateOf(health) }
+    var showHealthShake by remember { mutableStateOf(false) }
+
+    LaunchedEffect(health) {
+        Log.d("BossHealth", "Health changed: $health, Last: $lastHealth")
+        if (health < lastHealth) {
+            Log.d("BossHealth", "SHAKE ACTIVADO!")
+            showHealthShake = true
+            delay(200)
+            showHealthShake = false
+            Log.d("BossHealth", "SHAKE DESACTIVADO")
+        }
+        lastHealth = health
+    }
+
+    val healthShakeOffset by animateFloatAsState(
+        targetValue = if (showHealthShake) {
+            if ((System.currentTimeMillis() / 30) % 2 == 0L) -3f else 3f
+        } else 0f,
+        animationSpec = tween(30),
+        label = "healthShake"
+    )
+    LaunchedEffect(healthShakeOffset) {
+        Log.d("BossHealth", "Shake offset: $healthShakeOffset")
+    }
+
+    // Brillo en salud crítica (< 30%)
+    val criticalGlow by rememberInfiniteTransition(label = "criticalGlow").animateFloat(
+        initialValue = if (animatedHealth < 0.3f) 0.6f else 1.0f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (animatedHealth < 0.3f) 400 else 1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+    LaunchedEffect(animatedHealth) {
+        Log.d("BossHealth", "AnimatedHealth: $animatedHealth, Critical: ${animatedHealth < 0.3f}, Glow: $criticalGlow")
+    }
+
+    // Estado para animar la pérdida de corazón
+    var lastMistakes by remember { mutableStateOf(mistakes) }
+    var lostHeartIndex by remember { mutableStateOf(-1) }
+
+    // Detectar cuando se pierde un corazón
+    LaunchedEffect(mistakes) {
+        if (mistakes > lastMistakes) {
+            lostHeartIndex = maxMistakes - mistakes + 1
+            delay(600)
+            lostHeartIndex = -1
+        }
+        lastMistakes = mistakes
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = cardPadding),
         colors = CardDefaults.cardColors(
@@ -345,41 +400,13 @@ private fun BossHeaderFixed(
                 )
             }
 
-            // Detectar cuando el boss recibe daño
-            var lastHealth by remember { mutableStateOf(health) }
-            var showHealthShake by remember { mutableStateOf(false) }
-
-            LaunchedEffect(health) {
-                if (health < lastHealth) {
-                    showHealthShake = true
-                    delay(200)
-                    showHealthShake = false
-                }
-                lastHealth = health
-            }
-
-            val healthShakeOffset by animateFloatAsState(
-                targetValue = if (showHealthShake) {
-                    if ((System.currentTimeMillis() / 30) % 2 == 0L) -3f else 3f
-                } else 0f,
-                animationSpec = tween(30),
-                label = "healthShake"
-            )
-
-            // Brillo en salud crítica (< 30%)
-            val criticalGlow by rememberInfiniteTransition(label = "criticalGlow").animateFloat(
-                initialValue = if (animatedHealth < 0.3f) 0.6f else 1.0f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(if (animatedHealth < 0.3f) 400 else 1000),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "glow"
-            )
-
             Spacer(Modifier.height(8.dp))
 
-            Box {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(x = healthShakeOffset.dp) // ✅ Mover el offset AQUÍ
+            ) {
                 // Glow exterior en salud crítica
                 if (animatedHealth < 0.3f) {
                     LinearProgressIndicator(
@@ -399,8 +426,7 @@ private fun BossHeaderFixed(
                     progress = { animatedHealth },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(progressBarHeight)
-                        .offset(x = healthShakeOffset.dp),
+                        .height(progressBarHeight),
                     strokeCap = StrokeCap.Round,
                     color = healthColor.copy(alpha = criticalGlow),
                     trackColor = healthColor.copy(alpha = 0.3f)
@@ -408,20 +434,6 @@ private fun BossHeaderFixed(
             }
 
             Spacer(Modifier.height(8.dp))
-
-            // Estado para animar la pérdida de corazón
-            var lastMistakes by remember { mutableStateOf(mistakes) }
-            var lostHeartIndex by remember { mutableStateOf(-1) }
-
-            // Detectar cuando se pierde un corazón
-            LaunchedEffect(mistakes) {
-                if (mistakes > lastMistakes) {
-                    lostHeartIndex = maxMistakes - mistakes + 1
-                    delay(600)
-                    lostHeartIndex = -1
-                }
-                lastMistakes = mistakes
-            }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally) // ✅ Agrega espaciado
