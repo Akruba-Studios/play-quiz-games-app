@@ -108,7 +108,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 11-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 12-BS
 // =====================================================
 
 // Helper para tuplas
@@ -344,17 +344,67 @@ private fun BossHeaderFixed(
                 )
             }
 
+            // Detectar cuando el boss recibe daño
+            var lastHealth by remember { mutableStateOf(health) }
+            var showHealthShake by remember { mutableStateOf(false) }
+
+            LaunchedEffect(health) {
+                if (health < lastHealth) {
+                    showHealthShake = true
+                    delay(200)
+                    showHealthShake = false
+                }
+                lastHealth = health
+            }
+
+            val healthShakeOffset by animateFloatAsState(
+                targetValue = if (showHealthShake) {
+                    if ((System.currentTimeMillis() / 30) % 2 == 0L) -3f else 3f
+                } else 0f,
+                animationSpec = tween(30),
+                label = "healthShake"
+            )
+
+            // Brillo en salud crítica (< 30%)
+            val criticalGlow by rememberInfiniteTransition(label = "criticalGlow").animateFloat(
+                initialValue = if (animatedHealth < 0.3f) 0.6f else 1.0f,
+                targetValue = 1.0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(if (animatedHealth < 0.3f) 400 else 1000),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "glow"
+            )
+
             Spacer(Modifier.height(8.dp))
 
-            LinearProgressIndicator(
-                progress = { animatedHealth },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(progressBarHeight),
-                strokeCap = StrokeCap.Round,
-                color = healthColor,
-                trackColor = healthColor.copy(alpha = 0.3f)
-            )
+            Box {
+                // Glow exterior en salud crítica
+                if (animatedHealth < 0.3f) {
+                    LinearProgressIndicator(
+                        progress = { animatedHealth },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(progressBarHeight + 2.dp)
+                            .alpha(criticalGlow * 0.5f),
+                        strokeCap = StrokeCap.Round,
+                        color = Color.Red,
+                        trackColor = Color.Transparent
+                    )
+                }
+
+                // Barra principal
+                LinearProgressIndicator(
+                    progress = { animatedHealth },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(progressBarHeight)
+                        .offset(x = healthShakeOffset.dp),
+                    strokeCap = StrokeCap.Round,
+                    color = healthColor.copy(alpha = criticalGlow),
+                    trackColor = healthColor.copy(alpha = 0.3f)
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -563,12 +613,29 @@ private fun AnswerSlotsFixed(
                     word.forEach { _ ->
                         val charToShow = userAnswerLetters.getOrNull(letterIndex) ?: ' '
                         val isRevealedLetter = revealedLetterPositions.contains(letterIndex)
+                        val fillScale = remember { Animatable(1.0f) }
+                        val isNewLetter = charToShow != ' ' && !isRevealedLetter
+
+                        LaunchedEffect(charToShow) {
+                            if (charToShow != ' ') {
+                                fillScale.snapTo(1.5f)
+                                fillScale.animateTo(
+                                    targetValue = 1.0f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                )
+                            }
+                        }
 
                         // --- INICIO DEL CÓDIGO RESTAURADO ---
                         // Este es tu código original del Card, 100% intacto.
                         // Lo único que cambia es que 'globalSlotSize' ahora es dinámico.
                         Card(
-                            modifier = Modifier.size(globalSlotSize),
+                            modifier = Modifier
+                                .size(globalSlotSize)
+                                .scale(fillScale.value),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             border = if (charToShow == ' ') BorderStroke(
                                 1.dp,
@@ -625,7 +692,20 @@ private fun TimerAndDialogueRow(
                 else -> Color.Red
             }
 
+            val timerPulse by rememberInfiniteTransition(label = "timerPulse").animateFloat(
+                initialValue = 1.0f,
+                targetValue = if (timeRemaining <= 10) 1.15f else 1.05f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = if (timeRemaining <= 5) 200 else if (timeRemaining <= 10) 400 else 800
+                    ),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "pulse"
+            )
+
             Card(
+                modifier = Modifier.scale(timerPulse),
                 colors = CardDefaults.cardColors(
                     containerColor = timerColor.copy(alpha = 0.2f)
                 ),
