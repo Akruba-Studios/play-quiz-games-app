@@ -109,7 +109,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 14-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 15-BS
 // =====================================================
 
 // Helper para tuplas
@@ -404,7 +404,7 @@ private fun BossHeaderFixed(
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(.85f)
                     .offset(x = healthShakeOffset.dp) // ✅ Mover el offset AQUÍ
             ) {
                 // Glow exterior en salud crítica
