@@ -129,7 +129,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 18-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 19-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1173,20 +1173,37 @@ private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
 @Composable
 fun OptimizedOceanCanvasWithConfig(
     modifier: Modifier = Modifier,
-    waveTime: Float = 0f,
+    isTransforming: Boolean,
     isActive: Boolean = true,
-    config: OceanPerformanceConfig, // NUEVO PARÁMETRO
+    config: OceanPerformanceConfig,
     fpsTracker: RealFpsTracker
 ) {
     val reusablePath = remember { Path() }
     val shallowPoints = remember { mutableListOf<Offset>() }
     val mediumPoints = remember { mutableListOf<Offset>() }
 
+    // Volvemos a un estado simple para el tiempo, como al principio
+    var waveTime by remember { mutableFloatStateOf(0f) }
+
+    // Bucle de animación simple y robusto
+    LaunchedEffect(isActive, isTransforming) {
+        // El bucle solo se ejecuta si la pantalla está activa Y no estamos haciendo drag/zoom
+        if (isActive && !isTransforming) {
+            while (true) {
+                waveTime += 0.03f // <-- VALOR MÁS LENTO Y AJUSTABLE
+                if (waveTime > 1000f) waveTime -= 1000f
+                delay(16L) // Espera aprox. 1/60 de segundo
+            }
+        }
+    }
+
     Canvas(modifier = modifier.fillMaxSize()) {
+        // Al leer el trigger aquí, le decimos a Compose que este Canvas debe redibujarse
+        // cada vez que el trigger cambie (es decir, constantemente).
+
         if (isActive) {
-            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath, shallowPoints, mediumPoints) // USAR NUEVA FUNCIÓN
+            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath, shallowPoints, mediumPoints)
         } else {
-            // Durante transiciones, mostrar océano estático
             drawRect(color = Color(0xFF1B4F72), size = size)
         }
     }
@@ -1538,24 +1555,13 @@ fun InteractiveWorldMap(
         offset = newOffset
     }
 
-    // Animación optimizada del océano
-    LaunchedEffect(transformableState.isTransformInProgress, isAnimationActive) {
-        while (true) {
-            if (isAnimationActive && !transformableState.isTransformInProgress) {
-                waveTime += 0.033f
-            }
-            delay(16L) // ← DELAY FIJO para smooth animation
-            if (waveTime > 1000f) waveTime -= 1000f
-        }
-    }
-
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
         // CAPA 1: Océano en canvas separado
         if (isOceanAnimationEnabled) {
             OptimizedOceanCanvasWithConfig(
-                waveTime = waveTime,
                 isActive = isAnimationActive,
+                isTransforming = transformableState.isTransformInProgress,
                 config = oceanConfig,
                 fpsTracker = realFpsTracker
             )
