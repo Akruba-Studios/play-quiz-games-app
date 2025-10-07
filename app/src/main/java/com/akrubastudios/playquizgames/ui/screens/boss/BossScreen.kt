@@ -71,6 +71,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -93,6 +94,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.GoldAccent
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
+import kotlinx.coroutines.delay
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -106,8 +108,99 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 9-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 10-BS
 // =====================================================
+
+// Helper para tuplas
+private data class Tuple4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
+
+@Composable
+private fun AnimatedHeart(
+    index: Int,
+    isAlive: Boolean,
+    isLosing: Boolean,
+    heartSize: Dp,
+    livesRemaining: Int
+) {
+    // Configuración dinámica según vidas restantes
+    val (animSpeed, scaleIntensity, heartColor, showWarning) = when (livesRemaining) {
+        1 -> Tuple4(300, 1.3f, Color(0xFFFF0000), true)
+        2 -> Tuple4(500, 1.2f, Color(0xFFFF4444), false)
+        else -> Tuple4(800, 1.15f, Color.Red, false)
+    }
+
+    // Latido
+    val infiniteTransition = rememberInfiniteTransition(label = "heart_$index")
+    val heartbeatScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = scaleIntensity,
+        animationSpec = infiniteRepeatable(
+            animation = tween(animSpeed, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "beat"
+    )
+
+    // Parpadeo de advertencia
+    val warningAlpha by infiniteTransition.animateFloat(
+        initialValue = if (showWarning) 0.4f else 1.0f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (showWarning) 200 else 800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "warning"
+    )
+
+    // Pérdida (explosión)
+    val lossScale by animateFloatAsState(
+        targetValue = if (isLosing) 2.0f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "loss_scale"
+    )
+
+    val lossAlpha by animateFloatAsState(
+        targetValue = if (isLosing) 0f else 1f,
+        animationSpec = tween(600),
+        label = "loss_alpha"
+    )
+
+    val lossRotation by animateFloatAsState(
+        targetValue = if (isLosing) 180f else 0f,
+        animationSpec = tween(600),
+        label = "loss_rotation"
+    )
+
+    Box(
+        modifier = Modifier.size(heartSize),
+        contentAlignment = Alignment.Center
+    ) {
+        // Aura de advertencia crítica
+        if (isAlive && showWarning && !isLosing) {
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = null,
+                tint = Color.Yellow.copy(alpha = 0.5f),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scale(1.4f * heartbeatScale)
+                    .alpha(warningAlpha * 0.6f)
+            )
+        }
+
+        // Corazón principal
+        Icon(
+            imageVector = if (isAlive || isLosing) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+            contentDescription = stringResource(R.string.cd_life),
+            tint = if (isAlive || isLosing) heartColor else Color.Gray.copy(alpha = 0.4f),
+            modifier = Modifier
+                .fillMaxSize()
+                .scale(if (isAlive && !isLosing) heartbeatScale else lossScale)
+                .alpha(if (isLosing) lossAlpha else warningAlpha)
+                .rotate(lossRotation)
+        )
+    }
+}
 
 @Composable
 private fun BossHeaderFixed(
@@ -241,18 +334,31 @@ private fun BossHeaderFixed(
 
             Spacer(Modifier.height(8.dp))
 
+            // Estado para animar la pérdida de corazón
+            var lastMistakes by remember { mutableStateOf(mistakes) }
+            var lostHeartIndex by remember { mutableStateOf(-1) }
+
+            // Detectar cuando se pierde un corazón
+            LaunchedEffect(mistakes) {
+                if (mistakes > lastMistakes) {
+                    lostHeartIndex = maxMistakes - mistakes + 1
+                    delay(600)
+                    lostHeartIndex = -1
+                }
+                lastMistakes = mistakes
+            }
+
             Row(
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally) // ✅ Agrega espaciado
             ) {
+                val livesRemaining = maxMistakes - mistakes
                 (1..maxMistakes).forEach { i ->
-                    Icon(
-                        imageVector = if (i <= maxMistakes - mistakes)
-                            Icons.Default.Favorite
-                        else
-                            Icons.Default.FavoriteBorder,
-                        contentDescription = stringResource(R.string.cd_life),
-                        tint = Color.Red,
-                        modifier = Modifier.size(heartSize)
+                    AnimatedHeart(
+                        index = i,
+                        isAlive = i <= maxMistakes - mistakes,
+                        isLosing = i == lostHeartIndex,
+                        heartSize = heartSize,
+                        livesRemaining = livesRemaining
                     )
                 }
             }
