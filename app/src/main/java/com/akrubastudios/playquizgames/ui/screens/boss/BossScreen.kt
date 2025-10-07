@@ -71,6 +71,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -101,7 +102,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 4-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 5-BS
 // =====================================================
 
 @Composable
@@ -168,14 +169,40 @@ private fun BossHeaderFixed(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Animación de gradiente oro→amarillo -  ESTO PARA EL TITULO DEL BOSS
+                val infiniteTransition = rememberInfiniteTransition(label = "guardianNameGradient")
+                val gradientShift by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 2000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "gradientShift"
+                )
+                // Animación de pulso
+                val pulseScale by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 1.05f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "pulseScale"
+                )
+                // Colores del gradiente
+                val goldColor = DarkGoldAccent
+                val yellowColor = Color(0xFFFFD700)
+                val currentColor = androidx.compose.ui.graphics.lerp(goldColor, yellowColor, gradientShift)
                 Text(
-                    text = guardianName,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = guardianName.uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), // o el tamaño que quieras
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = currentColor,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.scale(pulseScale)
                 )
                 GemsIndicator(
                     gems = currentGems,
