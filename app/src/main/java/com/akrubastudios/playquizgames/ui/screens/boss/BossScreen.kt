@@ -108,7 +108,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 10-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 11-BS
 // =====================================================
 
 // Helper para tuplas
@@ -288,6 +288,23 @@ private fun BossHeaderFixed(
                     ),
                     label = "pulseScale"
                 )
+                // Animación de sombra dinámica
+                val shadowIntensity by infiniteTransition.animateFloat(
+                    initialValue = 2f,
+                    targetValue = 8f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "shadowPulse"
+                )
+
+                // Escala basada en la fase
+                val phaseScale = when (phase) {
+                    3 -> 1.08f  // Fase 3: Más grande (más agresivo)
+                    2 -> 1.04f  // Fase 2: Mediano
+                    else -> 1.0f // Fase 1: Normal
+                }
                 // Colores del gradiente
                 val color1 = DarkGoldAccent
                 val color2 = LightGray
@@ -304,13 +321,20 @@ private fun BossHeaderFixed(
                 }
                 Text(
                     text = "$guardianEmoji ${guardianName.uppercase()}",
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), // o el tamaño que quieras
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 18.sp,
+                        shadow = Shadow(
+                            color = currentColor.copy(alpha = 0.8f),
+                            offset = Offset(0f, 0f),
+                            blurRadius = shadowIntensity
+                        )
+                    ),
                     fontWeight = FontWeight.Bold,
                     color = currentColor,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.scale(pulseScale)
+                    modifier = Modifier.scale(pulseScale * phaseScale)
                 )
                 GemsIndicator(
                     gems = currentGems,
