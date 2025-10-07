@@ -102,7 +102,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 6-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 7-BS
 // =====================================================
 
 @Composable
@@ -174,9 +174,9 @@ private fun BossHeaderFixed(
                 val infiniteTransition = rememberInfiniteTransition(label = "guardianNameGradient")
                 val gradientShift by infiniteTransition.animateFloat(
                     initialValue = 0f,
-                    targetValue = 1f,
+                    targetValue = 2f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 2000, easing = LinearEasing),
+                        animation = tween(durationMillis = 3000, easing = LinearEasing),
                         repeatMode = RepeatMode.Reverse
                     ),
                     label = "gradientShift"
@@ -192,9 +192,19 @@ private fun BossHeaderFixed(
                     label = "pulseScale"
                 )
                 // Colores del gradiente
-                val goldColor = DarkGoldAccent
-                val yellowColor = Color(0xFFFFD700)
-                val currentColor = androidx.compose.ui.graphics.lerp(goldColor, yellowColor, gradientShift)
+                val color1 = DarkGoldAccent
+                val color2 = LightGray
+                val color3 = Color(0xFFDC143C) // Rojo carmesí
+                val currentColor = when {
+                    gradientShift < 1f -> {
+                        // Transición de color1 a color2
+                        androidx.compose.ui.graphics.lerp(color1, color2, gradientShift)
+                    }
+                    else -> {
+                        // Transición de color2 a color3
+                        androidx.compose.ui.graphics.lerp(color2, color3, gradientShift - 1f)
+                    }
+                }
                 Text(
                     text = "$guardianEmoji ${guardianName.uppercase()}",
                     style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), // o el tamaño que quieras
