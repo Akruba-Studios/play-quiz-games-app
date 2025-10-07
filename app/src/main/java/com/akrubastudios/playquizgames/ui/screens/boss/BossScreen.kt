@@ -95,6 +95,7 @@ import com.akrubastudios.playquizgames.ui.theme.GoldAccent
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Datos para las partículas de confeti
 data class Particle(
@@ -108,7 +109,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 12-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 13-BS
 // =====================================================
 
 // Helper para tuplas
@@ -910,11 +911,29 @@ private fun LetterBankFixed(
     ) {
         hintLetters.forEachIndexed { index, letter ->
             val isUsed = usedIndices.contains(index)
+            var isPressed by remember { mutableStateOf(false) }
+            val pressScale by animateFloatAsState(
+                targetValue = if (isPressed) 0.85f else 1.0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy
+                ),
+                label = "pressScale_$index"
+            )
             Button(
-                onClick = { if (!isUsed) onLetterClick(letter, index) },
+                onClick = {
+                    if (!isUsed) {
+                        isPressed = true
+                        kotlinx.coroutines.GlobalScope.launch {
+                            delay(100)
+                            isPressed = false
+                        }
+                        onLetterClick(letter, index)
+                    }
+                },
                 modifier = Modifier
-                    .padding(horizontal = 2.dp) // <-- AGREGAR ESTA LÍNEA
-                    .size(buttonSize),
+                    .padding(horizontal = 2.dp)
+                    .size(buttonSize)
+                    .scale(pressScale),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isUsed) Color.Gray else DarkGoldAccent,
                     disabledContainerColor = Color.Gray
