@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.boss
 
+import android.R.attr.textColor
 import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.animation.AnimatedVisibility
@@ -79,6 +80,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemIconDarkGold
@@ -102,7 +106,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 7-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 8-BS
 // =====================================================
 
 @Composable
@@ -509,25 +513,82 @@ private fun TimerAndDialogueRow(
 
         // Dialogue
         if (dialogue.isNotEmpty()) {
-            val textColor = when (phase) {
-                1 -> Color.White
-                2 -> Color(0xFFFEF3C7)
-                3 -> Color(0xFFFCA5A5)
-                else -> Color.White
-            }
+            val slideOffset by animateFloatAsState(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                label = "dialogueSlide"
+            )
 
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Black.copy(alpha = 0.8f)
+            val fadeAlpha by animateFloatAsState(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 400),
+                label = "dialogueFade"
+            )
+
+            // ✅ Definir los dos colores
+            val colorGold = DarkGoldAccent
+            val colorCrimson = Color(0xFFDC143C) // Rojo carmesí
+
+            // ✅ Animación INDEPENDIENTE para el BORDE (más lenta)
+            val infiniteTransitionBorder = rememberInfiniteTransition(label = "dialogueBorder")
+            val borderShift by infiniteTransitionBorder.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 2500, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
                 ),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                AdaptiveDialogueText(
-                    text = dialogue,
-                    color = textColor,
-                    modifier = Modifier.padding(8.dp)
-                )
+                label = "borderShift"
+            )
+
+            // ✅ Animación INDEPENDIENTE para el TEXTO (más rápida)
+            val infiniteTransitionText = rememberInfiniteTransition(label = "dialogueText")
+            val textShift by infiniteTransitionText.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1800, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "textShift"
+            )
+
+            // ✅ Color animado del BORDE: alterna entre oro y carmesí
+            val currentBorderColor = androidx.compose.ui.graphics.lerp(
+                colorGold,
+                colorCrimson,
+                borderShift
+            )
+
+            // ✅ Color animado del TEXTO: alterna entre oro y carmesí (diferente velocidad)
+            val currentTextColor = androidx.compose.ui.graphics.lerp(
+                colorGold,
+                colorCrimson,
+                textShift
+            )
+
+            key(dialogue) {
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .offset(x = slideOffset.dp)
+                        .alpha(fadeAlpha)
+                        .border(
+                            width = 2.dp,
+                            color = currentBorderColor, // ✅ Color animado del borde
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Black.copy(alpha = 0.8f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    AdaptiveDialogueText(
+                        text = dialogue,
+                        color = currentTextColor, // ✅ Color animado del texto
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
             }
         }
     }
@@ -542,7 +603,7 @@ private fun AdaptiveDialogueText(
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val maxLines = 1 // Máximo 1 línea
-    val initialFontSize = 12f // Tamaño inicial
+    val initialFontSize = 14f // Tamaño inicial
     val baseTextStyle = MaterialTheme.typography.bodyMedium
 
     BoxWithConstraints(modifier = modifier) {
