@@ -88,4 +88,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.3") // O la última versión estable
     implementation("androidx.lifecycle:lifecycle-process:2.8.2")
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 }

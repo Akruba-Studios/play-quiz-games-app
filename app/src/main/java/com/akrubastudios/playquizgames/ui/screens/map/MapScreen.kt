@@ -117,6 +117,7 @@ import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemIcon
 import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import com.akrubastudios.playquizgames.ui.components.VideoBackground
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.CyanAccent
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
@@ -129,7 +130,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 19-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 20-MS
 // ===================================================================
 // Componente para mostrar FPS en pantalla
 
@@ -1557,6 +1558,12 @@ fun InteractiveWorldMap(
 
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
+        // CAPA 1: FONDO DE VIDEO
+        VideoBackground(
+            videoResId = R.raw.ocean_background,
+            modifier = Modifier.fillMaxSize()
+        )
+        /*
         // CAPA 1: Océano en canvas separado
         if (isOceanAnimationEnabled) {
             OptimizedOceanCanvasWithConfig(
@@ -1571,6 +1578,7 @@ fun InteractiveWorldMap(
                 drawRect(color = Color(0xFF2874A6)) // Color base del océano
             }
         }
+         */
 
         // CAPA 2: Mapa en canvas original
         Canvas(
