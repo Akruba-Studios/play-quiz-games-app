@@ -31,7 +31,6 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import coil.ImageLoader
 import com.akrubastudios.playquizgames.QuizApplication
 import com.akrubastudios.playquizgames.core.SoundManager
-import com.akrubastudios.playquizgames.performance.OceanConfigManager
 
 // Definimos la instancia de DataStore aquí, de forma centralizada.
 private const val USER_PREFERENCES_NAME = "user_settings"
@@ -152,16 +151,5 @@ object AppModule {
         // debe tomar el contexto de la aplicación y llamar a la función
         // newImageLoader() que hemos definido en nuestra clase QuizApplication.
         return (context.applicationContext as QuizApplication).newImageLoader()
-    }
-
-    @Provides
-    @Singleton
-    fun provideOceanConfigManager(
-        @ApplicationContext context: Context,
-        settingsRepository: SettingsRepository
-    ): OceanConfigManager {
-        // Hilt ahora sabe que para crear un OceanConfigManager,
-        // debe llamar a getInstance() pasándole el contexto de la aplicación.
-        return OceanConfigManager.getInstance(context, settingsRepository)
     }
 }

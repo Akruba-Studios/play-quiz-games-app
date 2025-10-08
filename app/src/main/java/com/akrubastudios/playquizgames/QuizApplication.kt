@@ -5,7 +5,6 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import com.akrubastudios.playquizgames.performance.OceanConfigManager
 import dagger.hilt.android.HiltAndroidApp
 import com.google.android.gms.ads.MobileAds
 import okhttp3.Dispatcher

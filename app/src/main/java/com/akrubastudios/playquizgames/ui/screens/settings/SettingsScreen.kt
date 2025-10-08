@@ -55,7 +55,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.akrubastudios.playquizgames.core.AppConstants
-import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -177,38 +176,6 @@ fun SettingsScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-                // --- INICIO DE LA NUEVA SECCIÓN DE GRÁFICOS ---
-                SectionTitle(stringResource(R.string.settings_graphics_section))
-
-                // Fila para seleccionar la calidad
-                ClickableRow(
-                    title = stringResource(R.string.settings_graphics_quality),
-                    value = tierToDisplayName(tier = uiState.currentQualityTier), // Muestra el tier actual
-                    onClick = { showQualityDialog = true }
-                )
-
-                // Fila para el toggle de ajuste automático
-                SettingRow(
-                    title = stringResource(R.string.settings_auto_adjust),
-                    checked = uiState.isAutoAdjustEnabled,
-                    onCheckedChange = { isEnabled -> viewModel.onAutoAdjustToggled(isEnabled) }
-                )
-
-                SettingRow(
-                    title = stringResource(R.string.settings_ocean_animation), // <-- NECESITAREMOS ESTE NUEVO STRING
-                    checked = uiState.isOceanAnimationEnabled,
-                    onCheckedChange = { isEnabled -> viewModel.onOceanAnimationToggle(isEnabled) }
-                )
-
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-                ClickableRow(
-                    title = stringResource(R.string.settings_advanced_options),
-                    onClick = { showAdvancedDialog = true }
-                )
-
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
-
                 // Sección Legal y Créditos
                 SectionTitle(stringResource(R.string.settings_info_section))
                 ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
@@ -228,32 +195,6 @@ fun SettingsScreen(
                 viewModel.onLanguageSelected(langCode)
                 showLanguageDialog = false // Cerramos el diálogo después de seleccionar
             }
-        )
-    }
-    if (showQualityDialog) {
-        QualitySelectionDialog(
-            onDismiss = { showQualityDialog = false },
-            onTierSelected = { tier ->
-                viewModel.onQualityTierSelected(tier)
-                showQualityDialog = false
-            },
-            onAutoSelected = {
-                viewModel.onAutomaticQualitySelected()
-                showQualityDialog = false
-            }
-        )
-    }
-    if (showAdvancedDialog) {
-        val toastMessage = stringResource(id = R.string.settings_force_redetection_toast)
-        AdvancedOptionsDialog(
-            onDismiss = { showAdvancedDialog = false },
-            onForceRedetection = {
-                viewModel.onForceRedetection()
-                // Mostramos un Toast como feedback inmediato para el usuario
-                Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
-                showAdvancedDialog = false // Cerramos el diálogo
-            },
-            debugInfo = uiState.debugInfo
         )
     }
 }
@@ -295,121 +236,6 @@ private fun LanguageSelectionDialog(
             }
         }
     )
-}
-
-@Composable
-private fun QualitySelectionDialog(
-    onDismiss: () -> Unit,
-    onTierSelected: (DevicePerformanceDetector.DeviceTier) -> Unit,
-    onAutoSelected: () -> Unit
-) {
-    AppAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { DialogTitle(text = stringResource(R.string.settings_quality_dialog_title)) },
-        text = {
-            Column {
-                // Opción para Automático
-                Text(
-                    text = stringResource(R.string.settings_quality_tier_auto),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onAutoSelected() }
-                        .padding(vertical = 12.dp)
-                )
-                Divider()
-                // Opción para Muy Baja
-                Text(
-                    text = stringResource(R.string.settings_quality_tier_very_low),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.VERY_LOW) }
-                        .padding(vertical = 12.dp)
-                )
-                // Opción para Baja
-                Text(
-                    text = stringResource(R.string.settings_quality_tier_low),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.LOW) }
-                        .padding(vertical = 12.dp)
-                )
-                // Opción para Media
-                Text(
-                    text = stringResource(R.string.settings_quality_tier_medium),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.MEDIUM) }
-                        .padding(vertical = 12.dp)
-                )
-                // Opción para Alta
-                Text(
-                    text = stringResource(R.string.settings_quality_tier_high),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTierSelected(DevicePerformanceDetector.DeviceTier.HIGH) }
-                        .padding(vertical = 12.dp)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun AdvancedOptionsDialog(
-    onDismiss: () -> Unit,
-    onForceRedetection: () -> Unit,
-    debugInfo: String
-) {
-    AppAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { DialogTitle(text = stringResource(R.string.settings_advanced_dialog_title)) },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState())
-            ) {
-                // Botón para forzar re-detección
-                Button(onClick = onForceRedetection, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        stringResource(R.string.settings_force_redetection),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                // Información de depuración
-                Text(
-                    text = stringResource(R.string.settings_debug_info),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = debugInfo,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace // Fuente monoespaciada para el debug
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                DialogButtonText(text = stringResource(R.string.dialog_button_ok))
-            }
-        }
-    )
-}
-
-@Composable
-private fun tierToDisplayName(tier: DevicePerformanceDetector.DeviceTier?): String {
-    return when (tier) {
-        DevicePerformanceDetector.DeviceTier.VERY_LOW -> stringResource(R.string.settings_quality_tier_very_low_A)
-        DevicePerformanceDetector.DeviceTier.LOW -> stringResource(R.string.settings_quality_tier_low_B)
-        DevicePerformanceDetector.DeviceTier.MEDIUM -> stringResource(R.string.settings_quality_tier_medium_C)
-        DevicePerformanceDetector.DeviceTier.HIGH -> stringResource(R.string.settings_quality_tier_high_D)
-        null -> stringResource(R.string.settings_quality_tier_auto) // null significa Automático
-    }
 }
 
 // <-- NUEVO: Composable específico para la fila de ajuste de idioma -->

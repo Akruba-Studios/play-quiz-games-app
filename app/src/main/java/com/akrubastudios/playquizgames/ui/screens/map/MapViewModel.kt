@@ -18,7 +18,6 @@ import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
 import com.akrubastudios.playquizgames.domain.Country
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
-import com.akrubastudios.playquizgames.performance.OceanConfigManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -51,9 +50,6 @@ data class MapState(
     val showDominationRewardsSheet: Boolean = false,
     val hasProfileNotification: Boolean = false,
     val gems: Int = 0,
-    val isOceanVisible: Boolean = true,
-    val showFailsafeDialog: Boolean = false,
-    val qualityDowngradeMessageResId: Int? = null,
     val isRewardedAdLoading: Boolean = true, // Inicia en true porque cargamos el anuncio al inicio
     val isRewardCooldownActive: Boolean = false,
     val rewardCooldownSeconds: Int = 0,
@@ -70,8 +66,7 @@ class MapViewModel @Inject constructor(
     private val application: Application,
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
-    val musicManager: MusicManager,
-    val oceanConfigManager: OceanConfigManager
+    val musicManager: MusicManager
 ) : ViewModel(), DefaultLifecycleObserver {
 
     val currentUser = authRepository.currentUser
@@ -99,12 +94,6 @@ class MapViewModel @Inject constructor(
         gameDataRepository.startUserDataListener()
         // 2. Lanza la corrutina para procesar los datos
         processUserData()
-
-        viewModelScope.launch {
-            oceanConfigManager.qualityDowngradeEventFlow.collect { newTierResId ->
-                _uiState.update { it.copy(qualityDowngradeMessageResId = newTierResId) }
-            }
-        }
         // Precargamos un anuncio bonificado al iniciar la pantalla del mapa.
         AdManager.loadRewardedAd(application)
     }
@@ -115,16 +104,7 @@ class MapViewModel @Inject constructor(
             // Carga la lista de países una sola vez, ya que es estática.
             val countryList = gameDataRepository.getCountryList()
 
-            // Se suscribe al StateFlow compartido del repositorio.
-            // 'collect' se ejecutará cada vez que los datos del usuario cambien en Firestore.
-            combine(
-                gameDataRepository.userStateFlow,
-                settingsRepository.oceanAnimationEnabledFlow,
-                oceanConfigManager.isOceanRenderingGloballyEnabled
-            ) { userData, isEnabledByUser, isEnabledBySystem ->
-
-                Triple(userData, isEnabledByUser, isEnabledBySystem)
-            }.collect { (userData, isEnabledByUser, isEnabledBySystem) ->
+            gameDataRepository.userStateFlow.collect { userData ->
 
                 val dismissedLevel = settingsRepository.dismissedExpeditionLevelFlow.first()
 
@@ -218,8 +198,6 @@ class MapViewModel @Inject constructor(
 
                     val hasNotification = userData.pendingProfileNotifications.isNotEmpty()
 
-                    val isOceanActuallyVisible = isEnabledByUser && isEnabledBySystem
-
                     // Lógica para determinar si la función de recompensa está desbloqueada
                     val isRewardUnlocked = userData.conqueredCountries.isNotEmpty()
                     // --- FIN DE LA MODIFICACIÓN ---
@@ -241,7 +219,6 @@ class MapViewModel @Inject constructor(
                         showDominationRewardsSheet = showDominationSheet,
                         hasProfileNotification = hasNotification,
                         gems = userData.gems,
-                        isOceanVisible = isOceanActuallyVisible,
                         isRewardFeatureUnlocked = isRewardUnlocked
                     )
                 }
@@ -385,15 +362,6 @@ class MapViewModel @Inject constructor(
                 Log.e("MapViewModel", "Error al actualizar hasSeenDominationTutorial", e)
             }
         }
-    }
-    fun showFailsafeDialog() {
-        _uiState.update { it.copy(showFailsafeDialog = true) }
-    }
-    fun dismissFailsafeDialog() {
-        _uiState.update { it.copy(showFailsafeDialog = false) }
-    }
-    fun onQualityDowngradeToastShown() {
-        _uiState.update { it.copy(qualityDowngradeMessageResId = null) }
     }
     // --- INICIO DE LAS NUEVAS FUNCIONES PARA ANUNCIOS BONIFICADOS ---
 

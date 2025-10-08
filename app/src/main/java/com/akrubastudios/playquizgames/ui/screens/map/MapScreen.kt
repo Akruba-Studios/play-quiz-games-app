@@ -105,10 +105,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.akrubastudios.playquizgames.core.MusicTrack
-import com.akrubastudios.playquizgames.performance.DevicePerformanceDetector
-import com.akrubastudios.playquizgames.performance.OceanConfigManager
-import com.akrubastudios.playquizgames.performance.OceanPerformanceConfig
-import com.akrubastudios.playquizgames.performance.RealFpsTracker
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -130,181 +126,8 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 20-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 21-MS
 // ===================================================================
-// Componente para mostrar FPS en pantalla
-
-@Composable
-fun FpsMonitorOverlay(
-    fpsTracker: RealFpsTracker,
-    modifier: Modifier = Modifier,
-    showDetailed: Boolean = false
-) {
-    val currentFPS by fpsTracker.currentFPS.collectAsState()
-    val averageFPS by fpsTracker.averageFPS.collectAsState()
-    val isTracking by fpsTracker.isTracking.collectAsState()
-
-    if (isTracking) {
-        Surface(
-            modifier = modifier,
-            color = Color.Black.copy(alpha = 0.7f),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // FPS Actual (número grande)
-                Text(
-                    text = "${currentFPS.toInt()}",
-                    color = getFpsColor(currentFPS),
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-
-                Text(
-                    text = "FPS",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelMedium
-                )
-
-                if (showDetailed) {
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "Promedio: ${averageFPS.toInt()}",
-                        color = Color.White.copy(alpha = 0.8f),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    val stats = remember(currentFPS, averageFPS) {
-                        fpsTracker.getStats()
-                    }
-
-                    Text(
-                        text = "Min: ${stats.minFPS.toInt()} Max: ${stats.maxFPS.toInt()}",
-                        color = Color.White.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Obtiene color basado en el FPS (verde = bueno, amarillo = medio, rojo = malo)
- */
-@Composable
-private fun getFpsColor(fps: Float): Color {
-    return when {
-        fps >= 25f -> Color.Green
-        fps >= 15f -> Color.Yellow
-        else -> Color.Red
-    }
-}
-
-@Composable
-fun AdvancedFpsMonitor(
-    fpsTracker: RealFpsTracker,
-    oceanConfigManager: OceanConfigManager,
-    modifier: Modifier = Modifier,
-    showTestControls: Boolean = false
-) {
-    val currentConfig by oceanConfigManager.currentConfig.collectAsState()
-    // Necesitamos obtener los stats de forma que se recomponga si cambian
-    var performanceStats by remember(currentConfig) {
-        mutableStateOf(oceanConfigManager.getPerformanceStats())
-    }
-
-    var showExpanded by remember { mutableStateOf(false) }
-
-    Surface(
-        modifier = modifier.clickable { showExpanded = !showExpanded },
-        color = Color.Black.copy(alpha = 0.8f),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            // El FpsMonitorOverlay ahora solo muestra FPS, no necesita ser detallado
-            FpsMonitorOverlay(
-                fpsTracker = fpsTracker,
-                showDetailed = true, // Lo ponemos en false para una vista más limpia
-                modifier = Modifier
-            )
-
-            // AnimatedVisibility para una expansión/contracción suave
-            AnimatedVisibility(visible = showExpanded) {
-                Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Divider(color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Información de configuración
-                    Text(
-                        text = "Tier: ${currentConfig.tierNameResId}",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    Text(
-                        text = "Target: ${currentConfig.targetFPS} FPS",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    Text(
-                        text = "Auto: ${if (performanceStats.isAutoAdjustEnabled) "ON" else "OFF"}",
-                        color = if (performanceStats.isAutoAdjustEnabled) Color.Green else Color.Red,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    // Controles de testing
-                    // La constante BuildConfig se genera automáticamente por Gradle
-                    if (showTestControls) {
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row {
-                            Button(
-                                onClick = {
-                                    // Inyectar FPS bajos para testing
-                                    repeat(50) {
-                                        oceanConfigManager.recordFramePerformance(8f)
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Red.copy(alpha = 0.7f)
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Test Low", fontSize = 10.sp)
-                            }
-
-                            Spacer(modifier = Modifier.width(4.dp))
-
-                            Button(
-                                onClick = {
-                                    // Inyectar FPS altos para testing
-                                    repeat(50) {
-                                        oceanConfigManager.recordFramePerformance(100f)
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Green.copy(alpha = 0.7f)
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Test High", fontSize = 10.sp)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -316,29 +139,14 @@ fun MapScreen(
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
 
-    // NUEVA LÍNEA: Obtener el gestor de configuración
-    val oceanConfigManager = viewModel.oceanConfigManager
-    val oceanConfig by oceanConfigManager.currentConfig.collectAsState()
-
-    // NUEVO: Crear tracker de FPS real
-    val realFpsTracker = remember { RealFpsTracker() }
-
-    // PARA MOSTRAR U OCULTAR EL FPS EN PANTALLA - FPSSHOW
-    val showFpsMonitor = false  // Cambiar a false para ocultar
-
     // NUEVO: Controlar el tracking según el lifecycle
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    realFpsTracker.startTracking()
-                    oceanConfigManager.resumeMonitoring()  // AGREGAR
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    realFpsTracker.stopTracking()
-                    oceanConfigManager.pauseMonitoring()   // AGREGAR
-                    oceanConfigManager.cancelBenchmarkObserver()
                 }
                 else -> {}
             }
@@ -349,7 +157,6 @@ fun MapScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             lifecycleOwner.lifecycle.removeObserver(viewModel)
-            realFpsTracker.stopTracking()
         }
     }
 
@@ -399,47 +206,8 @@ fun MapScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.oceanConfigManager.failsafeEventFlow.collect {
-            // El ViewModel sigue controlando el estado, pero la escucha
-            // se hace desde la UI, que siempre está activa.
-            viewModel.showFailsafeDialog() // <-- NECESITAREMOS ESTA NUEVA FUNCIÓN
-        }
-    }
-
-    LaunchedEffect(uiState.qualityDowngradeMessageResId) { // <-- CAMBIO AQUÍ
-        uiState.qualityDowngradeMessageResId?.let { newTierResId -> // <-- CAMBIO AQUÍ
-            // Preparamos el texto completo del Toast
-            val newTierName = context.getString(newTierResId)
-            val message = context.getString(R.string.ocean_quality_downgrade_toast, newTierName)
-
-            // Usamos nuestro Toast personalizado
-            val inflater = LayoutInflater.from(context)
-            val layout = inflater.inflate(R.layout.custom_toast_layout, null)
-            val textView = layout.findViewById<TextView>(R.id.toast_text)
-            textView.text = message
-
-            Toast(context).apply {
-                duration = Toast.LENGTH_LONG // Larga para que el usuario pueda leerla bien
-                view = layout
-                show()
-            }
-
-            // Notificamos al ViewModel que el mensaje ya fue mostrado
-            // para que no vuelva a aparecer en la siguiente recomposición.
-            viewModel.onQualityDowngradeToastShown()
-        }
-    }
-
     // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
-        LaunchedEffect(uiState.isOceanVisible) {
-            if (uiState.isOceanVisible) {
-                oceanConfigManager.startInitialBenchmark()
-            } else {
-                oceanConfigManager.cancelBenchmarkObserver()
-            }
-        }
         Scaffold(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
@@ -569,10 +337,6 @@ fun MapScreen(
                                 Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
                             )
                         },
-                        oceanConfig = oceanConfig, // NUEVA LÍNEA: Pasar la configuración
-                        oceanConfigManager = oceanConfigManager, // NUEVA LÍNEA: Pasar el manager
-                        realFpsTracker = realFpsTracker,
-                        isOceanAnimationEnabled = uiState.isOceanVisible,
                         modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
                     )
                 }
@@ -764,29 +528,6 @@ fun MapScreen(
                         }
                     }
                 }
-                // NUEVO: Monitor de FPS superpuesto
-                if (showFpsMonitor) {
-                    /*
-                    FpsMonitorOverlay(
-                        fpsTracker = realFpsTracker,
-                        showDetailed = true,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp)
-                    )
-                     */
-
-                    // DESPUÉS:
-                    AdvancedFpsMonitor(
-                        fpsTracker = realFpsTracker,
-                        oceanConfigManager = oceanConfigManager,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 160.dp, end = 16.dp), // Mantenemos el mismo padding
-                        showTestControls = true
-                    )
-                    // --- FIN DE LA MODIFICACIÓN ---
-                }
             }
         }
     }
@@ -893,14 +634,6 @@ fun MapScreen(
             confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
-    if (uiState.showFailsafeDialog) {
-        AppAlertDialog(
-            onDismissRequest = { viewModel.dismissFailsafeDialog() },
-            title = stringResource(id = R.string.ocean_failsafe_dialog_title),
-            text = stringResource(id = R.string.ocean_failsafe_dialog_message),
-            confirmButtonText = stringResource(id = R.string.dialog_button_ok)
-        )
-    }
 }
 
 // Crea este nuevo Composable separado para el contenido del Bottom Sheet.
@@ -970,245 +703,6 @@ private fun RewardRow(icon: ImageVector, text: String) {
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
-// SOLUCIÓN DEFINITIVA: Optimizar drawOceanBackground matemáticamente
-// PASO 1: Crear tablas precalculadas para funciones trigonométricas
-class OptimizedOceanRenderer {
-    companion object {
-        // Tablas precalculadas para evitar cálculos repetitivos
-        private const val TABLE_SIZE = 3600 // 360 grados * 10 para precisión
-        private val sinTable = FloatArray(TABLE_SIZE)
-        private val cosTable = FloatArray(TABLE_SIZE)
-
-        init {
-            // Precalcular todas las funciones trigonométricas
-            for (i in 0 until TABLE_SIZE) {
-                val angle = (i * PI * 2.0 / TABLE_SIZE).toFloat()
-                sinTable[i] = kotlin.math.sin(angle.toDouble()).toFloat()
-                cosTable[i] = kotlin.math.cos(angle.toDouble()).toFloat()
-            }
-        }
-
-        // Funciones optimizadas que usan lookup tables
-        fun fastSin(x: Float): Float {
-            val index = ((x * TABLE_SIZE / (2 * PI)) % TABLE_SIZE + TABLE_SIZE).toInt() % TABLE_SIZE
-            return sinTable[index]
-        }
-
-        fun fastCos(x: Float): Float {
-            val index = ((x * TABLE_SIZE / (2 * PI)) % TABLE_SIZE + TABLE_SIZE).toInt() % TABLE_SIZE
-            return cosTable[index]
-        }
-    }
-}
-
-// PASO 2: Versión optimizada de drawOceanBackground - Estrategia 2
-private fun DrawScope.drawOptimizedOceanBackgroundWithConfig(
-    waveTime: Float,
-    canvasSize: androidx.compose.ui.geometry.Size,
-    config: OceanPerformanceConfig, // NUEVO PARÁMETRO
-    fpsTracker: RealFpsTracker,
-    reusablePath: Path,
-    shallowPoints: MutableList<Offset>, // <-- AÑADIR
-    mediumPoints: MutableList<Offset>
-) {
-    val startTime = System.nanoTime()
-
-    // Colores oceánicos (sin cambios)
-    val deepOcean = Color(0xFF1B4F72)
-    val mediumOcean = Color(0xFF2874A6)
-    val shallowOcean = Color(0xFF3498DB)
-    val surfaceShine = Color(0xFF85C1E9)
-
-    // CAPA 1: Fondo base (sin cambios)
-    drawRect(color = deepOcean, size = canvasSize)
-
-    // CAPA 2: Variaciones de profundidad CON CONFIGURACIÓN DINÁMICA
-    val noiseScale = 0.002f
-    val stepSize = config.stepSize // USAR CONFIGURACIÓN DINÁMICA
-    val depthVariationIntensity = config.depthIntensity // USAR CONFIGURACIÓN DINÁMICA
-
-    shallowPoints.clear()
-    mediumPoints.clear()
-
-    // Precalcular valores que no cambian en el loop
-    val timeOffset1 = waveTime * 0.2f
-    val timeOffset2 = waveTime * 0.15f
-    val timeOffset3 = waveTime * 0.1f
-    val timeOffset4 = waveTime * 0.25f
-
-    for (x in 0 until canvasSize.width.toInt() step stepSize) {
-        val nx = x * noiseScale
-        val preCalcX1 = nx * 3.7f + timeOffset1
-        val preCalcX2 = nx * 7.3f + timeOffset3
-
-        for (y in 0 until canvasSize.height.toInt() step stepSize) {
-            val ny = y * noiseScale
-
-            // Usar funciones trigonométricas optimizadas
-            val noise1 = OptimizedOceanRenderer.fastSin(preCalcX1) *
-                    OptimizedOceanRenderer.fastCos(ny * 2.1f + timeOffset2)
-            val noise2 = OptimizedOceanRenderer.fastSin(preCalcX2) *
-                    OptimizedOceanRenderer.fastCos(ny * 5.9f + timeOffset4)
-
-            val combinedNoise = (noise1 * 0.6f + noise2 * 0.4f + 1f) / 2f
-            val depthFactor = combinedNoise * depthVariationIntensity
-
-            if (depthFactor > 0.25f) {
-                shallowPoints.add(Offset(x.toFloat(), y.toFloat()))
-            } else {
-                mediumPoints.add(Offset(x.toFloat(), y.toFloat()))
-            }
-        }
-    }
-
-    // 1. Calculamos el desplazamiento para la segunda capa.
-    val offsetAmount = stepSize / 2f
-    val offsetVector = Offset(offsetAmount, offsetAmount)
-
-    // 2. Preparamos las listas de puntos desplazados.
-    //    Usamos .map, que es muy eficiente para esta operación.
-    val mediumPointsOffset = mediumPoints.map { it + offsetVector }
-    val shallowPointsOffset = shallowPoints.map { it + offsetVector }
-
-    // 3. Dibujamos las capas de puntos MEDIOS (dos veces con alpha reducido).
-    //    El alpha original era 0.7f, ahora cada capa tiene 0.5f.
-
-    val brushSize = stepSize.toFloat() * 1.05f
-    val mediumColor = mediumOcean.copy(alpha = 0.6f)
-    val shallowColor = shallowOcean.copy(alpha = 0.35f)
-
-    drawPoints(
-        points = mediumPoints,
-        pointMode = PointMode.Points,
-        color = mediumColor,
-        strokeWidth = brushSize, // <-- Volvemos al tamaño original
-        cap = StrokeCap.Butt
-    )
-    drawPoints(
-        points = mediumPointsOffset, // <-- Usamos la lista desplazada
-        pointMode = PointMode.Points,
-        color = mediumColor,
-        strokeWidth = brushSize,
-        cap = StrokeCap.Butt
-    )
-
-    // 4. Dibujamos las capas de puntos CLAROS (dos veces con alpha reducido).
-    //    El alpha original era 0.4f, ahora cada capa tiene 0.28f.
-    drawPoints(
-        points = shallowPoints,
-        pointMode = PointMode.Points,
-        color = shallowColor,
-        strokeWidth = brushSize, // <-- Volvemos al tamaño original
-        cap = StrokeCap.Butt
-    )
-    drawPoints(
-        points = shallowPointsOffset, // <-- Usamos la lista desplazada
-        pointMode = PointMode.Points,
-        color = shallowColor,
-        strokeWidth = brushSize,
-        cap = StrokeCap.Butt
-    )
-
-    // CAPA 3: Corrientes marinas CON CONFIGURACIÓN DINÁMICA
-    val currentDirection1 = waveTime * 0.5f
-
-    for (y in 0 until canvasSize.height.toInt() step config.currentSpacing) { // USAR CONFIGURACIÓN DINÁMICA
-        val amplitude = 15f + OptimizedOceanRenderer.fastSin(y * 0.01f + waveTime * 0.4f) * 8f
-        val frequency = 0.008f
-
-        reusablePath.rewind() // .rewind() es más eficiente que .reset() para reutilizar
-        reusablePath.moveTo(0f, y.toFloat())
-
-        // USAR CONFIGURACIÓN DINÁMICA PARA DETALLE DE CURVAS
-        for (x in 0..canvasSize.width.toInt() step config.curveDetailSpacing) {
-            val waveY = y + OptimizedOceanRenderer.fastSin(x * frequency + currentDirection1) * amplitude
-            reusablePath.lineTo(x.toFloat(), waveY)
-        }
-
-        val alpha = abs(OptimizedOceanRenderer.fastSin(waveTime * 0.3f + y * 0.008f)) * 0.15f
-        drawPath(
-            path = reusablePath,
-            color = mediumOcean.copy(alpha = alpha),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
-        )
-    }
-
-    // CAPA 4: Reflexiones especulares CON CONFIGURACIÓN DINÁMICA
-    if (config.specularEnabled) {
-        // Crear lista dinámica de centros especulares según configuración
-        val specularCenters = mutableListOf<Offset>()
-        repeat(config.specularCenters) { index ->
-            val x = canvasSize.width * (0.2f + (index * 0.3f) % 0.8f)
-            val y = canvasSize.height * (0.3f + (index * 0.4f) % 0.6f)
-            specularCenters.add(Offset(x, y))
-        }
-
-        specularCenters.forEachIndexed { index, center ->
-            val timeOffset = index * PI.toFloat()
-            val animatedTime = waveTime * 0.6f + timeOffset
-
-            val mainRadius = 35f + OptimizedOceanRenderer.fastSin(animatedTime) * 12f
-            val mainAlpha = (0.12f + OptimizedOceanRenderer.fastSin(animatedTime * 1.5f) * 0.06f).coerceIn(0f, 0.35f)
-
-            drawCircle(
-                color = surfaceShine.copy(alpha = mainAlpha),
-                radius = mainRadius,
-                center = center
-            )
-        }
-    }
-
-    // CAPA 5: Shimmer atmosférico CON CONFIGURACIÓN CONDICIONAL
-    if (config.shimmerEnabled) {
-        val atmosphereIntensity = (OptimizedOceanRenderer.fastSin(waveTime * 0.8f) + 1f) / 2f * 0.04f
-        drawRect(
-            color = surfaceShine.copy(alpha = atmosphereIntensity),
-            size = canvasSize
-        )
-    }
-    val endTime = System.nanoTime() // ← AÑADIR AL FINAL
-    fpsTracker.measureOceanRenderTime(endTime - startTime)
-}
-
-// PASO 3: OceanCanvas optimizado con control de frecuencia
-@Composable
-fun OptimizedOceanCanvasWithConfig(
-    modifier: Modifier = Modifier,
-    isTransforming: Boolean,
-    isActive: Boolean = true,
-    config: OceanPerformanceConfig,
-    fpsTracker: RealFpsTracker
-) {
-    val reusablePath = remember { Path() }
-    val shallowPoints = remember { mutableListOf<Offset>() }
-    val mediumPoints = remember { mutableListOf<Offset>() }
-
-    // Volvemos a un estado simple para el tiempo, como al principio
-    var waveTime by remember { mutableFloatStateOf(0f) }
-
-    // Bucle de animación simple y robusto
-    LaunchedEffect(isActive, isTransforming) {
-        // El bucle solo se ejecuta si la pantalla está activa Y no estamos haciendo drag/zoom
-        if (isActive && !isTransforming) {
-            while (true) {
-                waveTime += 0.03f // <-- VALOR MÁS LENTO Y AJUSTABLE
-                if (waveTime > 1000f) waveTime -= 1000f
-                delay(16L) // Espera aprox. 1/60 de segundo
-            }
-        }
-    }
-
-    Canvas(modifier = modifier.fillMaxSize()) {
-        // Al leer el trigger aquí, le decimos a Compose que este Canvas debe redibujarse
-        // cada vez que el trigger cambie (es decir, constantemente).
-
-        if (isActive) {
-            drawOptimizedOceanBackgroundWithConfig(waveTime, size, config, fpsTracker, reusablePath, shallowPoints, mediumPoints)
-        } else {
-            drawRect(color = Color(0xFF1B4F72), size = size)
-        }
-    }
-}
 
 @Composable
 fun InteractiveWorldMap(
@@ -1217,10 +711,6 @@ fun InteractiveWorldMap(
     dominatedCountryIds: List<String>,
     availableCountryIds: List<String>,
     onCountryClick: (String) -> Unit,
-    oceanConfig: OceanPerformanceConfig, // NUEVO PARÁMETRO
-    realFpsTracker: RealFpsTracker,
-    oceanConfigManager: OceanConfigManager, // NUEVO PARÁMETRO
-    isOceanAnimationEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -1370,20 +860,6 @@ fun InteractiveWorldMap(
         } catch (e: IOException) {
             android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
             isInitialProcessing = false
-        }
-    }
-
-    // CONTROL1: NUEVO LaunchedEffect para reportar FPS al ConfigManager
-    // Busca el LaunchedEffect de FPS reporting y REEMPLAZA:
-    LaunchedEffect(lifecycleOwner) {  // CAMBIAR de Unit a lifecycleOwner
-        while (true) {
-            delay(1000L)
-            if (isAnimationActive) {  // AGREGAR esta condición
-                val currentFPS = realFpsTracker.currentFPS.value
-                if (currentFPS > 0) {
-                    oceanConfigManager.recordFramePerformance(currentFPS)
-                }
-            }
         }
     }
 
@@ -1563,22 +1039,6 @@ fun InteractiveWorldMap(
             videoResId = R.raw.ocean_background,
             modifier = Modifier.fillMaxSize()
         )
-        /*
-        // CAPA 1: Océano en canvas separado
-        if (isOceanAnimationEnabled) {
-            OptimizedOceanCanvasWithConfig(
-                isActive = isAnimationActive,
-                isTransforming = transformableState.isTransformInProgress,
-                config = oceanConfig,
-                fpsTracker = realFpsTracker
-            )
-        } else {
-            // Si la animación está desactivada, dibujamos un fondo estático y barato.
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(color = Color(0xFF2874A6)) // Color base del océano
-            }
-        }
-         */
 
         // CAPA 2: Mapa en canvas original
         Canvas(
