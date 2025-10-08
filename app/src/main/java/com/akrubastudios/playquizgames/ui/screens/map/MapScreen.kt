@@ -126,7 +126,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 22-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 23-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -785,6 +785,20 @@ fun InteractiveWorldMap(
     val context = LocalContext.current
     val density = LocalDensity.current
 
+    // Color Grading Dinámico: Color Grading según hora del día
+    val currentHour = remember {
+        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    }
+    val timeBasedTint = remember(currentHour) {
+        when (currentHour) {
+            in 6..11 -> Color(0xFFFFE5B4).copy(alpha = 0.15f)   // Mañana: Tinte cálido/amarillo - Color(0xFFFFE5B4).copy(alpha = 0.15f)
+            in 12..17 -> Color(0xFFFFD700).copy(alpha = 0.10f)  // Tarde: Tinte dorado suave - Color(0xFFFFD700).copy(alpha = 0.10f)
+            in 18..20 -> Color(0xFFFF8C42).copy(alpha = 0.25f)  // Atardecer: Tinte naranja - Color(0xFFFF8C42).copy(alpha = 0.20f)
+            else -> Color(0xFF1A4D7A).copy(alpha = 0.25f)       // Noche: Tinte azul oscuro
+        }
+    }
+    // Fin Color Grading Dinámico
+
     // Definir colores
     val dominatedColor = DarkGoldAccent.toArgb() // PAÍSES DOMINADOS
     val conqueredColor = CyanAccent.toArgb() // PAÍSES CONQUISTADOS
@@ -1039,8 +1053,28 @@ fun InteractiveWorldMap(
             videoResId = R.raw.ocean_background,
             modifier = Modifier.fillMaxSize()
         )
-        // CAPA 1.5: Efectos especulares
-        OceanSpecularEffect(modifier = Modifier.fillMaxSize())
+        // CAPA 1.5: Gradient overlay
+        // OceanGradientOverlay(modifier = Modifier.fillMaxSize()) // Gradient Overlay Animado
+
+        // CAPA 1.6: Efectos especulares
+        // OceanSpecularEffect(modifier = Modifier.fillMaxSize()) // Brillo Especular Animado
+
+        // CAPA 1.7: Vignette
+        OceanVignette(modifier = Modifier.fillMaxSize()) // Vignette Dinámico
+
+        // CAPA 1.8: Partículas Flotantes
+        OceanBubblesEffect(modifier = Modifier.fillMaxSize()) // Particulas Flotantes
+
+        // CAPA 1.9: Rayos de Luz
+        // OceanGodRaysEffect(modifier = Modifier.fillMaxSize()) // Rayos de luz penetrando el agua
+
+        // CAPA 1.10: Color Grading Dinámico
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(color = timeBasedTint)
+        }
+
+        // CAPA 1.11: Niebla Flotante
+        // OceanMistEffect(modifier = Modifier.fillMaxSize()) // Neblina atmosférica
 
         // CAPA 2: Mapa en canvas original
         Canvas(
