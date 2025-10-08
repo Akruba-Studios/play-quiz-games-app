@@ -126,7 +126,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 21-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 22-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1039,6 +1039,8 @@ fun InteractiveWorldMap(
             videoResId = R.raw.ocean_background,
             modifier = Modifier.fillMaxSize()
         )
+        // CAPA 1.5: Efectos especulares
+        OceanSpecularEffect(modifier = Modifier.fillMaxSize())
 
         // CAPA 2: Mapa en canvas original
         Canvas(
