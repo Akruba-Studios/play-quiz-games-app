@@ -127,7 +127,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 24-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 25-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1192,14 +1192,13 @@ fun InteractiveWorldMap(
 
                         // Convertir a Path de Compose
                         val composePath = transformedPath.asComposePath()
-
                         /*
                         // ✅ PRUEBA SIMPLE: UN SOLO BORDE ROJO GRUESO
                         drawPath(
                             path = composePath,
                             color = Color.Red, // ROJO SÓLIDO
                             style = Stroke(
-                                width = 20f / scale, // BIEN GRUESO para que se vea
+                                width = 5f / scale, // BIEN GRUESO para que se vea
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round
                             )
