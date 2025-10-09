@@ -98,6 +98,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.animation.core.*
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -126,7 +127,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 23-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 24-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -782,6 +783,9 @@ fun InteractiveWorldMap(
 
     var pulseAlpha by remember { mutableStateOf(0.7f) }
 
+    // ✅ NUEVO: Estado para el path de contorno
+    var worldOutlinePath by remember { mutableStateOf<android.graphics.Path?>(null) }
+
     val context = LocalContext.current
     val density = LocalDensity.current
 
@@ -793,7 +797,7 @@ fun InteractiveWorldMap(
         when (currentHour) {
             in 6..11 -> Color(0xFFFFE5B4).copy(alpha = 0.15f)   // Mañana: Tinte cálido/amarillo - Color(0xFFFFE5B4).copy(alpha = 0.15f)
             in 12..17 -> Color(0xFFFFD700).copy(alpha = 0.10f)  // Tarde: Tinte dorado suave - Color(0xFFFFD700).copy(alpha = 0.10f)
-            in 18..20 -> Color(0xFFFF8C42).copy(alpha = 0.25f)  // Atardecer: Tinte naranja - Color(0xFFFF8C42).copy(alpha = 0.20f)
+            in 18..19 -> Color(0xFFFF8C42).copy(alpha = 0.25f)  // Atardecer: Tinte naranja - Color(0xFFFF8C42).copy(alpha = 0.20f)
             else -> Color(0xFF1A4D7A).copy(alpha = 0.25f)       // Noche: Tinte azul oscuro
         }
     }
@@ -874,6 +878,26 @@ fun InteractiveWorldMap(
         } catch (e: IOException) {
             android.util.Log.e("InteractiveWorldMap", "Error cargando SVG", e)
             isInitialProcessing = false
+        }
+    }
+
+    // ✅ NUEVO: Parsear el path de contorno una sola vez
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                // Leer el path desde assets
+                val inputStream = context.assets.open("world_outline_path.txt")
+                val pathData = inputStream.bufferedReader().use { it.readText() }
+                inputStream.close()
+
+                // Parsear el path
+                val path = android.graphics.Path()
+                parsePathData(pathData, path)
+                worldOutlinePath = path
+                Log.d("InteractiveWorldMap", "Path de contorno parseado exitosamente")
+            } catch (e: Exception) {
+                Log.e("InteractiveWorldMap", "Error cargando/parseando world outline path", e)
+            }
         }
     }
 
@@ -1151,6 +1175,72 @@ fun InteractiveWorldMap(
                         dstSize = IntSize(scaledWidth.toInt(), scaledHeight.toInt()),
                         filterQuality = quality
                     )
+                    // ✅ NUEVO: DIBUJAR SOMBRA DEL CONTORNO
+                    worldOutlinePath?.let { outlinePath ->
+                        // Crear una matriz para transformar el path
+                        val matrix = android.graphics.Matrix()
+
+                        // Escalar el path al mismo tamaño que el bitmap
+                        matrix.setScale(baseFitScaleFactor, baseFitScaleFactor)
+
+                        // Trasladar a la misma posición que el bitmap
+                        matrix.postTranslate(baseLeft, baseTop)
+
+                        // Aplicar la transformación al path
+                        val transformedPath = android.graphics.Path()
+                        outlinePath.transform(matrix, transformedPath)
+
+                        // Convertir a Path de Compose
+                        val composePath = transformedPath.asComposePath()
+
+                        /*
+                        // ✅ PRUEBA SIMPLE: UN SOLO BORDE ROJO GRUESO
+                        drawPath(
+                            path = composePath,
+                            color = Color.Red, // ROJO SÓLIDO
+                            style = Stroke(
+                                width = 20f / scale, // BIEN GRUESO para que se vea
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            )
+                        )
+                         */
+
+                        // SOMBRA EXTERIOR (Glow)
+                        drawPath(
+                            path = composePath,
+                            color = Color.Black.copy(alpha = 0.4f), // Opacidad
+                            style = Stroke(
+                                width = 12f / scale, // Grosor y Se ajusta con el zoom
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            ),
+                            blendMode = BlendMode.Multiply
+                        )
+
+                        // BORDE PRINCIPAL
+                        drawPath(
+                            path = composePath,
+                            color = Color(0xFF2C3E50).copy(alpha = 0.6f), // Azul oscuro
+                            style = Stroke(
+                                width = 4f / scale,
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            )
+                        )
+
+                        // HIGHLIGHT INTERNO (opcional - efecto 3D)
+                        drawPath(
+                            path = composePath,
+                            color = Color.White.copy(alpha = 0.15f),
+                            style = Stroke(
+                                width = 2f / scale,
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            ),
+                            blendMode = BlendMode.Screen
+                        )
+                    }
                 }
             }
         }
