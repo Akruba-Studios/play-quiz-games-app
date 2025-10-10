@@ -102,7 +102,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 27-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 28-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -952,14 +952,20 @@ fun InteractiveWorldMap(
                     val textureLocked = BitmapFactory.decodeResource(context.resources, R.drawable.texture_locked)
                     val texturePaper = BitmapFactory.decodeResource(context.resources, R.drawable.old_paper_texture)
 
-                    // 2. Crear un "Pincel" (Paint) para cada estado
-                    val availablePaint = createTexturePaint(textureAvailable, availableColor)
-                    val conqueredPaint = createTexturePaint(textureConquered, conqueredColor)
-                    val dominatedPaint = createTexturePaint(textureDominated, dominatedColor)
-                    val lockedPaint = createTexturePaint(textureLocked, defaultColor)
-                    val paperPaint = createTexturePaint(texturePaper) // Sin tinte para los países fuera de juego
+                    // 2. Crear un mapa con los colores base para cada tipo
+                    val colorMap = mapOf(
+                        TextureType.AVAILABLE to availableColor,
+                        TextureType.CONQUERED to conqueredColor,
+                        TextureType.DOMINATED to dominatedColor,
+                        TextureType.LOCKED to defaultColor
+                    )
 
-                    // --- FIN DE LA NUEVA LÓGICA DE TEXTURIZADO ---
+                    // 3. Crear los "Pinceles" usando el nuevo sistema
+                    val availablePaint = createTexturePaint(textureAvailable, TextureType.AVAILABLE, colorMap)
+                    val conqueredPaint = createTexturePaint(textureConquered, TextureType.CONQUERED, colorMap)
+                    val dominatedPaint = createTexturePaint(textureDominated, TextureType.DOMINATED, colorMap)
+                    val lockedPaint = createTexturePaint(textureLocked, TextureType.LOCKED, colorMap)
+                    val paperPaint = createTexturePaint(texturePaper, TextureType.PAPER, colorMap)
 
                     val newCountryPaths = mutableMapOf<String, android.graphics.Path>()
 
@@ -1273,28 +1279,57 @@ fun InteractiveWorldMap(
         }
     }
 }
-// --- AÑADE ESTA FUNCIÓN COMPLETA AL FINAL DEL ARCHIVO ---
+
+// --- INICIO CENTRO CONTROL PARA TINTES DE TEXTURAS EN PAISES ---
+// 1. Enum para identificar el tipo de textura de forma segura
+private enum class TextureType {
+    AVAILABLE,
+    CONQUERED,
+    DOMINATED,
+    LOCKED,
+    PAPER
+}
+// 2. Interruptores globales para activar/desactivar cada tinte
+private const val USE_TINT_FOR_AVAILABLE = false // Cambia a false para apagar el tinte
+private const val USE_TINT_FOR_CONQUERED = false // Cambia a false para apagar el tinte
+private const val USE_TINT_FOR_DOMINATED = false // Cambia a false para apagar el tinte
+private const val USE_TINT_FOR_LOCKED = false    // Cambia a false para apagar el tinte
+private const val USE_TINT_FOR_PAPER = false      // Actualmente apagado, como en tu código original
+
 /**
- * Crea un objeto Paint configurado con una textura repetible y un tinte de color opcional.
+ * Crea un objeto Paint configurado con una textura y aplica un tinte condicional.
  */
-private fun createTexturePaint(texture: Bitmap, tintColor: Int? = null): android.graphics.Paint {
+private fun createTexturePaint(
+    texture: Bitmap,
+    type: TextureType, // Ahora recibe un tipo, no un color
+    baseColors: Map<TextureType, Int> // Pasamos todos los colores base
+): android.graphics.Paint {
     val shader = BitmapShader(texture, android.graphics.Shader.TileMode.REPEAT, android.graphics.Shader.TileMode.REPEAT)
-    return android.graphics.Paint().apply {
+    val paint = android.graphics.Paint().apply {
         isAntiAlias = true
         style = android.graphics.Paint.Style.FILL
         setShader(shader)
-        /*
-        // Aplica un tinte de color si se proporciona
-        if (tintColor != null) {
-            // Usamos un alfa de ~50% para el tinte, para que la textura siga siendo visible debajo
-            val tintedAlphaColor = android.graphics.Color.argb(
-                120, // Opacidad del tinte (0-255). 120 es ~47%
-                android.graphics.Color.red(tintColor),
-                android.graphics.Color.green(tintColor),
-                android.graphics.Color.blue(tintColor)
-            )
-            colorFilter = PorterDuffColorFilter(tintedAlphaColor, PorterDuff.Mode.OVERLAY)
-        }
-         */
     }
+
+    // Lógica centralizada para decidir si se aplica el tinte
+    val (useTint, tintColor) = when (type) {
+        TextureType.AVAILABLE -> Pair(USE_TINT_FOR_AVAILABLE, baseColors[TextureType.AVAILABLE])
+        TextureType.CONQUERED -> Pair(USE_TINT_FOR_CONQUERED, baseColors[TextureType.CONQUERED])
+        TextureType.DOMINATED -> Pair(USE_TINT_FOR_DOMINATED, baseColors[TextureType.DOMINATED])
+        TextureType.LOCKED    -> Pair(USE_TINT_FOR_LOCKED, baseColors[TextureType.LOCKED])
+        TextureType.PAPER     -> Pair(USE_TINT_FOR_PAPER, android.graphics.Color.argb(180, 139, 119, 101)) // Color sepia original
+    }
+
+    if (useTint && tintColor != null) {
+        val tintedAlphaColor = android.graphics.Color.argb(
+            120, // Opacidad del tinte (puedes hacerla una constante también)
+            android.graphics.Color.red(tintColor),
+            android.graphics.Color.green(tintColor),
+            android.graphics.Color.blue(tintColor)
+        )
+        paint.colorFilter = PorterDuffColorFilter(tintedAlphaColor, PorterDuff.Mode.OVERLAY)
+    }
+
+    return paint
 }
+// --- FIN CENTRO CONTROL PARA TINTES DE TEXTURAS EN PAISES ---
