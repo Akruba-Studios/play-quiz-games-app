@@ -1,6 +1,5 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
-import android.R.attr.path
 import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.layout.*
@@ -26,51 +25,36 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.pointer.pointerInput
 import com.caverock.androidsvg.SVG
 import java.io.IOException
 
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.isActive
-import androidx.core.graphics.PathParser
-import kotlinx.coroutines.withContext
 
-import androidx.compose.animation.core.*
-
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.filled.Flight
 
 import androidx.compose.material.icons.filled.SwapHoriz
 
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.res.stringResource
@@ -80,7 +64,6 @@ import java.util.Locale
 import androidx.compose.foundation.clickable // <-- AÑADE ESTA
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material3.SnackbarHost // <-- AÑADE ESTA
 import androidx.compose.material3.SnackbarHostState // <-- AÑADE ESTA
@@ -96,23 +79,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
-import androidx.compose.animation.core.*
-import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
 import com.akrubastudios.playquizgames.ui.components.DialogText
 import com.akrubastudios.playquizgames.ui.components.DialogTitle
 import com.akrubastudios.playquizgames.ui.components.GemIcon
-import com.akrubastudios.playquizgames.ui.components.GemsBalanceIndicator
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import com.akrubastudios.playquizgames.ui.components.VideoBackground
 import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
@@ -120,14 +98,9 @@ import com.akrubastudios.playquizgames.ui.theme.CyanAccent
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
-import kotlinx.coroutines.delay
-import kotlin.math.sin
-import kotlin.math.cos
-import kotlin.math.PI
-import kotlin.math.abs
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 25-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 26-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -856,6 +829,27 @@ fun InteractiveWorldMap(
         pathMap
     }
 
+    // Función para obtener TODOS los IDs de países del SVG
+    suspend fun extractAllCountryIdsFromSVG(context: Context): Set<String> = withContext(Dispatchers.IO) {
+        val countryIds = mutableSetOf<String>()
+
+        try {
+            val inputStream = context.assets.open("world-map.min.svg")
+            val svgContent = inputStream.bufferedReader().use { it.readText() }
+            inputStream.close()
+
+            // Buscar todos los id="..." en el SVG
+            val idPattern = """id=["']([a-zA-Z]{2})["']""".toRegex()
+            idPattern.findAll(svgContent).forEach { match ->
+                countryIds.add(match.groupValues[1])
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("InteractiveWorldMap", "Error extrayendo todos los IDs", e)
+        }
+
+        countryIds
+    }
+
     // Función para convertir path data SVG a Path de Android
     fun parsePathData(pathData: String, path: android.graphics.Path) {
         try {
@@ -929,7 +923,11 @@ fun InteractiveWorldMap(
                     // NO limpiar processedSvgBitmap aquí para evitar flash
                     // processedSvgBitmap = null  // <-- REMOVIDO
 
-                    val pathCoordinates = extractPathCoordinates(context, pathColorMap.keys)
+                    // Primero extraer TODOS los países del SVG
+                    val allCountryIds = extractAllCountryIdsFromSVG(context)
+
+                    // Luego extraer las coordenadas de TODOS
+                    val pathCoordinates = extractPathCoordinates(context, allCountryIds)
 
                     if (!isActive) return@LaunchedEffect
 
@@ -948,6 +946,27 @@ fun InteractiveWorldMap(
                     val paint = android.graphics.Paint().apply {
                         isAntiAlias = true
                         style = android.graphics.Paint.Style.FILL
+                    }
+
+                    // Cargar textura de papel envejecido
+                    val paperTexture = BitmapFactory.decodeResource(context.resources, R.drawable.old_paper_texture)
+                    val paperShader = BitmapShader(
+                        paperTexture,
+                        android.graphics.Shader.TileMode.REPEAT,
+                        android.graphics.Shader.TileMode.REPEAT
+                    )
+                    // Paint especial para países sin contenido (textura)
+                    val paperPaint = android.graphics.Paint().apply {
+                        isAntiAlias = true
+                        style = android.graphics.Paint.Style.FILL
+                        shader = paperShader
+                        // Tinte sepia para que se vea más antiguo - Se apaga porque queda mejor el original
+                        /*
+                        colorFilter = android.graphics.PorterDuffColorFilter(
+                            android.graphics.Color.argb(180, 139, 119, 101), // Sepia translúcido al PNG Paises que no entran aun al juego
+                            android.graphics.PorterDuff.Mode.MULTIPLY
+                        )
+                         */
                     }
 
                     val newCountryPaths = mutableMapOf<String, android.graphics.Path>()
@@ -970,6 +989,17 @@ fun InteractiveWorldMap(
                                     pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 6f), 0f)
                                 }
                                 canvas.drawPath(path, crackPaint)
+                            }
+                        }
+                    }
+
+                    // Dibujar textura en países sin contenido (los que NO están en pathColorMap)
+                    pathCoordinates.keys.forEach { countryId ->
+                        if (!pathColorMap.containsKey(countryId)) {
+                            pathCoordinates[countryId]?.let { pathData ->
+                                val path = android.graphics.Path()
+                                parsePathData(pathData, path)
+                                canvas.drawPath(path, paperPaint)
                             }
                         }
                     }
