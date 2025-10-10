@@ -60,6 +60,8 @@
 
     <string name="ocean_quality_downgrade_toast">Calidad del océano ajustada a: \'%1$s\' para mejorar el rendimiento. Puedes desactivar la animación en Ajustes.</string>
 
+    <string name="map_toast_conquer_neighbors">¡Conquista un país vecino para desbloquear esta región!</string>
+
     <!-- Anuncios Bonificados -->
     <string name="reward_button_text">+ Gemas</string>
     <string name="cd_get_gem_reward">Obtener Recompensa de Gemas</string>

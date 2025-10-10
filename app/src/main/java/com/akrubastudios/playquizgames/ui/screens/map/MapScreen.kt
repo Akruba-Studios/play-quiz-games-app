@@ -102,7 +102,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 29-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 30-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1068,19 +1068,19 @@ fun InteractiveWorldMap(
                 return null
             }
 
-            val interactableCountries = (conqueredCountryIds + availableCountryIds).toSet()
+            // Iteramos sobre TODOS los paths de países que tenemos cacheados
+            for ((countryId, path) in countryPaths) {
+                val region = android.graphics.Region()
+                val clipRegion = android.graphics.Region(0, 0, svgBitmap.width, svgBitmap.height)
+                region.setPath(path, clipRegion)
 
-            for (countryId in interactableCountries) {
-                countryPaths[countryId]?.let { path ->
-                    val region = android.graphics.Region()
-                    val clipRegion = android.graphics.Region(0, 0, svgBitmap.width, svgBitmap.height)
-                    region.setPath(path, clipRegion)
-
-                    if (region.contains(svgX.toInt(), svgY.toInt())) {
-                        return countryId
-                    }
+                if (region.contains(svgX.toInt(), svgY.toInt())) {
+                    // Si encontramos una coincidencia, devolvemos el ID del país,
+                    // sin importar su estado.
+                    return countryId
                 }
             }
+            // Si no se toca ningún país, devolvemos null
             null
 
         } catch (e: Exception) {
@@ -1143,14 +1143,34 @@ fun InteractiveWorldMap(
                     detectTapGestures { tapOffset ->
                         if (isMapReady) {
                             processedSvgBitmap?.let { bitmap ->
-                                detectCountryFromTap(
+                                val tappedCountryId = detectCountryFromTap(
                                     tapOffset,
                                     bitmap,
                                     size.toSize(),
                                     hOffset = horizontalOffsetFactor,
                                     vOffset = verticalOffsetFactor
-                                )?.let { countryId ->
-                                    onCountryClick(countryId)
+                                )
+
+                                if (tappedCountryId != null) {
+                                    val isInteractable = conqueredCountryIds.contains(tappedCountryId) ||
+                                            availableCountryIds.contains(tappedCountryId)
+
+                                    if (isInteractable) {
+                                        // Si el país es jugable, navega
+                                        onCountryClick(tappedCountryId)
+                                    } else {
+                                        // Si no, muestra el Toast
+                                        val inflater = LayoutInflater.from(context)
+                                        val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+                                        val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                        textView.text = context.getString(R.string.map_toast_conquer_neighbors)
+
+                                        Toast(context).apply {
+                                            duration = Toast.LENGTH_LONG
+                                            view = layout
+                                            show()
+                                        }
+                                    }
                                 }
                             }
                         }
