@@ -102,7 +102,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 28-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 29-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -778,7 +778,7 @@ fun InteractiveWorldMap(
     }
     // Fin Color Grading Dinámico
 
-    // Definir colores
+    // Definir colores - Se quedan solo por la nomenclatura ya que los colores ahora se definen con texturas
     val dominatedColor = DarkGoldAccent.toArgb() // PAÍSES DOMINADOS
     val conqueredColor = CyanAccent.toArgb() // PAÍSES CONQUISTADOS
     val availableColor = LightGray.toArgb() // PAÍSES DISPONIBLES
@@ -1244,7 +1244,7 @@ fun InteractiveWorldMap(
                             path = composePath,
                             color = Color.Black.copy(alpha = 0.4f), // Opacidad
                             style = Stroke(
-                                width = 12f / scale, // Grosor y Se ajusta con el zoom
+                                width = 9f / scale, // Grosor y Se ajusta con el zoom - Antes 12f
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round
                             ),
@@ -1256,7 +1256,7 @@ fun InteractiveWorldMap(
                             path = composePath,
                             color = Color(0xFF2C3E50).copy(alpha = 0.6f), // Azul oscuro
                             style = Stroke(
-                                width = 4f / scale,
+                                width = 3f / scale, // Antes 4f
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round
                             )
@@ -1267,7 +1267,7 @@ fun InteractiveWorldMap(
                             path = composePath,
                             color = Color.White.copy(alpha = 0.15f),
                             style = Stroke(
-                                width = 2f / scale,
+                                width = 1.5f / scale, // Antes 2f
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round
                             ),
@@ -1317,7 +1317,7 @@ private fun createTexturePaint(
         TextureType.CONQUERED -> Pair(USE_TINT_FOR_CONQUERED, baseColors[TextureType.CONQUERED])
         TextureType.DOMINATED -> Pair(USE_TINT_FOR_DOMINATED, baseColors[TextureType.DOMINATED])
         TextureType.LOCKED    -> Pair(USE_TINT_FOR_LOCKED, baseColors[TextureType.LOCKED])
-        TextureType.PAPER     -> Pair(USE_TINT_FOR_PAPER, android.graphics.Color.argb(180, 139, 119, 101)) // Color sepia original
+        TextureType.PAPER     -> Pair(USE_TINT_FOR_PAPER, android.graphics.Color.argb(180, 139, 119, 101)) // Color sepia original (180, 139, 119, 101)
     }
 
     if (useTint && tintColor != null) {
