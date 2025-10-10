@@ -102,7 +102,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 30-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 31-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -758,6 +758,8 @@ fun InteractiveWorldMap(
 
     var pulseAlpha by remember { mutableStateOf(0.7f) }
 
+    var lastToastTime by remember { mutableStateOf(0L) }
+
     // ✅ NUEVO: Estado para el path de contorno
     var worldOutlinePath by remember { mutableStateOf<android.graphics.Path?>(null) }
 
@@ -1159,16 +1161,21 @@ fun InteractiveWorldMap(
                                         // Si el país es jugable, navega
                                         onCountryClick(tappedCountryId)
                                     } else {
-                                        // Si no, muestra el Toast
-                                        val inflater = LayoutInflater.from(context)
-                                        val layout = inflater.inflate(R.layout.custom_toast_layout, null)
-                                        val textView = layout.findViewById<TextView>(R.id.toast_text)
-                                        textView.text = context.getString(R.string.map_toast_conquer_neighbors)
+                                        // Si no, muestra el Toast PERO CON COOLDOWN
+                                        val currentTime = System.currentTimeMillis()
+                                        if ((currentTime - lastToastTime) > 3000L) { // 3000L = 3 segundos
+                                            lastToastTime = currentTime // Actualiza la marca de tiempo
 
-                                        Toast(context).apply {
-                                            duration = Toast.LENGTH_LONG
-                                            view = layout
-                                            show()
+                                            val inflater = LayoutInflater.from(context)
+                                            val layout = inflater.inflate(R.layout.custom_toast_layout, null)
+                                            val textView = layout.findViewById<TextView>(R.id.toast_text)
+                                            textView.text = context.getString(R.string.map_toast_conquer_neighbors)
+
+                                            Toast(context).apply {
+                                                duration = Toast.LENGTH_LONG
+                                                view = layout
+                                                show()
+                                            }
                                         }
                                     }
                                 }
