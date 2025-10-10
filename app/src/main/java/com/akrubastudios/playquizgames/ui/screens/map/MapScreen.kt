@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.IntSize
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
@@ -100,7 +102,7 @@ import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 26-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 27-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -943,49 +945,45 @@ fun InteractiveWorldMap(
 
                     if (!isActive) return@LaunchedEffect
 
-                    val paint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        style = android.graphics.Paint.Style.FILL
-                    }
+                    // 1. Cargar todas las texturas una sola vez
+                    val textureAvailable = BitmapFactory.decodeResource(context.resources, R.drawable.texture_available)
+                    val textureConquered = BitmapFactory.decodeResource(context.resources, R.drawable.texture_conquered)
+                    val textureDominated = BitmapFactory.decodeResource(context.resources, R.drawable.texture_dominated)
+                    val textureLocked = BitmapFactory.decodeResource(context.resources, R.drawable.texture_locked)
+                    val texturePaper = BitmapFactory.decodeResource(context.resources, R.drawable.old_paper_texture)
 
-                    // Cargar textura de papel envejecido
-                    val paperTexture = BitmapFactory.decodeResource(context.resources, R.drawable.old_paper_texture)
-                    val paperShader = BitmapShader(
-                        paperTexture,
-                        android.graphics.Shader.TileMode.REPEAT,
-                        android.graphics.Shader.TileMode.REPEAT
-                    )
-                    // Paint especial para países sin contenido (textura)
-                    val paperPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        style = android.graphics.Paint.Style.FILL
-                        shader = paperShader
-                        // Tinte sepia para que se vea más antiguo - Se apaga porque queda mejor el original
-                        /*
-                        colorFilter = android.graphics.PorterDuffColorFilter(
-                            android.graphics.Color.argb(180, 139, 119, 101), // Sepia translúcido al PNG Paises que no entran aun al juego
-                            android.graphics.PorterDuff.Mode.MULTIPLY
-                        )
-                         */
-                    }
+                    // 2. Crear un "Pincel" (Paint) para cada estado
+                    val availablePaint = createTexturePaint(textureAvailable, availableColor)
+                    val conqueredPaint = createTexturePaint(textureConquered, conqueredColor)
+                    val dominatedPaint = createTexturePaint(textureDominated, dominatedColor)
+                    val lockedPaint = createTexturePaint(textureLocked, defaultColor)
+                    val paperPaint = createTexturePaint(texturePaper) // Sin tinte para los países fuera de juego
+
+                    // --- FIN DE LA NUEVA LÓGICA DE TEXTURIZADO ---
 
                     val newCountryPaths = mutableMapOf<String, android.graphics.Path>()
 
                     pathColorMap.forEach { (countryId, color) ->
                         pathCoordinates[countryId]?.let { pathData ->
-                            paint.color = color
+                            // 3. Seleccionar el pincel correcto según el color/estado
+                            val paintToUse = when (color) {
+                                dominatedColor -> dominatedPaint
+                                conqueredColor -> conqueredPaint
+                                availableColor -> availablePaint
+                                else -> lockedPaint // defaultColor
+                            }
+
                             val path = android.graphics.Path()
                             parsePathData(pathData, path)
                             newCountryPaths[countryId] = path
-                            canvas.drawPath(path, paint)
+                            canvas.drawPath(path, paintToUse)
 
-                            // NUEVO: Agregar grietas para países grises
                             if (color == defaultColor) {
                                 val crackPaint = android.graphics.Paint().apply {
                                     isAntiAlias = true
                                     style = android.graphics.Paint.Style.STROKE
-                                    strokeWidth = 1f // Grosor de las lineas o bordes de los paises grises
-                                    setColor(android.graphics.Color.argb(128, 255, 255, 255)) // Blanco 25% transparente
+                                    strokeWidth = 1f
+                                    setColor(android.graphics.Color.argb(128, 255, 255, 255))
                                     pathEffect = android.graphics.DashPathEffect(floatArrayOf(12f, 6f), 0f)
                                 }
                                 canvas.drawPath(path, crackPaint)
@@ -993,7 +991,7 @@ fun InteractiveWorldMap(
                         }
                     }
 
-                    // Dibujar textura en países sin contenido (los que NO están en pathColorMap)
+                    // Dibujar textura en países sin contenido (esta lógica no cambia)
                     pathCoordinates.keys.forEach { countryId ->
                         if (!pathColorMap.containsKey(countryId)) {
                             pathCoordinates[countryId]?.let { pathData ->
@@ -1273,5 +1271,30 @@ fun InteractiveWorldMap(
                 }
             }
         }
+    }
+}
+// --- AÑADE ESTA FUNCIÓN COMPLETA AL FINAL DEL ARCHIVO ---
+/**
+ * Crea un objeto Paint configurado con una textura repetible y un tinte de color opcional.
+ */
+private fun createTexturePaint(texture: Bitmap, tintColor: Int? = null): android.graphics.Paint {
+    val shader = BitmapShader(texture, android.graphics.Shader.TileMode.REPEAT, android.graphics.Shader.TileMode.REPEAT)
+    return android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.FILL
+        setShader(shader)
+        /*
+        // Aplica un tinte de color si se proporciona
+        if (tintColor != null) {
+            // Usamos un alfa de ~50% para el tinte, para que la textura siga siendo visible debajo
+            val tintedAlphaColor = android.graphics.Color.argb(
+                120, // Opacidad del tinte (0-255). 120 es ~47%
+                android.graphics.Color.red(tintColor),
+                android.graphics.Color.green(tintColor),
+                android.graphics.Color.blue(tintColor)
+            )
+            colorFilter = PorterDuffColorFilter(tintedAlphaColor, PorterDuff.Mode.OVERLAY)
+        }
+         */
     }
 }
