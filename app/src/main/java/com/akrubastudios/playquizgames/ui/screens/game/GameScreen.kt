@@ -108,6 +108,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -135,8 +136,9 @@ import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 2-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 3-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -788,6 +790,19 @@ fun LetterButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    // 1. Estado para controlar la animación de presión
+    var isPressed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // 2. Valor de la animación de escala (efecto resorte)
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy
+        ),
+        label = "pressScale"
+    )
+
     val fontSize = when {
         buttonSize >= 65.dp -> 24.sp
         buttonSize >= 55.dp -> 20.sp
@@ -796,10 +811,23 @@ fun LetterButton(
     }
 
     Button(
-        onClick = onClick,
+        onClick = {
+            // Solo ejecuta la animación si el botón está habilitado
+            if (enabled) {
+                // Inicia una corrutina para la secuencia de animación
+                scope.launch {
+                    isPressed = true
+                    delay(100) // Mantiene el botón presionado por 100ms
+                    isPressed = false
+                }
+                // Llama a la lógica original del juego
+                onClick()
+            }
+        },
         modifier = Modifier
             .padding(horizontal = 4.dp)
-            .size(buttonSize),
+            .size(buttonSize)
+            .scale(pressScale),
         enabled = enabled,
         contentPadding = PaddingValues(0.dp)
     ) {
