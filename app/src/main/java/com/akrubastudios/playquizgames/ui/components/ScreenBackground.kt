@@ -24,7 +24,7 @@ import coil.request.ImageRequest
  * @param content El contenido de la pantalla que se mostrará sobre el fondo.
  */
 @Composable
-fun ScreenBackground(
+fun ScreenBackground( // CONTROL: 1-SB
     backgroundUrl: String,
     imageLoader: ImageLoader,
     imageAlpha: Float = 0.7f, // Valor + grande, Imagen mas clara
@@ -39,13 +39,20 @@ fun ScreenBackground(
                 // Construimos una petición explícita a Coil
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(backgroundUrl)
-                    .crossfade(true) // Añade una transición suave
+                    .crossfade(false) // Causaba parpadeo?
                     .size(coil.size.Size.ORIGINAL) // Le decimos a Coil que optimice para el tamaño del contenedor
                     .listener(
                         onSuccess = { _, result ->
-                            if (result.dataSource == coil.decode.DataSource.NETWORK) {
-                                Log.w("ScreenBackground", "⚠️ FALLBACK: Imagen cargada desde red (no estaba precargada): ${backgroundUrl.takeLast(30)}")
+                            val source = when (result.dataSource) {
+                                coil.decode.DataSource.MEMORY_CACHE -> "MEMORIA RAM ⚡"
+                                coil.decode.DataSource.DISK -> "DISCO 💾"
+                                coil.decode.DataSource.NETWORK -> "RED (FALLBACK) ⚠️"
+                                else -> "DESCONOCIDO"
                             }
+                            Log.d("ScreenBackground", "✅ Imagen mostrada desde: $source | ${backgroundUrl.takeLast(30)}")
+                        },
+                        onError = { _, result ->
+                            Log.e("ScreenBackground", "❌ Error al cargar imagen: ${result.throwable}")
                         }
                     )
                     .build(),
