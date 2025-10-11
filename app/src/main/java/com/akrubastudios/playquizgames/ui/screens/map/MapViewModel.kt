@@ -45,7 +45,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import javax.inject.Inject
 
-data class MapState( // Control: 4-MVM
+data class MapState( // Control: 5-MVM
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val dominatedCountryIds: List<String> = emptyList(),
@@ -300,11 +300,13 @@ class MapViewModel @Inject constructor(
                 // --- NUEVO: Precarga inteligente del nuevo continente ---
                 val allCountries = gameDataRepository.getCountryList()
 
-                // CAPA 1: Precarga inmediata del país de entrada + vecinos
-                precacheManager.precacheCountryAndNeighbors(countryToUnlock, allCountries)
+                launch {
+                    // CAPA 1: Precarga inmediata del país de entrada + vecinos
+                    precacheManager.precacheCountryAndNeighbors(countryToUnlock, allCountries)
 
-                // CAPA 2: Precarga en background del resto del continente
-                precacheManager.precacheContinentInBackground(continentId, allCountries)
+                    // CAPA 2: Precarga en background del resto del continente
+                    precacheManager.precacheContinentInBackground(continentId, allCountries)
+                }
 
             } catch (e: Exception) {
                 android.util.Log.e("MapViewModel", "❌ Error al desbloquear el nuevo país.", e)
