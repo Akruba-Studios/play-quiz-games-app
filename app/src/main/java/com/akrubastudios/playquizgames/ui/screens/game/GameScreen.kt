@@ -102,6 +102,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.DisposableEffect
@@ -138,7 +139,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 3-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 4-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -698,6 +699,25 @@ fun AnswerSlot(
     showIncorrectAnimation: Boolean = false,
     isRevealed: Boolean = false
 ) {
+    // --- INICIO DE LA LÓGICA DE ANIMACIÓN ---
+    val fillScale = remember { Animatable(1.0f) }
+
+    // Este efecto se dispara cada vez que el 'char' que se muestra cambia.
+    LaunchedEffect(char) {
+        // Si el caracter deja de ser un espacio (es decir, aparece una letra),
+        // se ejecuta la animación de rebote.
+        if (char != ' ') {
+            fillScale.snapTo(1.5f) // Salta instantáneamente a un tamaño mayor
+            fillScale.animateTo(
+                targetValue = 1.0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            ) // Anima de vuelta a su tamaño normal con efecto rebote
+        }
+    }
+
     val borderColor = when {
         showCorrectAnimation -> Color(0xFF4CAF50) // Verde
         showIncorrectAnimation -> Color(0xFFF44336) // Rojo
@@ -708,12 +728,14 @@ fun AnswerSlot(
     Box(
         modifier = Modifier
             .size(size)
+            .scale(fillScale.value)
             .border(2.dp, borderColor, RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = char.toString().uppercase(),
-            fontSize = if (size < 35.dp) 16.sp else 20.sp
+            fontSize = if (size < 35.dp) 16.sp else 20.sp,
+            color = if (char == ' ') androidx.compose.ui.graphics.Color.Transparent else LocalContentColor.current
         )
     }
 }
