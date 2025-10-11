@@ -3,11 +3,15 @@ package com.akrubastudios.playquizgames.ui.screens.map
 import android.app.Activity
 import android.app.Application
 import android.content.res.Configuration
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.core.LanguageManager
@@ -22,18 +26,25 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import javax.inject.Inject
 
-data class MapState(
+data class MapState( // Control: 1-MVM
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val dominatedCountryIds: List<String> = emptyList(),
@@ -66,7 +77,9 @@ class MapViewModel @Inject constructor(
     private val application: Application,
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
-    val musicManager: MusicManager
+    val musicManager: MusicManager,
+    private val imageLoader: ImageLoader, // <-- AÑADE ESTA LÍNEA
+    @ApplicationContext private val context: Context
 ) : ViewModel(), DefaultLifecycleObserver {
 
     val currentUser = authRepository.currentUser
@@ -221,6 +234,7 @@ class MapViewModel @Inject constructor(
                         gems = userData.gems,
                         isRewardFeatureUnlocked = isRewardUnlocked
                     )
+                    prefetchCountryBackgrounds(countryList)
                 }
             }
         }
@@ -240,6 +254,60 @@ class MapViewModel @Inject constructor(
                 Log.e("MapViewModel", "Error al añadir notificación y bandera: $flagName", e)
             }
         }
+    }
+
+    /**
+     * Pre-carga una única imagen de forma controlada usando Listeners y coroutines.
+     * Devuelve true si la carga fue exitosa (desde red o disco).
+     */
+    private suspend fun precacheSingleImage(imageUrl: String): Boolean {
+        if (imageUrl.isBlank()) return false
+
+        return suspendCancellableCoroutine { continuation ->
+            val request = ImageRequest.Builder(context)
+                .data(imageUrl)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .memoryCachePolicy(CachePolicy.DISABLED) // No necesitamos el bitmap en RAM ahora mismo
+                .listener(
+                    onSuccess = { _, result ->
+                        Log.d("MapViewModel_Precache", "✅ Imagen precargada desde ${result.dataSource}: ${imageUrl.takeLast(20)}")
+                        if (continuation.isActive) continuation.resume(true)
+                    },
+                    onError = { _, result ->
+                        Log.e("MapViewModel_Precache", "❌ Error al precargar: ${result.throwable}")
+                        if (continuation.isActive) continuation.resume(false)
+                    }
+                )
+                .build()
+
+            imageLoader.enqueue(request)
+
+            continuation.invokeOnCancellation {
+                // Si la corutina se cancela, no hacemos nada extra,
+                // Coil manejará la cancelación de la petición.
+            }
+        }
+    }
+
+    /**
+     * Pre-carga múltiples imágenes de fondo en paralelo.
+     */
+    private suspend fun prefetchCountryBackgrounds(countries: List<Country>) = coroutineScope {
+        val imageUrls = countries
+            .filter { it.backgroundImageUrl.isNotBlank() }
+            .map { it.backgroundImageUrl }
+
+        if (imageUrls.isEmpty()) return@coroutineScope
+
+        Log.d("MapViewModel_Precache", "🚀 Iniciando precarga de ${imageUrls.size} fondos de país...")
+
+        val jobs = imageUrls.map { url ->
+            async(Dispatchers.IO) {
+                precacheSingleImage(url)
+            }
+        }
+        jobs.awaitAll()
+        Log.d("MapViewModel_Precache", "✅ Precarga de fondos de país completada.")
     }
 
     /**
