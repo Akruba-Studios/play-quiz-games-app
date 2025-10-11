@@ -30,6 +30,7 @@ import javax.inject.Singleton
 import androidx.lifecycle.ProcessLifecycleOwner
 import coil.ImageLoader
 import com.akrubastudios.playquizgames.QuizApplication
+import com.akrubastudios.playquizgames.core.PrecacheManager
 import com.akrubastudios.playquizgames.core.SoundManager
 
 // Definimos la instancia de DataStore aquí, de forma centralizada.
@@ -151,5 +152,14 @@ object AppModule {
         // debe tomar el contexto de la aplicación y llamar a la función
         // newImageLoader() que hemos definido en nuestra clase QuizApplication.
         return (context.applicationContext as QuizApplication).newImageLoader()
+    }
+
+    @Provides
+    @Singleton
+    fun providePrecacheManager(
+        @ApplicationContext context: Context,
+        imageLoader: ImageLoader
+    ): PrecacheManager {
+        return PrecacheManager(context, imageLoader)
     }
 }

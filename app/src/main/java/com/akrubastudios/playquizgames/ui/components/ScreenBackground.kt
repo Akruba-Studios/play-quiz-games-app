@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,6 +41,13 @@ fun ScreenBackground(
                     .data(backgroundUrl)
                     .crossfade(true) // Añade una transición suave
                     .size(coil.size.Size.ORIGINAL) // Le decimos a Coil que optimice para el tamaño del contenedor
+                    .listener(
+                        onSuccess = { _, result ->
+                            if (result.dataSource == coil.decode.DataSource.NETWORK) {
+                                Log.w("ScreenBackground", "⚠️ FALLBACK: Imagen cargada desde red (no estaba precargada): ${backgroundUrl.takeLast(30)}")
+                            }
+                        }
+                    )
                     .build(),
                 imageLoader = imageLoader,
                 contentDescription = "Background image",

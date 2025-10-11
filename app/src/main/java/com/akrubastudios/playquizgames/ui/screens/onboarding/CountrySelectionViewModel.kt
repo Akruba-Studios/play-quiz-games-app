@@ -18,6 +18,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.akrubastudios.playquizgames.core.LanguageManager
+import com.akrubastudios.playquizgames.core.PrecacheManager
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
@@ -37,6 +38,7 @@ class CountrySelectionViewModel @Inject constructor(
     private val db: FirebaseFirestore,
     private val languageManager: LanguageManager,
     val imageLoader: ImageLoader,
+    private val precacheManager: PrecacheManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -94,6 +96,21 @@ class CountrySelectionViewModel @Inject constructor(
                     "timestamp" to System.currentTimeMillis()
                 )
                 db.collection("start_requests").add(startRequest).await() // Ahora 'db' existe
+
+                // 2. NUEVO: Disparamos la precarga inteligente
+                Log.d("CountrySelectionVM", "🚀 Iniciando precarga para país inicial: $countryId")
+
+                val allCountries = gameDataRepository.getCountryList()
+
+                // CAPA 1: Precarga inmediata del país seleccionado + sus vecinos
+                precacheManager.precacheCountryAndNeighbors(countryId, allCountries)
+
+                // CAPA 2: Precarga en background del resto del continente
+                precacheManager.precacheContinentInBackground(continentId, allCountries)
+
+                Log.d("CountrySelectionVM", "✅ Precarga iniciada. Navegando al mapa.")
+
+                // 3. Navegamos al mapa
                 _navigationEvent.send(Unit)
             } catch (e: Exception) {
                 Log.e("CountrySelectionVM", "Error al enviar start_request", e)

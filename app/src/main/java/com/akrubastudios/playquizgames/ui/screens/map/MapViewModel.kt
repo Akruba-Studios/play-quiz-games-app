@@ -17,6 +17,7 @@ import com.akrubastudios.playquizgames.core.AdManager
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
+import com.akrubastudios.playquizgames.core.PrecacheManager
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.data.repository.SettingsRepository
@@ -44,7 +45,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import javax.inject.Inject
 
-data class MapState( // Control: 3-MVM
+data class MapState( // Control: 4-MVM
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val dominatedCountryIds: List<String> = emptyList(),
@@ -79,6 +80,7 @@ class MapViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     val musicManager: MusicManager,
     val imageLoader: ImageLoader, // <-- AÑADE ESTA LÍNEA
+    private val precacheManager: PrecacheManager,
     @ApplicationContext private val context: Context
 ) : ViewModel(), DefaultLifecycleObserver {
 
@@ -107,15 +109,11 @@ class MapViewModel @Inject constructor(
         gameDataRepository.startUserDataListener()
         // 2. Lanza la corrutina para procesar los datos
         processUserData()
-        // Lanzamos una corutina separada que se ejecuta UNA SOLA VEZ.
-        viewModelScope.launch {
-            // 1. Obtenemos la lista de países (que es estática) una vez.
-            val countryList = gameDataRepository.getCountryList()
-            // 2. Ejecutamos la precarga.
-            prefetchCountryBackgrounds(countryList)
-        }
-        // Precargamos un anuncio bonificado al iniciar la pantalla del mapa.
+        // 3. Precargamos un anuncio bonificado al iniciar la pantalla del mapa.
         AdManager.loadRewardedAd(application)
+
+        // NOTA: La precarga de imágenes ahora la maneja PrecacheManager
+        // y se dispara desde otros puntos estratégicos del juego.
     }
 
     private fun processUserData() {
@@ -263,60 +261,6 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Pre-carga una única imagen de forma controlada usando Listeners y coroutines.
-     * Devuelve true si la carga fue exitosa (desde red o disco).
-     */
-    private suspend fun precacheSingleImage(imageUrl: String): Boolean {
-        if (imageUrl.isBlank()) return false
-
-        return suspendCancellableCoroutine { continuation ->
-            val request = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .memoryCachePolicy(CachePolicy.DISABLED) // No necesitamos el bitmap en RAM ahora mismo
-                .listener(
-                    onSuccess = { _, result ->
-                        Log.d("MapViewModel_Precache", "✅ Imagen precargada desde ${result.dataSource}: ${imageUrl.takeLast(20)}")
-                        if (continuation.isActive) continuation.resume(true)
-                    },
-                    onError = { _, result ->
-                        Log.e("MapViewModel_Precache", "❌ Error al precargar: ${result.throwable}")
-                        if (continuation.isActive) continuation.resume(false)
-                    }
-                )
-                .build()
-
-            imageLoader.enqueue(request)
-
-            continuation.invokeOnCancellation {
-                // Si la corutina se cancela, no hacemos nada extra,
-                // Coil manejará la cancelación de la petición.
-            }
-        }
-    }
-
-    /**
-     * Pre-carga múltiples imágenes de fondo en paralelo.
-     */
-    private suspend fun prefetchCountryBackgrounds(countries: List<Country>) = coroutineScope {
-        val imageUrls = countries
-            .filter { it.backgroundImageUrl.isNotBlank() }
-            .map { it.backgroundImageUrl }
-
-        if (imageUrls.isEmpty()) return@coroutineScope
-
-        Log.d("MapViewModel_Precache", "🚀 Iniciando precarga de ${imageUrls.size} fondos de país...")
-
-        val jobs = imageUrls.map { url ->
-            async(Dispatchers.IO) {
-                precacheSingleImage(url)
-            }
-        }
-        jobs.awaitAll()
-        Log.d("MapViewModel_Precache", "✅ Precarga de fondos de país completada.")
-    }
-
-    /**
      * Se llama cuando el usuario selecciona un continente en el diálogo de expedición.
      * TODO: La lógica para desbloquear el contenido se implementará en el siguiente paso.
      */
@@ -352,6 +296,15 @@ class MapViewModel @Inject constructor(
                 userRef.update("availableCountries", com.google.firebase.firestore.FieldValue.arrayUnion(countryToUnlock))
 
                 _uiState.value = _uiState.value.copy(expeditionAvailable = false)
+
+                // --- NUEVO: Precarga inteligente del nuevo continente ---
+                val allCountries = gameDataRepository.getCountryList()
+
+                // CAPA 1: Precarga inmediata del país de entrada + vecinos
+                precacheManager.precacheCountryAndNeighbors(countryToUnlock, allCountries)
+
+                // CAPA 2: Precarga en background del resto del continente
+                precacheManager.precacheContinentInBackground(continentId, allCountries)
 
             } catch (e: Exception) {
                 android.util.Log.e("MapViewModel", "❌ Error al desbloquear el nuevo país.", e)
