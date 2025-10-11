@@ -61,6 +61,7 @@
     <string name="ocean_quality_downgrade_toast">Ocean quality set to: \'%1$s\' to improve performance. You can disable the animation in Settings.</string>
 
     <string name="map_toast_conquer_neighbors">Conquer a neighboring country to unlock this region!</string>
+    <string name="map_toast_coming_soon">This region will be available in future expansions!</string>
 
     <!-- Rewarded Ads -->
     <string name="reward_button_text">+ Gems</string>
