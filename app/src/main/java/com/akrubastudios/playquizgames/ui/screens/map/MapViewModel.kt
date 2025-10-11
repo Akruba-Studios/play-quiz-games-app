@@ -44,7 +44,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import javax.inject.Inject
 
-data class MapState( // Control: 1-MVM
+data class MapState( // Control: 2-MVM
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val dominatedCountryIds: List<String> = emptyList(),
@@ -107,6 +107,13 @@ class MapViewModel @Inject constructor(
         gameDataRepository.startUserDataListener()
         // 2. Lanza la corrutina para procesar los datos
         processUserData()
+        // Lanzamos una corutina separada que se ejecuta UNA SOLA VEZ.
+        viewModelScope.launch {
+            // 1. Obtenemos la lista de países (que es estática) una vez.
+            val countryList = gameDataRepository.getCountryList()
+            // 2. Ejecutamos la precarga.
+            prefetchCountryBackgrounds(countryList)
+        }
         // Precargamos un anuncio bonificado al iniciar la pantalla del mapa.
         AdManager.loadRewardedAd(application)
     }
@@ -234,7 +241,6 @@ class MapViewModel @Inject constructor(
                         gems = userData.gems,
                         isRewardFeatureUnlocked = isRewardUnlocked
                     )
-                    prefetchCountryBackgrounds(countryList)
                 }
             }
         }
