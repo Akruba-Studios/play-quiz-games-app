@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.SignInResult
 import com.akrubastudios.playquizgames.R
+import com.akrubastudios.playquizgames.core.PrecacheManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,8 @@ data class LoginState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val repository: AuthRepository,
-    private val application: Application
+    private val application: Application,
+    private val precacheManager: PrecacheManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginState())
@@ -36,6 +38,12 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+
+            // 🎨 NUEVO: Disparamos la precarga de avatares en paralelo con el login
+            android.util.Log.d("LoginViewModel", "🎨 Iniciando precarga de avatares durante login de Google")
+            val avatarUrls = com.akrubastudios.playquizgames.ui.screens.createprofile.availableAvatars
+            precacheManager.precacheAvatarsInBackground(avatarUrls)
+
             val result = repository.signInWithGoogle(idToken)
             result.onSuccess { signInResult ->
                 _uiState.update {

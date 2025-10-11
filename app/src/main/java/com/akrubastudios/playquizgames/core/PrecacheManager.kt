@@ -22,7 +22,7 @@ import kotlin.coroutines.resume
 /**
  * Gestor centralizado de precarga de imágenes.
  * Se encarga de precargar imágenes de países de forma inteligente y progresiva.
- * Mantiene un registro de qué imágenes ya fueron precargadas en esta sesión.
+ * Mantiene un registro de qué imágenes ya fueron precargadas en esta sesión. // CONTROL: 1-PM
  */
 @Singleton
 class PrecacheManager @Inject constructor(
@@ -168,5 +168,29 @@ class PrecacheManager @Inject constructor(
             precachedUrls.clear()
         }
         Log.d("PrecacheManager", "🗑️ Registro de precarga limpiado")
+    }
+
+    /**
+     * Precarga todas las imágenes de avatares disponibles.
+     * Se ejecuta en background durante el login de Google.
+     */
+    fun precacheAvatarsInBackground(avatarUrls: List<String>) {
+        precacheScope.launch {
+            val urlsToPrecache = avatarUrls.filter { it.isNotBlank() && !isAlreadyPrecached(it) }
+
+            if (urlsToPrecache.isEmpty()) {
+                Log.d("PrecacheManager", "✅ Avatares ya precargados")
+                return@launch
+            }
+
+            Log.d("PrecacheManager", "🎨 Iniciando precarga de ${urlsToPrecache.size} avatares en background")
+
+            urlsToPrecache.forEach { url ->
+                val success = precacheSingleImage(url)
+                if (success) markAsPrecached(url)
+            }
+
+            Log.d("PrecacheManager", "✅ Precarga de avatares completada")
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.akrubastudios.playquizgames.ui.screens.createprofile
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -129,6 +130,7 @@ fun CreateProfileScreen(
                                 val isSelected = uiState.selectedAvatarUrl == avatarUrl
                                 AsyncImage(
                                     model = avatarUrl,
+                                    imageLoader = viewModel.imageLoader,
                                     contentDescription = "Avatar Option",
                                     modifier = Modifier
                                         .size(64.dp)
@@ -141,7 +143,16 @@ fun CreateProfileScreen(
                                             ),
                                             shape = CircleShape
                                         ),
-                                    contentScale = ContentScale.Crop
+                                    contentScale = ContentScale.Crop,
+                                    onSuccess = { state ->
+                                        val source = when (state.result.dataSource) {
+                                            coil.decode.DataSource.MEMORY_CACHE -> "RAM ⚡"
+                                            coil.decode.DataSource.DISK -> "DISCO 💾"
+                                            coil.decode.DataSource.NETWORK -> "RED ⚠️"
+                                            else -> "?"
+                                        }
+                                        Log.d("CreateProfileAvatar", "Avatar cargado desde: $source")
+                                    }
                                 )
                             }
                         }

@@ -20,7 +20,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
-val availableAvatars = listOf(
+val availableAvatars = listOf( // Agregar todos los links
     "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fcanadian.png?alt=media",
     "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fwoman.png?alt=media",
     "https://firebasestorage.googleapis.com/v0/b/akrubastudios-playquiz-dev.firebasestorage.app/o/avatars%2Fprofile%2Fman.png?alt=media",
@@ -61,6 +61,8 @@ class CreateProfileViewModel @Inject constructor(
                 username = decodedName
             )
         }
+        // Log para debugging
+        Log.d("CreateProfileViewModel", "📸 CreateProfile iniciado. Los avatares deberían estar precargados.")
     }
 
     fun onUsernameChange(newName: String) {
