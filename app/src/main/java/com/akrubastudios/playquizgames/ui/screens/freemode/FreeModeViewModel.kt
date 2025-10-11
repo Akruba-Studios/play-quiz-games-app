@@ -4,6 +4,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.UserLevelCompletion
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +41,8 @@ data class FreeModeState(
 class FreeModeViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val languageManager: LanguageManager,
-    val musicManager: MusicManager
+    val musicManager: MusicManager,
+    val imageLoader: ImageLoader
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(FreeModeState())

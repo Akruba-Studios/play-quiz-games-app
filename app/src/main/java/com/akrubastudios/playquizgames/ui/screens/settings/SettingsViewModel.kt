@@ -5,6 +5,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -36,7 +37,8 @@ class SettingsViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     val musicManager: MusicManager, // <-- INYECTAR MUSIC MANAGER
     private val settingsRepository: SettingsRepository, // <-- INYECTAR REPOSITORY
-    private val soundManager: SoundManager
+    private val soundManager: SoundManager,
+    val imageLoader: ImageLoader
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(SettingsState())

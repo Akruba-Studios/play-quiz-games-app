@@ -73,7 +73,10 @@ fun FunFactLibraryScreen(
             )
         }
     ) { paddingValues ->
-        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+        ScreenBackground(
+            backgroundUrl = AppConstants.MENU_BACKGROUND_URL,
+            imageLoader = viewModel.imageLoader // <-- AÑADE ESTA LÍNEA
+        ) {
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()

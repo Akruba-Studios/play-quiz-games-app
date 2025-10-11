@@ -72,6 +72,7 @@ fun ResultScreen(
 
     ScreenBackground(
         backgroundUrl = AppConstants.RESULTS_BACKGROUND_URL,
+        imageLoader = viewModel.imageLoader,
         imageAlpha = 0.6f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
         scrimAlpha = 0.75f   // 0.7 - 70% opaco en el velo
     ) {

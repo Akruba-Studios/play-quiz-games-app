@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.Country
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,7 @@ class CountrySelectionViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val languageManager: LanguageManager,
+    val imageLoader: ImageLoader,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

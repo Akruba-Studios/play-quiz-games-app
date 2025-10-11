@@ -67,6 +67,7 @@ fun CountryScreen(
 
     ScreenBackground(
         backgroundUrl = uiState.country?.backgroundImageUrl ?: "",
+        imageLoader = viewModel.imageLoader,
         imageAlpha = 1.0f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
         scrimAlpha = 0.7f   // 0.7 - 70% opaco en el velo
     ) {

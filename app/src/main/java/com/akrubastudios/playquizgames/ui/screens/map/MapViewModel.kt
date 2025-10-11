@@ -44,7 +44,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import javax.inject.Inject
 
-data class MapState( // Control: 2-MVM
+data class MapState( // Control: 3-MVM
     val countries: List<Country> = emptyList(),
     val conqueredCountryIds: List<String> = emptyList(),
     val dominatedCountryIds: List<String> = emptyList(),
@@ -78,7 +78,7 @@ class MapViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val settingsRepository: SettingsRepository,
     val musicManager: MusicManager,
-    private val imageLoader: ImageLoader, // <-- AÑADE ESTA LÍNEA
+    val imageLoader: ImageLoader, // <-- AÑADE ESTA LÍNEA
     @ApplicationContext private val context: Context
 ) : ViewModel(), DefaultLifecycleObserver {
 

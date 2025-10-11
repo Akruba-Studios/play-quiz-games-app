@@ -99,7 +99,10 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+        ScreenBackground(
+            backgroundUrl = AppConstants.MENU_BACKGROUND_URL,
+            imageLoader = viewModel.imageLoader // <-- AÑADE ESTA LÍNEA
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

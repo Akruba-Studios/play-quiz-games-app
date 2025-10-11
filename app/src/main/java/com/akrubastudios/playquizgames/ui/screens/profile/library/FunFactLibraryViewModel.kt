@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import android.content.res.Configuration
+import coil.ImageLoader
 import java.util.Locale
 import javax.inject.Inject
 
@@ -49,7 +50,8 @@ class FunFactLibraryViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
     private val quizRepository: QuizRepository,
     private val languageManager: LanguageManager, // <-- IMPORTADO Y USADO
-    private val application: Application
+    private val application: Application,
+    val imageLoader: ImageLoader
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FunFactLibraryState())

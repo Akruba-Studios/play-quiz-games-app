@@ -70,7 +70,10 @@ fun LevelSelectionScreen(
     var dragAmount by remember { mutableFloatStateOf(0f) }
     val dragThreshold = 70.dp // Distancia mínima para que el swipe se registre
 
-    ScreenBackground(backgroundUrl = AppConstants.MENU_BACKGROUND_URL) {
+    ScreenBackground(
+        backgroundUrl = AppConstants.MENU_BACKGROUND_URL,
+        imageLoader = viewModel.imageLoader // <-- AÑADE ESTA LÍNEA
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()

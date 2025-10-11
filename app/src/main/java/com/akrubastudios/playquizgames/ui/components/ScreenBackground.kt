@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -24,6 +25,7 @@ import coil.request.ImageRequest
 @Composable
 fun ScreenBackground(
     backgroundUrl: String,
+    imageLoader: ImageLoader,
     imageAlpha: Float = 0.7f, // Valor + grande, Imagen mas clara
     scrimAlpha: Float = 0.7f, // Valor * grande, Velo mas opaco
     content: @Composable () -> Unit
@@ -39,6 +41,7 @@ fun ScreenBackground(
                     .crossfade(true) // Añade una transición suave
                     .size(coil.size.Size.ORIGINAL) // Le decimos a Coil que optimice para el tamaño del contenedor
                     .build(),
+                imageLoader = imageLoader,
                 contentDescription = "Background image",
                 modifier = Modifier
                     .fillMaxSize()

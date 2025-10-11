@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
@@ -59,7 +60,8 @@ class CountryViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val savedStateHandle: SavedStateHandle,
-    val musicManager: MusicManager
+    val musicManager: MusicManager,
+    val imageLoader: ImageLoader
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(CountryState())

@@ -4,6 +4,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
@@ -36,7 +37,8 @@ data class RankingState(
 @HiltViewModel
 class RankingViewModel @Inject constructor(
     private val gameDataRepository: GameDataRepository,
-    val musicManager: MusicManager
+    val musicManager: MusicManager,
+    val imageLoader: ImageLoader
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(RankingState())

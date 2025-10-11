@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +41,8 @@ data class CreateProfileState(
 class CreateProfileViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
+    val imageLoader: ImageLoader
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateProfileState())

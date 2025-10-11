@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.LevelStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +34,7 @@ class LevelSelectionViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     val musicManager: MusicManager,
+    val imageLoader: ImageLoader,
     savedStateHandle: SavedStateHandle
 ) : ViewModel(), DefaultLifecycleObserver {
 

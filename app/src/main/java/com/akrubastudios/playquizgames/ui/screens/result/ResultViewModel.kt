@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.core.LanguageManager
 import com.akrubastudios.playquizgames.core.MusicManager
 import com.akrubastudios.playquizgames.core.SoundManager
@@ -33,6 +34,7 @@ class ResultViewModel @Inject constructor(
     private val db: FirebaseFirestore,
     val soundManager: SoundManager,
     val musicManager: MusicManager,
+    val imageLoader: ImageLoader,
     private val savedStateHandle: SavedStateHandle,
     private val languageManager: LanguageManager
 ) : ViewModel() {

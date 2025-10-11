@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.LocalImageLoader
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.components.TextWithBorder
@@ -40,6 +42,7 @@ fun ContinentSelectionScreen(
 
     ScreenBackground(
         backgroundUrl = AppConstants.ONBOARDING_BACKGROUND_URL,
+        imageLoader = LocalImageLoader.current,
         imageAlpha = 0.6f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
         scrimAlpha = 0.75f   // 0.7 - 70% opaco en el velo
     ) {

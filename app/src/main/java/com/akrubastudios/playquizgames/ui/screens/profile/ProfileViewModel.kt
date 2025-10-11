@@ -7,6 +7,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
 import com.akrubastudios.playquizgames.data.repository.AuthRepository
 import com.akrubastudios.playquizgames.data.repository.GameDataRepository
 import com.akrubastudios.playquizgames.domain.PlayerLevelManager
@@ -59,6 +60,7 @@ class ProfileViewModel @Inject constructor(
     private val languageManager: LanguageManager,
     private val db: FirebaseFirestore,
     val musicManager: MusicManager,
+    val imageLoader: ImageLoader
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(ProfileState())
