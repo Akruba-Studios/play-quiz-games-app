@@ -32,6 +32,7 @@ import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.akrubastudios.playquizgames.R
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -40,6 +41,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,7 +77,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class) // Control: 3-PS
+@OptIn(ExperimentalMaterial3Api::class) // Control: 4-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -373,21 +378,66 @@ private fun ProfileHeader(
     imageSize: Dp,
     onImageClick: () -> Unit // <-- Añadimos el nuevo parámetro
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "avatarBorderAnimation")
+    // Animamos un valor de 0f a 360f para representar la rotación
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
+    // Creamos una lista de colores para el gradiente
+    val gradientColors = listOf(
+        MaterialTheme.colorScheme.primary,       // Color principal (SkyBlue)
+        MaterialTheme.colorScheme.tertiary,      // Color de acento (GoldAccent)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) // El mismo color pero más transparente
+    )
+
+    // Creamos el Brush (pincel) que usará el borde
+    val animatedBorderBrush = Brush.sweepGradient(
+        colors = gradientColors,
+        center = Offset.Zero // El centro del gradiente (no importa mucho para sweep)
+    )
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Foto de Perfil",
+        // 1. Usamos un Box para superponer el borde y la imagen.
+        Box(
             modifier = Modifier
                 .size(imageSize)
-                .border(
-                    width = 2.dp, // Grosor del borde, puedes ajustarlo
-                    color = MaterialTheme.colorScheme.outline, // Color del tema para bordes
-                    shape = CircleShape // Asegura que el borde también sea circular
-                )
-                .clip(CircleShape)
-                .clickable { onImageClick() },
-            contentScale = ContentScale.Crop
-        )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onImageClick() }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            // 2. CAPA 1 (FONDO): Un Box que solo contiene el borde rotatorio.
+            Box(
+                modifier = Modifier
+                    .matchParentSize() // Ocupa el mismo espacio que el Box padre
+                    .graphicsLayer { rotationZ = rotation } // <-- La rotación se aplica SOLO aquí
+                    .border(
+                        width = 2.dp,
+                        brush = animatedBorderBrush,
+                        shape = CircleShape
+                    )
+            )
+
+            // 3. CAPA 2 (FRENTE): La imagen, recortada pero sin rotación.
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "Foto de Perfil",
+                modifier = Modifier
+                    .matchParentSize() // Ocupa el mismo espacio
+                    .padding(2.dp) // Un pequeño padding para que el borde se vea bien
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     }
