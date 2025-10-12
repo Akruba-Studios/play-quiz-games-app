@@ -106,7 +106,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.runBlocking
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 33-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 34-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1101,7 +1101,7 @@ fun InteractiveWorldMap(
     }
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-        val newScale = (scale * zoomChange).coerceIn(0.8f, 5f) //0.8f y 5f; son el minimo y maximo para hacer zoom
+        val newScale = (scale * zoomChange).coerceIn(1.1f, 10f) //0.8f y 5f; son el minimo y maximo para hacer zoom
 
         // Usar valores fijos basados en una pantalla promedio (más simple)
         val maxOffsetX = canvasWidth * maxOffsetFactorX * newScale   // 30% para hacer drag en horizontal
