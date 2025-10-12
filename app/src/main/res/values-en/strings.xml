@@ -193,6 +193,9 @@
 
     <string name="library_unlock_toast">To unlock the Knowledge Center, get 3 ⭐ on any round!</string>
 
+    <string name="settings_edit_avatar_title">Choose your New Avatar</string>
+    <string name="settings_save_button">Save</string>
+
     <!-- Fun Fact Library -->
     <string name="library_title">Knowledge Library</string>
     <string name="library_empty_message">Your library is empty!. Get 3 ⭐ to collect the Fun Facts you discover here.</string>

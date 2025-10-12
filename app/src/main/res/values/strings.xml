@@ -193,6 +193,9 @@
 
     <string name="library_unlock_toast">Para desbloquear el Centro de Conocimiento, ¡Consigue 3 ⭐ en cualquier ronda de preguntas!</string>
 
+    <string name="settings_edit_avatar_title">Elige tu Nuevo Avatar</string>
+    <string name="settings_save_button">Guardar</string>
+
     <!-- Biblioteca de Fun Facts -->
     <string name="library_title">Centro de Conocimiento</string>
     <string name="library_empty_message">¡Tu biblioteca está vacía!. Consigue 3 ⭐ para coleccionar aquí los Datos Curiosos que descubras.</string>

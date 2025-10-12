@@ -72,7 +72,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class) // Control: 2-PS
+@OptIn(ExperimentalMaterial3Api::class) // Control: 3-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -93,6 +93,8 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showGemsTutorialDialog by remember { mutableStateOf(false) }
+
+    var showEditAvatarSheet by remember { mutableStateOf(false) }
 
     // Escucha el evento de cierre de sesión del ViewModel
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -233,7 +235,8 @@ fun ProfileScreen(
                             name = uiState.user?.displayName
                                 ?: stringResource(R.string.default_player_name),
                             imageUrl = uiState.user?.photoUrl,
-                            imageSize = imageSize
+                            imageSize = imageSize,
+                            onImageClick = { showEditAvatarSheet = true }
                         )
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -337,10 +340,39 @@ fun ProfileScreen(
             confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
+    if (showEditAvatarSheet) {
+        val sheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { showEditAvatarSheet = false },
+            sheetState = sheetState
+        ) {
+            AvatarSelectionSheetContent(
+                availableAvatars = com.akrubastudios.playquizgames.ui.screens.createprofile.availableAvatars,
+                // Pasamos el avatar seleccionado que vendrá del ViewModel
+                selectedAvatarUrl = uiState.selectedAvatarUrl,
+                onAvatarSelected = { avatarUrl ->
+                    viewModel.onAvatarSelected(avatarUrl)
+                },
+                onSave = {
+                    viewModel.saveAvatarChange()
+                    showEditAvatarSheet = false
+                },
+                onCancel = {
+                    viewModel.cancelAvatarChange()
+                    showEditAvatarSheet = false
+                }
+            )
+        }
+    }
 }
 
 @Composable
-private fun ProfileHeader(name: String, imageUrl: String?, imageSize: Dp) {
+private fun ProfileHeader(
+    name: String,
+    imageUrl: String?,
+    imageSize: Dp,
+    onImageClick: () -> Unit // <-- Añadimos el nuevo parámetro
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AsyncImage(
             model = imageUrl,
@@ -352,7 +384,8 @@ private fun ProfileHeader(name: String, imageUrl: String?, imageSize: Dp) {
                     color = MaterialTheme.colorScheme.outline, // Color del tema para bordes
                     shape = CircleShape // Asegura que el borde también sea circular
                 )
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .clickable { onImageClick() },
             contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -554,5 +587,72 @@ private fun GoalProgressRow(goal: GoalProgress) {
             modifier = Modifier.fillMaxWidth().height(6.dp),
             strokeCap = StrokeCap.Round
         )
+    }
+}
+
+// AÑADE ESTE CÓDIGO AL FINAL DEL ARCHIVO ProfileScreen.kt
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AvatarSelectionSheetContent(
+    availableAvatars: List<String>,
+    selectedAvatarUrl: String,
+    onAvatarSelected: (String) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.settings_edit_avatar_title),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            availableAvatars.forEach { avatarUrl ->
+                val isSelected = selectedAvatarUrl == avatarUrl
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "Avatar Option",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .clickable { onAvatarSelected(avatarUrl) }
+                        .border(
+                            border = BorderStroke(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                            ),
+                            shape = CircleShape
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.dialog_button_cancel))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = onSave) {
+                Text(stringResource(R.string.settings_save_button))
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }

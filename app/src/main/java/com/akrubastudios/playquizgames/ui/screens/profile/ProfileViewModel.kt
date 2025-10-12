@@ -26,6 +26,7 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
 /**
@@ -49,7 +50,8 @@ data class ProfileState(
     val levelInfo: PlayerLevelManager.LevelInfo? = null,
     val nextMilestone: Milestone? = null,
     val triggerMilestoneAnimation: Boolean = false,
-    val gems: Int = 0
+    val gems: Int = 0,
+    val selectedAvatarUrl: String = ""
 )
 
 @HiltViewModel
@@ -118,7 +120,8 @@ class ProfileViewModel @Inject constructor(
                         levelInfo = levelInfo,
                         nextMilestone = nextMilestone,
                         triggerMilestoneAnimation = shouldTriggerAnimation,
-                        gems = currentUser.gems
+                        gems = currentUser.gems,
+                        selectedAvatarUrl = currentUser.photoUrl ?: ""
                     )
                 }
             }
@@ -212,5 +215,50 @@ class ProfileViewModel @Inject constructor(
             _signOutEvent.send(Unit)
             Log.d("SignOut_Debug", "[PASO 4] Evento de navegación enviado.")
         }
+    }
+
+    /**
+     * Se llama cuando el usuario selecciona un avatar en el panel.
+     * Actualiza el estado de la UI para mostrar visualmente la selección.
+     */
+    fun onAvatarSelected(avatarUrl: String) {
+        _uiState.update { it.copy(selectedAvatarUrl = avatarUrl) }
+    }
+    /**
+     * Se llama cuando el usuario cancela la edición.
+     * Restaura la selección visual al avatar que el usuario tiene actualmente.
+     */
+    fun cancelAvatarChange() {
+        _uiState.update { it.copy(selectedAvatarUrl = it.user?.photoUrl ?: "") }
+    }
+    /**
+     * Guarda el cambio de avatar en Firestore.
+     */
+    fun saveAvatarChange() {
+        val uid = authRepository.currentUser?.uid ?: return
+        val newAvatarUrl = _uiState.value.selectedAvatarUrl
+
+        // No hacemos nada si no hay un avatar nuevo seleccionado o si es el mismo que ya tiene
+        if (newAvatarUrl.isBlank() || newAvatarUrl == _uiState.value.user?.photoUrl) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                // Llamamos a una nueva función en el repositorio para hacer la actualización
+                updateUserProfile(uid, newAvatarUrl)
+            } catch (e: Exception) {
+                // Manejar el error si es necesario (ej. mostrar un Toast)
+                Log.e("ProfileViewModel", "Error al guardar el avatar", e)
+            }
+        }
+    }
+    /**
+     * Función privada que actualiza el documento del usuario en Firestore.
+     */
+    private suspend fun updateUserProfile(uid: String, avatarUrl: String) {
+        val userRef = db.collection("users").document(uid)
+        userRef.update("photoUrl", avatarUrl).await()
+        Log.d("ProfileViewModel", "Avatar actualizado en Firestore con éxito.")
     }
 }
