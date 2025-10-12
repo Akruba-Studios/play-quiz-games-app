@@ -136,11 +136,13 @@ import coil.ImageLoader
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 9-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 10-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -205,20 +207,28 @@ fun GameScreen(
         ) {
             // NUEVO: Pantalla de precarga de imágenes
             if (uiState.isPreloadingImages) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                ScreenBackground(
+                    backgroundUrl = AppConstants.MENU_BACKGROUND_URL, // Reutilizamos una imagen genérica
+                    imageLoader = viewModel.imageLoader,
+                    imageAlpha = 0.6f,
+                    scrimAlpha = 0.75f
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.loading_images),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.loading_images),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             } else if (uiState.isLoading) {
