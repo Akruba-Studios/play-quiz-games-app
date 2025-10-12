@@ -106,7 +106,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.runBlocking
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 35-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 36-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1151,6 +1151,8 @@ fun InteractiveWorldMap(
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
                 // CAPA 1.1: Partículas Flotantes
                 OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+                // CAPA 1.6: Tormenta
+                ThunderstormEffect(modifier = Modifier.fillMaxSize())
 
                 // CAPA 1.2: Niebla Flotante
                 // OceanMistEffect(modifier = Modifier.fillMaxSize())

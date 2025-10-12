@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import kotlin.random.Random
 
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(modifier: Modifier = Modifier) {
@@ -339,5 +340,50 @@ fun OceanMistEffect(modifier: Modifier = Modifier) {
             topLeft = Offset(offsetX3 - 300f, size.height * 0.35f),
             size = androidx.compose.ui.geometry.Size(600f, 200f)
         )
+    }
+}
+@Composable // Efecto de Tormenta: Relámpagos con flash y oscurecimiento
+fun ThunderstormEffect(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "thunderstorm")
+
+    // Genera tiempos aleatorios para los relámpagos (cada 8-15 segundos)
+    val lightningTrigger by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 100f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "lightningTrigger"
+    )
+
+    // Fase del relámpago: 0 = normal, 0.1-0.3 = oscureciendo, 0.3-0.35 = flash, 0.35-1 = volviendo
+    val lightningPhase = remember(lightningTrigger) {
+        if (Random.nextFloat() < 0.08f) { // 8% de probabilidad cada ciclo
+            lightningTrigger % 1f
+        } else {
+            0f
+        }
+    }
+
+    val flashIntensity = when {
+        lightningPhase < 0.1f -> 0f // Normal
+        lightningPhase < 0.3f -> (lightningPhase - 0.1f) / 0.2f * -0.3f // Oscureciendo
+        lightningPhase < 0.35f -> 0.95f // FLASH blanco
+        lightningPhase < 0.5f -> 0.95f - ((lightningPhase - 0.35f) / 0.15f * 0.95f) // Desvaneciendo flash
+        else -> 0f // Vuelve a normal
+    }
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        if (flashIntensity > 0) {
+            // Flash blanco o oscurecimiento
+            val color = if (flashIntensity > 0.5f) {
+                Color.White.copy(alpha = flashIntensity)
+            } else {
+                Color.Black.copy(alpha = -flashIntensity) // Valores negativos se usan para oscurecer
+            }
+
+            drawRect(color = color)
+        }
     }
 }
