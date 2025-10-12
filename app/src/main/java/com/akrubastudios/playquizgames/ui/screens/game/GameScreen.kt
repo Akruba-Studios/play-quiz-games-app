@@ -139,7 +139,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 6-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 7-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -736,6 +736,16 @@ fun AnswerSlot(
         modifier = Modifier
             .size(size)
             .scale(fillScale.value)
+            // CAPA 1: La base semi-opaca. La forma debe coincidir con la del borde.
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(4.dp)
+            )
+            // CAPA 2: El tinte sutil encima.
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(4.dp)
+            )
             .border(2.dp, borderColor, RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
