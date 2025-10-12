@@ -139,7 +139,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 5-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 6-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -468,14 +468,12 @@ fun QuestionImage(
                 .fillMaxSize()
                 // 1. FONDO con el color y la forma deseados.
                 .background(
-                    // Lógica condicional para el color:
-                    color = if (isSystemInDarkTheme()) {
-                        // Si el tema es oscuro, forzamos el fondo gris claro.
-                        LightGray
-                    } else {
-                        // Si el tema es claro, usamos el color por defecto del tema.
-                        MaterialTheme.colorScheme.surfaceContainer
-                    },
+                    color = LightGray,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                // CAPA 2: El tinte sutil encima
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.03f), // En este caso se hace mucho mas sutil para dar fuerza al lightgray en modo dia y noche
                     shape = RoundedCornerShape(12.dp)
                 )
                 // 2. BORDE que usa el color 'outline' de nuestro tema.
@@ -779,7 +777,11 @@ fun LetterBank(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp) // <-- Movemos el padding exterior aquí
-            .background( // 1. AÑADIMOS UN FONDO SUTIL
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .background(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(8.dp)
             )
@@ -1277,7 +1279,11 @@ fun ScoreAndDifficultyCard(
     Log.d("ScoreCard", "screenWidth: $screenWidth → fontSize: $cardFontSize, padding: $cardPadding")
 
     Card(
-        modifier = modifier,
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(12.dp)
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(12.dp),
