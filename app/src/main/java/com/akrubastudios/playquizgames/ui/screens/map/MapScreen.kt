@@ -106,7 +106,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.runBlocking
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 34-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 35-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -762,6 +762,9 @@ fun InteractiveWorldMap(
     var pathColorMap by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var countryPaths by remember { mutableStateOf<Map<String, android.graphics.Path>>(emptyMap()) }
 
+    var allParsedPaths by remember { mutableStateOf<Map<String, android.graphics.Path>>(emptyMap()) }
+    var allPathCoordinates by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+
     var pulseAlpha by remember { mutableStateOf(0.7f) }
 
     var lastToastTime by remember { mutableStateOf(0L) }
@@ -905,6 +908,32 @@ fun InteractiveWorldMap(
         }
     }
 
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                // 1. Extraer todos los IDs una sola vez
+                val allIds = extractAllCountryIdsFromSVG(context)
+
+                // 2. Extraer todas las coordenadas una sola vez
+                val coordinates = extractPathCoordinates(context, allIds)
+                allPathCoordinates = coordinates
+
+                // 3. Parsear TODOS los paths una sola vez
+                val parsed = mutableMapOf<String, android.graphics.Path>()
+                coordinates.forEach { (countryId, pathData) ->
+                    val path = android.graphics.Path()
+                    parsePathData(pathData, path)
+                    parsed[countryId] = path
+                }
+                allParsedPaths = parsed
+
+                Log.d("InteractiveWorldMap", "Paths parseados: ${parsed.size}")
+            } catch (e: Exception) {
+                Log.e("InteractiveWorldMap", "Error parseando paths iniciales", e)
+            }
+        }
+    }
+
     // Recalcular colores cuando cambien las listas
     LaunchedEffect(dominatedCountryIds, conqueredCountryIds, availableCountryIds, countries) {
         if (countries.isEmpty()) return@LaunchedEffect
@@ -925,20 +954,16 @@ fun InteractiveWorldMap(
         pathColorMap = newColorMap
     }
 
-    // MODIFICADO: Procesamiento mejorado sin flash
-    LaunchedEffect(svgDocument, pathColorMap) {
+    // REEMPLAZAR desde línea 443 hasta línea 544
+    LaunchedEffect(svgDocument, pathColorMap, allParsedPaths) {
         svgDocument?.let { svg ->
-            if (pathColorMap.isNotEmpty()) {
+            if (pathColorMap.isNotEmpty() && allParsedPaths.isNotEmpty()) {  // AÑADIDA CONDICIÓN
                 try {
-                    // NO limpiar processedSvgBitmap aquí para evitar flash
-                    // processedSvgBitmap = null  // <-- REMOVIDO
+                    // YA NO NECESITAS ESTAS LÍNEAS (ELIMINAR):
+                    // val allCountryIds = extractAllCountryIdsFromSVG(context)
+                    // val pathCoordinates = extractPathCoordinates(context, allCountryIds)
 
-                    // Primero extraer TODOS los países del SVG
-                    val allCountryIds = extractAllCountryIdsFromSVG(context)
-
-                    // Luego extraer las coordenadas de TODOS
-                    val pathCoordinates = extractPathCoordinates(context, allCountryIds)
-
+                    // USAR allParsedPaths en lugar de volver a parsear
                     if (!isActive) return@LaunchedEffect
 
                     val width = 1200
@@ -953,14 +978,13 @@ fun InteractiveWorldMap(
 
                     if (!isActive) return@LaunchedEffect
 
-                    // 1. Cargar todas las texturas una sola vez
+                    // Cargar texturas (esto queda igual)
                     val textureAvailable = BitmapFactory.decodeResource(context.resources, R.drawable.texture_available)
                     val textureConquered = BitmapFactory.decodeResource(context.resources, R.drawable.texture_conquered)
                     val textureDominated = BitmapFactory.decodeResource(context.resources, R.drawable.texture_dominated)
                     val textureLocked = BitmapFactory.decodeResource(context.resources, R.drawable.texture_locked)
                     val texturePaper = BitmapFactory.decodeResource(context.resources, R.drawable.old_paper_texture)
 
-                    // 2. Crear un mapa con los colores base para cada tipo
                     val colorMap = mapOf(
                         TextureType.AVAILABLE to availableColor,
                         TextureType.CONQUERED to conqueredColor,
@@ -968,7 +992,6 @@ fun InteractiveWorldMap(
                         TextureType.LOCKED to defaultColor
                     )
 
-                    // 3. Crear los "Pinceles" usando el nuevo sistema
                     val availablePaint = createTexturePaint(textureAvailable, TextureType.AVAILABLE, colorMap)
                     val conqueredPaint = createTexturePaint(textureConquered, TextureType.CONQUERED, colorMap)
                     val dominatedPaint = createTexturePaint(textureDominated, TextureType.DOMINATED, colorMap)
@@ -977,18 +1000,16 @@ fun InteractiveWorldMap(
 
                     val newCountryPaths = mutableMapOf<String, android.graphics.Path>()
 
+                    // CAMBIO PRINCIPAL: Usar allParsedPaths en lugar de parsear de nuevo
                     pathColorMap.forEach { (countryId, color) ->
-                        pathCoordinates[countryId]?.let { pathData ->
-                            // 3. Seleccionar el pincel correcto según el color/estado
+                        allParsedPaths[countryId]?.let { path ->  // USAR PATH YA PARSEADO
                             val paintToUse = when (color) {
                                 dominatedColor -> dominatedPaint
                                 conqueredColor -> conqueredPaint
                                 availableColor -> availablePaint
-                                else -> lockedPaint // defaultColor
+                                else -> lockedPaint
                             }
 
-                            val path = android.graphics.Path()
-                            parsePathData(pathData, path)
                             newCountryPaths[countryId] = path
                             canvas.drawPath(path, paintToUse)
 
@@ -1005,23 +1026,19 @@ fun InteractiveWorldMap(
                         }
                     }
 
-                    // Dibujar textura en países sin contenido (esta lógica no cambia)
-                    pathCoordinates.keys.forEach { countryId ->
+                    // Dibujar países decorativos (papel)
+                    allParsedPaths.keys.forEach { countryId ->  // USAR allParsedPaths
                         if (!pathColorMap.containsKey(countryId)) {
-                            pathCoordinates[countryId]?.let { pathData ->
-                                val path = android.graphics.Path()
-                                parsePathData(pathData, path)
+                            allParsedPaths[countryId]?.let { path ->  // USAR PATH YA PARSEADO
                                 canvas.drawPath(path, paperPaint)
                             }
                         }
                     }
 
                     if (isActive) {
-                        // ACTUALIZAR TODO ATOMICAMENTE para evitar estados inconsistentes
                         processedSvgBitmap = bitmap
                         countryPaths = newCountryPaths
 
-                        // MARCAR COMO LISTO SOLO CUANDO TODO ESTÉ PROCESADO
                         if (isInitialProcessing) {
                             isMapReady = true
                             isInitialProcessing = false
@@ -1169,17 +1186,6 @@ fun InteractiveWorldMap(
             }
             // Vignette Dinámico
             OceanVignette(modifier = Modifier.fillMaxSize())
-        }
-
-        // 1. Creamos un estado para guardar las coordenadas de TODOS los países
-        var allPathCoordinates by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-
-        // 2. Usamos LaunchedEffect para calcularlas UNA SOLA VEZ en segundo plano
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
-                val allIds = extractAllCountryIdsFromSVG(context)
-                allPathCoordinates = extractPathCoordinates(context, allIds)
-            }
         }
 
         // CAPA 2: Mapa en canvas original

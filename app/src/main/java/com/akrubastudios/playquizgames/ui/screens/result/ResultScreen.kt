@@ -91,9 +91,11 @@ fun ResultScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    TextWithBorder(
+                    TextWithBorder( // Esta tecnica deberia centrar siempre siempre los textwithborders
                         text = title,
-                        style = MaterialTheme.typography.headlineLarge, // Ya no necesita el .copy()
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            textAlign = TextAlign.Center
+                        ),
                         borderColor = Color.White,
                         borderWidth = 4f
                         // El modifier.fillMaxWidth() se quita de aquí
