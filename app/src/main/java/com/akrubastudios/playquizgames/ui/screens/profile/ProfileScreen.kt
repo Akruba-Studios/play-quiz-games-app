@@ -42,9 +42,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +55,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -76,8 +79,9 @@ import com.akrubastudios.playquizgames.ui.components.getButtonTextColor
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class) // Control: 4-PS
+@OptIn(ExperimentalMaterial3Api::class) // Control: 5-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -378,6 +382,17 @@ private fun ProfileHeader(
     imageSize: Dp,
     onImageClick: () -> Unit // <-- Añadimos el nuevo parámetro
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1.0f, // Se encoge un 5% al presionar
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "avatarPressScale"
+    )
+
     val infiniteTransition = rememberInfiniteTransition(label = "avatarBorderAnimation")
     // Animamos un valor de 0f a 360f para representar la rotación
     val rotation by infiniteTransition.animateFloat(
@@ -407,10 +422,18 @@ private fun ProfileHeader(
         Box(
             modifier = Modifier
                 .size(imageSize)
+                .scale(pressScale)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = { onImageClick() }
+                    onClick = {
+                        scope.launch {
+                            isPressed = true
+                            delay(150) // Duración del estado "presionado"
+                            isPressed = false
+                        }
+                        onImageClick() // Llamamos a la acción original
+                    }
                 ),
             contentAlignment = Alignment.Center
         ) {
