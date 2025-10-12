@@ -139,7 +139,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 4-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 5-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -191,172 +191,181 @@ fun GameScreen(
         }
     }
 
-    // Column apila los elementos verticalmente.
-    // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
-    ) {
-        // NUEVO: Pantalla de precarga de imágenes
-        if (uiState.isPreloadingImages) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+    GameScreenBackground(visualTheme = uiState.visualTheme) {
+        // Column apila los elementos verticalmente.
+        // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
+        ) {
+            // NUEVO: Pantalla de precarga de imágenes
+            if (uiState.isPreloadingImages) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.loading_images),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            } else if (uiState.isLoading) {
+                // Mantenemos el indicador de carga mientras los datos no estén listos.
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.loading_images),
-                        style = MaterialTheme.typography.bodyLarge
+                }
+            } else {
+                // Reemplaza el texto con esta llamada
+                TopBar(
+                    questionNumber = uiState.questionNumber,
+                    totalQuestions = uiState.totalQuestions,
+                    score = uiState.score,
+                    remainingTime = uiState.remainingTime,
+                    difficulty = uiState.difficulty,
+                    questionResults = uiState.questionResults,
+                    timerExplosion = uiState.timerExplosion,
+                    isFunFactButtonEnabled = !uiState.isFunFactUsedInRound || uiState.areFunFactsUnlockedForLevel,
+                    onFunFactClick = { viewModel.onFunFactClicked() },
+                    currentGems = uiState.currentGems,
+                    onGemsClick = { viewModel.openHelpsSheet() }
+                )
+                // Usamos !! porque en este punto, sabemos que currentQuestion no es null
+                QuestionImage(
+                    imageUrl = uiState.currentQuestion!!.imageUrl,
+                    imageLoader = viewModel.imageLoader,
+                    // Le damos un "peso" para que ocupe una parte proporcional del espacio vertical.
+                    modifier = Modifier
+                )
+
+                QuestionText(
+                    text = uiState.questionText,
+                    showTransition = uiState.questionTransition,
+                    remainingTime = uiState.remainingTime,
+                    modifier = Modifier.padding(
+                        horizontal = 16.dp,
+                        vertical = 4.dp
+                    ) // Vertical 4dp, espacio arriba y abajo de la pregunta
+                )
+
+                AnswerSlots(
+                    correctAnswer = uiState.currentCorrectAnswer,
+                    userAnswer = uiState.userAnswer,
+                    onClear = { viewModel.clearUserAnswer() },
+                    showCorrectAnimation = uiState.showCorrectAnimation,
+                    showIncorrectAnimation = uiState.showIncorrectAnimation,
+                    showClearAnimation = uiState.showClearAnimation,
+                    revealedLetterPositions = uiState.revealedLetterPositions
+                )
+                BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                    val availableHeight = this@BoxWithConstraints.maxHeight
+                    val availableWidth = this@BoxWithConstraints.maxWidth
+
+                    LetterBank(
+                        hintLetters = uiState.generatedHintLetters,
+                        usedIndices = uiState.usedLetterIndices,
+                        difficulty = uiState.difficulty,
+                        availableHeight = availableHeight,
+                        availableWidth = availableWidth,
+                        onLetterClick = { letter, index ->
+                            viewModel.onLetterClick(letter, index)
+                        }
                     )
                 }
             }
-        } else if (uiState.isLoading) {
-            // Mantenemos el indicador de carga mientras los datos no estén listos.
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            if (uiState.showHelpsSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { viewModel.closeHelpsSheet() },
+                    sheetState = sheetState,
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    // Contenido provisional para las ayudas
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido
+                    ) {
+                        // 1. AÑADIMOS EL TÍTULO
+                        Text(
+                            text = stringResource(R.string.helps_menu_title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        if (uiState.isProcessingHelp) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(100.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        } else {
+                            val revealLetterCost =
+                                GameViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * GameViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
+                            HelpItem(
+                                icon = Icons.Default.VpnKey,
+                                title = stringResource(R.string.help_item_reveal_letter_title),
+                                description = stringResource(R.string.help_item_reveal_letter_description),
+                                cost = revealLetterCost,
+                                currentGems = uiState.currentGems,
+                                isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
+                                onClick = { viewModel.useRevealLetterHelp() }
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            HelpItem(
+                                icon = Icons.Default.Timer,
+                                title = stringResource(R.string.help_item_extra_time_title),
+                                description = stringResource(
+                                    R.string.help_item_extra_time_description,
+                                    GameViewModel.HELP_EXTRA_TIME_SECONDS
+                                ),
+                                cost = GameViewModel.HELP_EXTRA_TIME_COST,
+                                currentGems = uiState.currentGems,
+                                isUsed = uiState.isExtraTimeUsed,
+                                onClick = { viewModel.useExtraTimeHelp() }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                }
             }
-        } else {
-            // Reemplaza el texto con esta llamada
-            TopBar(
-                questionNumber = uiState.questionNumber,
-                totalQuestions = uiState.totalQuestions,
-                score = uiState.score,
-                remainingTime = uiState.remainingTime,
-                difficulty = uiState.difficulty,
-                questionResults = uiState.questionResults,
-                timerExplosion = uiState.timerExplosion,
-                isFunFactButtonEnabled = !uiState.isFunFactUsedInRound || uiState.areFunFactsUnlockedForLevel,
-                onFunFactClick = { viewModel.onFunFactClicked() },
-                currentGems = uiState.currentGems,
-                onGemsClick = { viewModel.openHelpsSheet() }
-            )
-            // Usamos !! porque en este punto, sabemos que currentQuestion no es null
-            QuestionImage(
-                imageUrl = uiState.currentQuestion!!.imageUrl,
-                imageLoader = viewModel.imageLoader,
-                // Le damos un "peso" para que ocupe una parte proporcional del espacio vertical.
-                modifier = Modifier
-            )
+            if (uiState.showFunFactTutorialDialog) {
+                AppAlertDialog(
+                    onDismissRequest = { viewModel.funFactTutorialShown() },
+                    title = stringResource(R.string.fun_fact_tutorial_title),
+                    text = stringResource(R.string.fun_fact_tutorial_message),
+                    confirmButtonText = stringResource(R.string.dialog_button_ok)
+                )
+            }
 
-            QuestionText(
-                text = uiState.questionText,
-                showTransition = uiState.questionTransition,
-                remainingTime = uiState.remainingTime,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp) // Vertical 4dp, espacio arriba y abajo de la pregunta
-            )
-
-            AnswerSlots(
-                correctAnswer = uiState.currentCorrectAnswer,
-                userAnswer = uiState.userAnswer,
-                onClear = { viewModel.clearUserAnswer() },
-                showCorrectAnimation = uiState.showCorrectAnimation,
-                showIncorrectAnimation = uiState.showIncorrectAnimation,
-                showClearAnimation = uiState.showClearAnimation,
-                revealedLetterPositions = uiState.revealedLetterPositions
-            )
-            BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                val availableHeight = this@BoxWithConstraints.maxHeight
-                val availableWidth = this@BoxWithConstraints.maxWidth
-
-                LetterBank(
-                    hintLetters = uiState.generatedHintLetters,
-                    usedIndices = uiState.usedLetterIndices,
-                    difficulty = uiState.difficulty,
-                    availableHeight = availableHeight,
-                    availableWidth = availableWidth,
-                    onLetterClick = { letter, index ->
-                        viewModel.onLetterClick(letter, index)
+            // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
+            if (uiState.showFunFactDialog) {
+                AppAlertDialog(
+                    onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
+                    title = { DialogTitle(text = stringResource(R.string.fun_fact_title)) },
+                    text = { DialogText(text = uiState.currentFunFact) },
+                    confirmButton = {
+                        val buttonIconColor = getButtonTextColor()
+                        IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.cd_close),
+                                // Aplicamos el color al 'tint' del icono
+                                tint = buttonIconColor
+                            )
+                        }
                     }
                 )
             }
-        }
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        if (uiState.showHelpsSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { viewModel.closeHelpsSheet() },
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.background
-            ) {
-                // Contenido provisional para las ayudas
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido
-                ) {
-                    // 1. AÑADIMOS EL TÍTULO
-                    Text(
-                        text = stringResource(R.string.helps_menu_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    if (uiState.isProcessingHelp) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(100.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    } else {
-                        val revealLetterCost = GameViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * GameViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
-                        HelpItem(
-                            icon = Icons.Default.VpnKey,
-                            title = stringResource(R.string.help_item_reveal_letter_title),
-                            description = stringResource(R.string.help_item_reveal_letter_description),
-                            cost = revealLetterCost,
-                            currentGems = uiState.currentGems,
-                            isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
-                            onClick = { viewModel.useRevealLetterHelp() }
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        HelpItem(
-                            icon = Icons.Default.Timer,
-                            title = stringResource(R.string.help_item_extra_time_title),
-                            description = stringResource(R.string.help_item_extra_time_description, GameViewModel.HELP_EXTRA_TIME_SECONDS),
-                            cost = GameViewModel.HELP_EXTRA_TIME_COST,
-                            currentGems = uiState.currentGems,
-                            isUsed = uiState.isExtraTimeUsed,
-                            onClick = { viewModel.useExtraTimeHelp() }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(32.dp))
-                }
-            }
-        }
-        if (uiState.showFunFactTutorialDialog) {
-            AppAlertDialog(
-                onDismissRequest = { viewModel.funFactTutorialShown() },
-                title = stringResource(R.string.fun_fact_tutorial_title),
-                text = stringResource(R.string.fun_fact_tutorial_message),
-                confirmButtonText = stringResource(R.string.dialog_button_ok)
-            )
-        }
-
-        // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
-        if (uiState.showFunFactDialog) {
-            AppAlertDialog(
-                onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
-                title = { DialogTitle(text = stringResource(R.string.fun_fact_title)) },
-                text = { DialogText(text = uiState.currentFunFact) },
-                confirmButton = {
-                    val buttonIconColor = getButtonTextColor()
-                    IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = stringResource(R.string.cd_close),
-                            // Aplicamos el color al 'tint' del icono
-                            tint = buttonIconColor
-                        )
-                    }
-                }
-            )
         }
     }
 }

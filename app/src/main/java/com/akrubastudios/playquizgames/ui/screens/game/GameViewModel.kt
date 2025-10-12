@@ -36,6 +36,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import coil.request.CachePolicy
+import com.akrubastudios.playquizgames.domain.models.toParsed
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -53,6 +54,7 @@ class GameViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     val imageLoader: ImageLoader
 ) : ViewModel() {
+    private val archetypeRegistry = com.akrubastudios.playquizgames.ui.screens.boss.background.ArchetypeRegistry()
     val levelId: String = savedStateHandle.get<String>("levelId")!!
     val countryId: String = savedStateHandle.get<String>("countryId")!!
     val difficulty: String = savedStateHandle.get<String>("difficulty")!!
@@ -141,6 +143,22 @@ class GameViewModel @Inject constructor(
             val loadedLevel = levelRequest.await()
             previousBestStars = bestScoreRequest.await()
 
+            // En paralelo, cargamos también el tema visual del país.
+            // Usamos un bloque 'async' para que se ejecute al mismo tiempo que las otras peticiones.
+            val visualThemeRequest = async {
+                // Solo cargamos el tema si estamos en un contexto de país real (no en modo libre)
+                if (countryId != "freemode") {
+                    repository.getCountryVisualTheme(countryId)
+                } else {
+                    null // En modo libre no hay tema específico.
+                }
+            }
+
+            // Esperamos a que la petición del tema termine.
+            val countryVisualTheme = visualThemeRequest.await()
+            // Procesamos el tema para convertirlo en un objeto que la UI pueda usar.
+            val parsedTheme = countryVisualTheme?.toParsed(archetypeRegistry)
+
             if (loadedLevel != null) {
                 levelPackage = loadedLevel // Guardamos el nivel cargado
                 shuffledQuestions = loadedLevel.questions.shuffled()
@@ -163,7 +181,7 @@ class GameViewModel @Inject constructor(
                     Log.d("GameViewModel_Precache", "✅ TODAS las imágenes precargadas en ${totalTime}ms")
 
                     // Ocultar loading
-                    _uiState.update { it.copy(isPreloadingImages = false) }
+                    // _uiState.update { it.copy(isPreloadingImages = false) }
                 }
 
                 val firstQuestion = shuffledQuestions[currentQuestionIndex]
@@ -182,6 +200,7 @@ class GameViewModel @Inject constructor(
                 _uiState.update { currentState ->
                     currentState.copy(
                         isLoading = false,
+                        isPreloadingImages = false,
                         currentQuestion = firstQuestion,
                         totalQuestions = shuffledQuestions.size,
                         currentCorrectAnswer = correctAnswerForUi,
@@ -192,7 +211,8 @@ class GameViewModel @Inject constructor(
                         questionResults = List(loadedLevel.questions.size) { null }, // Crear lista del tamaño correcto
                         areFunFactsUnlockedForLevel = areFactsUnlocked,
                         hasSeenFunFactTutorial = userData?.hasSeenFunFactTutorial ?: true,
-                        currentGems = userData?.gems ?: 0
+                        currentGems = userData?.gems ?: 0,
+                        visualTheme = parsedTheme
                     )
                 }
                 startTimer()

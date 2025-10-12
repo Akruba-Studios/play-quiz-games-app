@@ -35,4 +35,5 @@ data class GameState(
     val revealedLetterPositions: Set<Int> = emptySet(), // Letras reveladas
     val isExtraTimeUsed: Boolean = false,
     val isPreloadingImages: Boolean = false,
+    val visualTheme: com.akrubastudios.playquizgames.domain.models.ParsedVisualTheme? = null
 )
