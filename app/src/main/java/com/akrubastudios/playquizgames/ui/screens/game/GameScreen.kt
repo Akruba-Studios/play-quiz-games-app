@@ -142,7 +142,7 @@ import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 10-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 11-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -194,44 +194,45 @@ fun GameScreen(
         }
     }
 
-    GameScreenBackground(
-        visualTheme = uiState.visualTheme,
-        questionNumber = uiState.questionNumber,
-        totalQuestions = uiState.totalQuestions
-    ) {
-        // Column apila los elementos verticalmente.
-        // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
+    // NUEVO: Pantalla de precarga de imágenes
+    if (uiState.isPreloadingImages) {
+        ScreenBackground(
+            backgroundUrl = AppConstants.MENU_BACKGROUND_URL, // Reutilizamos una imagen genérica
+            imageLoader = viewModel.imageLoader,
+            imageAlpha = 0.6f,
+            scrimAlpha = 0.75f
         ) {
-            // NUEVO: Pantalla de precarga de imágenes
-            if (uiState.isPreloadingImages) {
-                ScreenBackground(
-                    backgroundUrl = AppConstants.MENU_BACKGROUND_URL, // Reutilizamos una imagen genérica
-                    imageLoader = viewModel.imageLoader,
-                    imageAlpha = 0.6f,
-                    scrimAlpha = 0.75f
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(R.string.loading_images),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.loading_images),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-            } else if (uiState.isLoading) {
+            }
+        }
+    } else {
+        GameScreenBackground(
+            visualTheme = uiState.visualTheme,
+            questionNumber = uiState.questionNumber,
+            totalQuestions = uiState.totalQuestions
+        ) {
+            // Column apila los elementos verticalmente.
+            // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
+            ) {
+                if (uiState.isLoading) {
                 // Mantenemos el indicador de carga mientras los datos no estén listos.
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -297,89 +298,90 @@ fun GameScreen(
                     )
                 }
             }
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            if (uiState.showHelpsSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { viewModel.closeHelpsSheet() },
-                    sheetState = sheetState,
-                    containerColor = MaterialTheme.colorScheme.background
-                ) {
-                    // Contenido provisional para las ayudas
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido
+                val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                if (uiState.showHelpsSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { viewModel.closeHelpsSheet() },
+                        sheetState = sheetState,
+                        containerColor = MaterialTheme.colorScheme.background
                     ) {
-                        // 1. AÑADIMOS EL TÍTULO
-                        Text(
-                            text = stringResource(R.string.helps_menu_title),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        if (uiState.isProcessingHelp) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().height(100.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        } else {
-                            val revealLetterCost =
-                                GameViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * GameViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
-                            HelpItem(
-                                icon = Icons.Default.VpnKey,
-                                title = stringResource(R.string.help_item_reveal_letter_title),
-                                description = stringResource(R.string.help_item_reveal_letter_description),
-                                cost = revealLetterCost,
-                                currentGems = uiState.currentGems,
-                                isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
-                                onClick = { viewModel.useRevealLetterHelp() }
+                        // Contenido provisional para las ayudas
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally // Centra el contenido
+                        ) {
+                            // 1. AÑADIMOS EL TÍTULO
+                            Text(
+                                text = stringResource(R.string.helps_menu_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.padding(bottom = 16.dp)
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            if (uiState.isProcessingHelp) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            } else {
+                                val revealLetterCost =
+                                    GameViewModel.HELP_REVEAL_LETTER_COST_INITIAL + (uiState.revealLetterUses * GameViewModel.HELP_REVEAL_LETTER_COST_INCREMENT)
+                                HelpItem(
+                                    icon = Icons.Default.VpnKey,
+                                    title = stringResource(R.string.help_item_reveal_letter_title),
+                                    description = stringResource(R.string.help_item_reveal_letter_description),
+                                    cost = revealLetterCost,
+                                    currentGems = uiState.currentGems,
+                                    isUsed = uiState.userAnswer.length >= uiState.currentCorrectAnswer.count { it.isLetter() },
+                                    onClick = { viewModel.useRevealLetterHelp() }
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                            HelpItem(
-                                icon = Icons.Default.Timer,
-                                title = stringResource(R.string.help_item_extra_time_title),
-                                description = stringResource(
-                                    R.string.help_item_extra_time_description,
-                                    GameViewModel.HELP_EXTRA_TIME_SECONDS
-                                ),
-                                cost = GameViewModel.HELP_EXTRA_TIME_COST,
-                                currentGems = uiState.currentGems,
-                                isUsed = uiState.isExtraTimeUsed,
-                                onClick = { viewModel.useExtraTimeHelp() }
-                            )
+                                HelpItem(
+                                    icon = Icons.Default.Timer,
+                                    title = stringResource(R.string.help_item_extra_time_title),
+                                    description = stringResource(
+                                        R.string.help_item_extra_time_description,
+                                        GameViewModel.HELP_EXTRA_TIME_SECONDS
+                                    ),
+                                    cost = GameViewModel.HELP_EXTRA_TIME_COST,
+                                    currentGems = uiState.currentGems,
+                                    isUsed = uiState.isExtraTimeUsed,
+                                    onClick = { viewModel.useExtraTimeHelp() }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(32.dp))
                         }
-                        Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
-            }
-            if (uiState.showFunFactTutorialDialog) {
-                AppAlertDialog(
-                    onDismissRequest = { viewModel.funFactTutorialShown() },
-                    title = stringResource(R.string.fun_fact_tutorial_title),
-                    text = stringResource(R.string.fun_fact_tutorial_message),
-                    confirmButtonText = stringResource(R.string.dialog_button_ok)
-                )
-            }
+                if (uiState.showFunFactTutorialDialog) {
+                    AppAlertDialog(
+                        onDismissRequest = { viewModel.funFactTutorialShown() },
+                        title = stringResource(R.string.fun_fact_tutorial_title),
+                        text = stringResource(R.string.fun_fact_tutorial_message),
+                        confirmButtonText = stringResource(R.string.dialog_button_ok)
+                    )
+                }
 
-            // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
-            if (uiState.showFunFactDialog) {
-                AppAlertDialog(
-                    onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
-                    title = { DialogTitle(text = stringResource(R.string.fun_fact_title)) },
-                    text = { DialogText(text = uiState.currentFunFact) },
-                    confirmButton = {
-                        val buttonIconColor = getButtonTextColor()
-                        IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.cd_close),
-                                // Aplicamos el color al 'tint' del icono
-                                tint = buttonIconColor
-                            )
+                // Añadimos el diálogo aquí, dentro del Column pero fuera del 'else'.
+                if (uiState.showFunFactDialog) {
+                    AppAlertDialog(
+                        onDismissRequest = { /* No hacer nada para forzar el clic en la X */ },
+                        title = { DialogTitle(text = stringResource(R.string.fun_fact_title)) },
+                        text = { DialogText(text = uiState.currentFunFact) },
+                        confirmButton = {
+                            val buttonIconColor = getButtonTextColor()
+                            IconButton(onClick = { viewModel.onFunFactDialogDismissed() }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.cd_close),
+                                    // Aplicamos el color al 'tint' del icono
+                                    tint = buttonIconColor
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
