@@ -43,6 +43,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.Dispatchers
@@ -82,8 +83,10 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -103,7 +106,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.runBlocking
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 32-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 33-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,6 +312,7 @@ fun MapScreen(
                         conqueredCountryIds = uiState.conqueredCountryIds,
                         dominatedCountryIds = uiState.dominatedCountryIds,
                         availableCountryIds = uiState.availableCountryIds,
+                        oceanQuality = uiState.oceanQuality,
                         onCountryClick = { countryId ->
                             navController.navigate(
                                 Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
@@ -687,6 +691,7 @@ fun InteractiveWorldMap(
     conqueredCountryIds: List<String>,
     dominatedCountryIds: List<String>,
     availableCountryIds: List<String>,
+    oceanQuality: String,
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1112,33 +1117,59 @@ fun InteractiveWorldMap(
 
     // Nueva estructura con capas separadas
     Box(modifier = modifier.fillMaxSize()) {
-        // CAPA 1: FONDO DE VIDEO
-        VideoBackground(
-            videoResId = R.raw.ocean_background,
-            modifier = Modifier.fillMaxSize()
-        )
-        // CAPA 1.5: Gradient overlay
-        // OceanGradientOverlay(modifier = Modifier.fillMaxSize()) // Gradient Overlay Animado
 
-        // CAPA 1.6: Efectos especulares
-        // OceanSpecularEffect(modifier = Modifier.fillMaxSize()) // Brillo Especular Animado
-
-        // CAPA 1.7: Vignette
-        OceanVignette(modifier = Modifier.fillMaxSize()) // Vignette Dinámico
-
-        // CAPA 1.8: Partículas Flotantes
-        OceanBubblesEffect(modifier = Modifier.fillMaxSize()) // Particulas Flotantes
-
-        // CAPA 1.9: Rayos de Luz
-        // OceanGodRaysEffect(modifier = Modifier.fillMaxSize()) // Rayos de luz penetrando el agua
-
-        // CAPA 1.10: Color Grading Dinámico
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawRect(color = timeBasedTint)
+        // CAPA 1: Fondos y Efectos del Océano (Renderizado Condicional)
+        // Primero, creamos un composable reutilizable para el fondo estático.
+        val staticOceanBackground = @Composable {
+            Image(
+                painter = painterResource(id = R.drawable.ocean_background_static),
+                contentDescription = "Ocean Background",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         }
 
-        // CAPA 1.11: Niebla Flotante
-        // OceanMistEffect(modifier = Modifier.fillMaxSize()) // Neblina atmosférica
+        when (oceanQuality) {
+            "VERY_HIGH" -> {
+                VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
+                // CAPA 1.1: Partículas Flotantes
+                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+
+                // CAPA 1.2: Niebla Flotante
+                // OceanMistEffect(modifier = Modifier.fillMaxSize())
+
+                // CAPA 1.3: Rayos de Luz
+                // OceanGodRaysEffect(modifier = Modifier.fillMaxSize())
+
+                // CAPA 1.4: Gradient overlay
+                // OceanGradientOverlay(modifier = Modifier.fillMaxSize()) // Gradient Overlay Animado
+
+                // CAPA 1.5: Efectos especulares
+                // OceanSpecularEffect(modifier = Modifier.fillMaxSize()) // Brillo Especular Animado
+            }
+            "HIGH" -> {
+                VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
+                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+            }
+            "MEDIUM" -> {
+                staticOceanBackground()
+                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+            }
+            "LOW" -> {
+                staticOceanBackground()
+                // No se renderizan más efectos.
+            }
+        }
+
+        // Efectos que se aplican a casi todos los niveles (excepto los más bajos si fuera necesario)
+        if (oceanQuality in listOf("VERY_HIGH", "HIGH", "MEDIUM")) {
+            // Color Grading Dinámico
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawRect(color = timeBasedTint)
+            }
+            // Vignette Dinámico
+            OceanVignette(modifier = Modifier.fillMaxSize())
+        }
 
         // 1. Creamos un estado para guardar las coordenadas de TODOS los países
         var allPathCoordinates by remember { mutableStateOf<Map<String, String>>(emptyMap()) }

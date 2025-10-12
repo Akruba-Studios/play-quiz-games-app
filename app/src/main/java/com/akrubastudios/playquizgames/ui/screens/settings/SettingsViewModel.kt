@@ -28,7 +28,8 @@ data class SettingsState(
     val areSfxEnabled: Boolean = true,
     val sfxVolume: Float = 1.0f,
     val currentLanguageCode: String = "es", // Añadimos el idioma actual
-    val musicVolume: Float = 1.0f
+    val musicVolume: Float = 1.0f,
+    val oceanQuality: String = "HIGH"
 )
 
 @HiltViewModel
@@ -79,6 +80,11 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(sfxVolume = volume) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.oceanQualityFlow.collect { quality ->
+                _uiState.update { it.copy(oceanQuality = quality) }
+            }
+        }
     }
 
     /**
@@ -118,5 +124,11 @@ class SettingsViewModel @Inject constructor(
         // Actualizamos la UI inmediatamente para que el slider sea fluido
         _uiState.update { it.copy(sfxVolume = volume) }
         soundManager.setSfxVolume(volume)
+    }
+
+    fun onOceanQualitySelected(quality: String) {
+        viewModelScope.launch {
+            settingsRepository.saveOceanQuality(quality)
+        }
     }
 }

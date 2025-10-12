@@ -220,20 +220,17 @@
 
     <string name="settings_graphics_section">Gráficos</string>
     <string name="settings_graphics_quality">Calidad del Océano</string>
-    <string name="settings_quality_dialog_title">Calidad Gráfica Océano</string>
-    <string name="settings_quality_tier_very_low">Muy Baja: Mínimo uso de recursos</string>
-    <string name="settings_quality_tier_low">Baja: Uso eficiente de recursos</string>
-    <string name="settings_quality_tier_medium">Media: Consumo moderado de recursos</string>
-    <string name="settings_quality_tier_high">Alta: Alto consumo de recursos</string>
-    <string name="settings_quality_tier_auto">Automático</string>
-    <string name="settings_auto_adjust">Calidad Automática</string>
+    <string name="settings_quality_dialog_title">Seleccionar Calidad</string>
+    <string name="settings_quality_tier_very_high">Muy Alta: Océano Animado &amp; Efectos Climáticos</string>
+    <string name="settings_quality_tier_high">Alta: Océano Animado &amp; Efectos Día/Noche</string>
+    <string name="settings_quality_tier_medium">Media: Océano Estático &amp; Efectos Día/Noche</string>
+    <string name="settings_quality_tier_low">Baja: Solo Océano Estático (Alto Rendimiento)</string>
 
-    <string name="settings_quality_tier_very_low_A">Muy Baja</string>
-    <string name="settings_quality_tier_low_B">Baja</string>
-    <string name="settings_quality_tier_medium_C">Media</string>
-    <string name="settings_quality_tier_high_D">Alta</string>
-    <string name="settings_quality_tier_ultra_E">Ultra</string>
-    <string name="settings_quality_tier_emergency">Emergencia</string>
+    <!-- Strings cortos para mostrar en la fila de ajustes -->
+    <string name="settings_quality_tier_very_high_short">Muy Alta</string>
+    <string name="settings_quality_tier_high_short">Alta</string>
+    <string name="settings_quality_tier_medium_short">Media</string>
+    <string name="settings_quality_tier_low_short">Baja</string>
 
     <string name="settings_advanced_options">Opciones Avanzadas…</string>
     <string name="settings_advanced_dialog_title">Ajustes de Rendimiento Avanzado</string>

@@ -110,11 +110,9 @@ fun SettingsScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // --- INICIO DE LA CORRECCIÓN ---
                 // 1. Obtenemos el texto del string UNA SOLA VEZ aquí, en el contexto Composable.
                 val featureNotAvailableText = stringResource(R.string.feature_not_available)
                 val creditsText = stringResource(R.string.credits_toast_text)
-                // --- FIN DE LA CORRECCIÓN ---
 
                 // <-- NUEVO: Sección de Idioma -->
                 SectionTitle(stringResource(R.string.settings_language_section))
@@ -179,6 +177,15 @@ fun SettingsScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
 
+                SectionTitle(stringResource(R.string.settings_graphics_section))
+                ClickableValueRow(
+                    title = stringResource(R.string.settings_graphics_quality),
+                    value = qualityCodeToName(uiState.oceanQuality),
+                    onClick = { showQualityDialog = true }
+                )
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+
                 // Sección Legal y Créditos
                 SectionTitle(stringResource(R.string.settings_info_section))
                 ClickableRow(title = stringResource(R.string.settings_privacy_policy)) {
@@ -197,6 +204,15 @@ fun SettingsScreen(
             onLanguageSelected = { langCode ->
                 viewModel.onLanguageSelected(langCode)
                 showLanguageDialog = false // Cerramos el diálogo después de seleccionar
+            }
+        )
+    }
+    if (showQualityDialog) {
+        QualitySelectionDialog(
+            onDismiss = { showQualityDialog = false },
+            onQualitySelected = { qualityCode ->
+                viewModel.onOceanQualitySelected(qualityCode)
+                showQualityDialog = false
             }
         )
     }
@@ -329,5 +345,81 @@ private fun ClickableRow(title: String, value: String, onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.secondary,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+/**
+ * Una fila clicable que muestra un título a la izquierda y un valor a la derecha.
+ */
+@Composable
+private fun ClickableValueRow(title: String, value: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/**
+ * Diálogo para que el usuario seleccione el nivel de calidad gráfica.
+ */
+@Composable
+private fun QualitySelectionDialog(
+    onDismiss: () -> Unit,
+    onQualitySelected: (String) -> Unit
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { DialogTitle(text = stringResource(R.string.settings_quality_dialog_title)) },
+        text = {
+            Column {
+                val qualityOptions = mapOf(
+                    "VERY_HIGH" to stringResource(R.string.settings_quality_tier_very_high),
+                    "HIGH" to stringResource(R.string.settings_quality_tier_high),
+                    "MEDIUM" to stringResource(R.string.settings_quality_tier_medium),
+                    "LOW" to stringResource(R.string.settings_quality_tier_low)
+                )
+
+                qualityOptions.forEach { (code, name) ->
+                    Text(
+                        text = name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onQualitySelected(code) }
+                            .padding(vertical = 12.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                DialogButtonText(text = stringResource(R.string.dialog_button_cancel))
+            }
+        }
+    )
+}
+
+/**
+ * Convierte el código de calidad (ej. "HIGH") a su nombre corto traducible (ej. "Alta").
+ */
+@Composable
+private fun qualityCodeToName(code: String): String {
+    return when (code) {
+        "VERY_HIGH" -> stringResource(R.string.settings_quality_tier_very_high_short)
+        "HIGH" -> stringResource(R.string.settings_quality_tier_high_short)
+        "MEDIUM" -> stringResource(R.string.settings_quality_tier_medium_short)
+        "LOW" -> stringResource(R.string.settings_quality_tier_low_short)
+        else -> code // Fallback
     }
 }

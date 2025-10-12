@@ -31,6 +31,7 @@ class SettingsRepository @Inject constructor(
         val MUSIC_VOLUME_KEY = floatPreferencesKey("music_volume")
         val SFX_ENABLED_KEY = booleanPreferencesKey("sfx_enabled")
         val SFX_VOLUME_KEY = floatPreferencesKey("sfx_volume")
+        val OCEAN_QUALITY_KEY = stringPreferencesKey("ocean_quality")
     }
 
     val languagePreferenceFlow: Flow<String> = dataStore.data
@@ -111,6 +112,16 @@ class SettingsRepository @Inject constructor(
         Log.d("LanguageDebug", "[PASO 3] SettingsRepository: Guardando '$languageCode' en DataStore.")
         dataStore.edit { preferences ->
             preferences[LANGUAGE_KEY] = languageCode
+        }
+    }
+
+    val oceanQualityFlow: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[OCEAN_QUALITY_KEY] ?: "HIGH" // Valor por defecto "HIGH"
+        }
+    suspend fun saveOceanQuality(quality: String) {
+        dataStore.edit { preferences ->
+            preferences[OCEAN_QUALITY_KEY] = quality
         }
     }
 }

@@ -66,7 +66,8 @@ data class MapState( // Control: 5-MVM
     val isRewardCooldownActive: Boolean = false,
     val rewardCooldownSeconds: Int = 0,
     val showRewardDialog: Boolean = false,
-    val isRewardFeatureUnlocked: Boolean = false
+    val isRewardFeatureUnlocked: Boolean = false,
+    val oceanQuality: String = "HIGH"
 )
 
 @HiltViewModel
@@ -122,7 +123,13 @@ class MapViewModel @Inject constructor(
             // Carga la lista de países una sola vez, ya que es estática.
             val countryList = gameDataRepository.getCountryList()
 
-            gameDataRepository.userStateFlow.collect { userData ->
+            // Combinamos el flujo del usuario con el de la calidad del océano
+            combine(
+                gameDataRepository.userStateFlow,
+                settingsRepository.oceanQualityFlow
+            ) { userData, quality ->
+                Pair(userData, quality) // Creamos un par con ambos valores
+            }.collect { (userData, oceanQuality) ->
 
                 val dismissedLevel = settingsRepository.dismissedExpeditionLevelFlow.first()
 
@@ -237,7 +244,8 @@ class MapViewModel @Inject constructor(
                         showDominationRewardsSheet = showDominationSheet,
                         hasProfileNotification = hasNotification,
                         gems = userData.gems,
-                        isRewardFeatureUnlocked = isRewardUnlocked
+                        isRewardFeatureUnlocked = isRewardUnlocked,
+                        oceanQuality = oceanQuality
                     )
                 }
             }
