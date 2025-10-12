@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import com.akrubastudios.playquizgames.domain.models.ParsedVisualTheme
 import com.akrubastudios.playquizgames.ui.screens.boss.background.PatternGenerator
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
@@ -26,21 +27,41 @@ import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 @Composable
 fun GameScreenBackground(
     visualTheme: ParsedVisualTheme?,
+    questionNumber: Int = 1,
+    totalQuestions: Int = 10,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Fondo base del tema (LightGray o DeepNavy)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Solo dibujamos el patrón si tenemos un tema visual definido
         visualTheme?.let { theme ->
-            Log.d("GameBackground", "✅ VisualTheme recibido: countryId=${theme.countryId}, pattern=${theme.archetype.patternType}")
-            // Animación infinita para el pulso del patrón
-            val infiniteTransition = rememberInfiniteTransition(label = "patternPulse")
+            val isDark = isSystemInDarkTheme()
+
+            // Progreso de 0f (inicio) a 1f (final)
+            val progress = if (totalQuestions > 0) {
+                (questionNumber - 1f) / totalQuestions.toFloat()
+            } else 0f
+
+            // Animaciones
+            val infiniteTransition = rememberInfiniteTransition(label = "patternEffects")
+
+            // Rotación lenta (1 vuelta cada 80 segundos)
+            val rotation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 80000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "patternRotation"
+            )
+
+            // Pulso de alpha
             val animatedAlpha by infiniteTransition.animateFloat(
-                initialValue = 0.25f, // Opacidad mínima (muy sutil)
-                targetValue = 0.45f, // Opacidad máxima
+                initialValue = if (isDark) 0.12f else 0.20f,
+                targetValue = if (isDark) 0.22f else 0.35f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(durationMillis = 5000, easing = LinearEasing),
                     repeatMode = RepeatMode.Reverse
@@ -48,31 +69,67 @@ fun GameScreenBackground(
                 label = "patternAlpha"
             )
 
-            // Determinamos el color del patrón según el tema del dispositivo
-            val patternColor = if (isSystemInDarkTheme()) {
-                Color.White.copy(alpha = animatedAlpha * 1.5f) // Blanco en tema oscuro
+            // Interpolación de colores según progreso
+            val patternColor = if (isDark) {
+                when {
+                    progress < 0.5f -> {
+                        val localProgress = progress / 0.5f
+                        androidx.compose.ui.graphics.lerp(
+                            Color(0xFF3B82F6), // Azul medio
+                            Color(0xFF06B6D4), // Cyan medio
+                            localProgress
+                        )
+                    }
+                    else -> {
+                        val localProgress = (progress - 0.5f) / 0.5f
+                        androidx.compose.ui.graphics.lerp(
+                            Color(0xFF06B6D4), // Cyan medio
+                            Color(0xFFF59E0B), // Amarillo medio
+                            localProgress
+                        )
+                    }
+                }.copy(alpha = animatedAlpha)
             } else {
-                Color.Black.copy(alpha = 0.15f) // Negro en tema claro
+                when {
+                    progress < 0.5f -> {
+                        val localProgress = progress / 0.5f
+                        androidx.compose.ui.graphics.lerp(
+                            Color(0xFF1E40AF), // Azul oscuro
+                            Color(0xFF7C3AED), // Púrpura oscuro
+                            localProgress
+                        )
+                    }
+                    else -> {
+                        val localProgress = (progress - 0.5f) / 0.5f
+                        androidx.compose.ui.graphics.lerp(
+                            Color(0xFF7C3AED), // Púrpura oscuro
+                            Color(0xFF047857), // Verde oscuro
+                            localProgress
+                        )
+                    }
+                }.copy(alpha = animatedAlpha)
             }
 
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                // Llamamos al generador de patrones que ya existe
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = 2f // ← Escala 100% más grande
+                        scaleY = 2f // ← Escala 100% más grande
+                        rotationZ = rotation
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin.Center
+                    }
+            ) {
                 PatternGenerator.drawPattern(
                     drawScope = this,
                     patternType = theme.archetype.patternType,
                     color = patternColor,
                     countryId = theme.countryId,
-                    phase = 1 // Usamos siempre la fase 1 para una menor densidad
+                    phase = 1
                 )
             }
         }
 
-        // FUERA del let:
-        if (visualTheme == null) {
-            Log.d("GameBackground", "❌ VisualTheme es NULL")
-        }
-
-        // El contenido de la pantalla se dibuja encima del fondo y el patrón
         content()
     }
 }

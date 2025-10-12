@@ -137,9 +137,10 @@ import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 8-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 9-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -191,7 +192,11 @@ fun GameScreen(
         }
     }
 
-    GameScreenBackground(visualTheme = uiState.visualTheme) {
+    GameScreenBackground(
+        visualTheme = uiState.visualTheme,
+        questionNumber = uiState.questionNumber,
+        totalQuestions = uiState.totalQuestions
+    ) {
         // Column apila los elementos verticalmente.
         // Modifier.fillMaxSize() hace que ocupe toda la pantalla.
         Column(
@@ -575,9 +580,13 @@ fun QuestionText(
             style = baseTextStyle.copy(
                 fontSize = optimalFontSize.sp,
                 shadow = Shadow(
-                    color = Color(0xFF000000).copy(alpha = 0.25f),
-                    offset = Offset(1f, 1f),
-                    blurRadius = 2f
+                    color = if (isSystemInDarkTheme()) {
+                        LightGray.copy(alpha = 0.9f) // Blanco opaco en modo oscuro
+                    } else {
+                        DeepNavy.copy(alpha = 0.9f) // Negro opaco en modo claro
+                    },
+                    offset = Offset(0f, 0f), // Sin desplazamiento (halo puro)
+                    blurRadius = 20f
                 )
             ),
             textAlign = TextAlign.Center,
