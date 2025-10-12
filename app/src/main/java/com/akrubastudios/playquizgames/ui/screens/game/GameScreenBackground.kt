@@ -24,7 +24,7 @@ import com.akrubastudios.playquizgames.domain.models.ParsedVisualTheme
 import com.akrubastudios.playquizgames.ui.screens.boss.background.PatternGenerator
 import com.akrubastudios.playquizgames.ui.theme.SkyBlue
 
-@Composable
+@Composable // CONTROL 1-GSB
 fun GameScreenBackground(
     visualTheme: ParsedVisualTheme?,
     questionNumber: Int = 1,
@@ -52,7 +52,7 @@ fun GameScreenBackground(
                 initialValue = 0f,
                 targetValue = 360f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 80000, easing = LinearEasing),
+                    animation = tween(durationMillis = 250000, easing = LinearEasing),
                     repeatMode = RepeatMode.Restart
                 ),
                 label = "patternRotation"
