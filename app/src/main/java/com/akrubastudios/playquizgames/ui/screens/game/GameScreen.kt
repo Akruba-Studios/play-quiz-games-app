@@ -139,7 +139,7 @@ import coil.request.ImageRequest
 import com.akrubastudios.playquizgames.ui.components.GemsIndicator
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 7-GM
+@OptIn(ExperimentalMaterial3Api::class) // Control 8-GM
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
@@ -1038,6 +1038,14 @@ fun QuestionProgressCircles(
             else -> 8.dp                     // Zona normal
         }
     }
+    // Replicamos la lógica del radio para que la forma del fondo coincida - Esto se extrajo de GemsIndicator, si se modifica uno, ambos deben modifciarse
+    val cornerRadius = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp
+            screenWidth < 370.dp -> 10.dp
+            else -> 12.dp
+        }
+    }
     Log.d("BottomRowSpacing", "screenWidth: $screenWidth → spacing: $bottomRowSpacing")
 
     Column( //modifier = modifier,
@@ -1158,10 +1166,26 @@ fun QuestionProgressCircles(
                     )
                 )
             }
-            GemsIndicator(
-                gems = currentGems,
-                onClick = onGemsClick
-            )
+            Box(
+                modifier = Modifier
+                    // CAPA 1: La base semi-opaca
+                    .background(
+                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                        shape = RoundedCornerShape(cornerRadius)
+                    )
+                    // CAPA 2: El tinte sutil
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = RoundedCornerShape(cornerRadius)
+                    )
+                    // Nos aseguramos de que el contenido se recorte a la forma
+                    .clip(RoundedCornerShape(cornerRadius))
+            ) {
+                GemsIndicator(
+                    gems = currentGems,
+                    onClick = onGemsClick
+                )
+            }
         }
     }
 }
