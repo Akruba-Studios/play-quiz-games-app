@@ -33,7 +33,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
-// Datos de tematización del Guardián
+// Datos de tematización del Guardián - CONTROL: 1-BVM
 data class GuardianTheme(
     val name: String,
     val emoji: String,
@@ -492,8 +492,11 @@ class BossViewModel @Inject constructor(
             } else {
                 soundManager.playSound(SoundEffect.INCORRECT_ANSWER)
                 val newMistakes = state.playerMistakes + 1
-                // Si con este nuevo error al jugador solo le queda 1 vida, suena la risa con delay.
-                if (newMistakes == state.maxMistakes - 1) {
+                // Si con este nuevo error al jugador solo le queda 1 vida Y NO ha ganado aún, suena la risa con delay.
+                val requiredCorrectAnswers = shuffledQuestions.size - (state.maxMistakes - 1)
+                val hasAlreadyWon = state.correctAnswersCount >= requiredCorrectAnswers
+
+                if (newMistakes == state.maxMistakes - 1 && !hasAlreadyWon) {
                     viewModelScope.launch {
                         delay(1500L) // Espera 1.5 segundos
                         soundManager.playSound(SoundEffect.BOSS_EVIL_LAUGH)
