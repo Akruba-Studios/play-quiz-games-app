@@ -43,6 +43,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.toSize
@@ -68,6 +74,7 @@ import androidx.compose.foundation.clickable // <-- AÑADE ESTA
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.SnackbarHost // <-- AÑADE ESTA
 import androidx.compose.material3.SnackbarHostState // <-- AÑADE ESTA
 import androidx.compose.runtime.remember // <-- AÑADE ESTA (si no está)
@@ -84,10 +91,12 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
@@ -106,7 +115,7 @@ import com.akrubastudios.playquizgames.ui.theme.LightGray
 import kotlinx.coroutines.runBlocking
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 36-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 37-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,6 +156,8 @@ fun MapScreen(
 
     var showGemsTutorialDialog by remember { mutableStateOf(false) }
 
+    var showGraphicsDialog by remember { mutableStateOf(false) }
+
     val currentLanguageCode = Locale.getDefault().language
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -185,6 +196,8 @@ fun MapScreen(
             else -> 16.dp                     // Zona normal (actual)
         }
     }
+    var headerHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
 
     // Scaffold nos da la estructura de la pantalla principal
     key(currentLanguageCode) {
@@ -332,8 +345,11 @@ fun MapScreen(
                 ) {
                     Surface(
                         modifier = Modifier
-                            .align(Alignment.TopCenter) // Lo posiciona en la parte superior
-                            .fillMaxWidth(),
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                headerHeight = with(density) { coordinates.size.height.toDp() }
+                            },
                         // Usamos el mismo color que el BottomAppBar para consistencia.
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         tonalElevation = 3.dp // Añade una pequeña sombra para dar profundidad
@@ -402,8 +418,74 @@ fun MapScreen(
                         }
                     }
                 }
+
                 if (!uiState.isLoading) {
                     val context = LocalContext.current // Necesario para el Toast
+
+                    // Icono de Olas para Ajustes Gráficos
+                    IconButton(
+                        onClick = { showGraphicsDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(top = headerHeight + 8.dp, start = 8.dp)
+                    ) {
+                        // Animación de pulso para VERY_HIGH y HIGH
+                        val shouldPulse = uiState.oceanQuality in listOf("VERY_HIGH", "HIGH")
+                        val infiniteTransition = rememberInfiniteTransition(label = "wave_pulse")
+                        val pulseScale by infiniteTransition.animateFloat(
+                            initialValue = 1f,
+                            targetValue = 1.15f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(2000, easing = FastOutSlowInEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "pulse_scale"
+                        )
+                        // --- INICIO DEL CAMBIO (PASO 2) ---
+                        Box(contentAlignment = Alignment.Center) {
+                            val iconColor = when (uiState.oceanQuality) {
+                                "VERY_HIGH" -> DarkGoldAccent
+                                "HIGH" -> Color.White
+                                "MEDIUM" -> Color.White
+                                "LOW" -> Color.Gray.copy(alpha = 0.8f)
+                                else -> Color.White
+                            }
+                            Icon(
+                                imageVector = Icons.Default.Waves,
+                                contentDescription = stringResource(R.string.cd_graphics_quality_indicator),
+                                modifier = Modifier.graphicsLayer {
+                                    scaleX = if (shouldPulse) pulseScale else 1f
+                                    scaleY = if (shouldPulse) pulseScale else 1f
+                                },
+                                tint = iconColor
+                            )
+                            // Dibuja línea diagonal según calidad
+                            when (uiState.oceanQuality) {
+                                "MEDIUM" -> {
+                                    Canvas(modifier = Modifier.matchParentSize()) {
+                                        drawLine(
+                                            color = DarkGoldAccent.copy(alpha = 0.8f),
+                                            start = Offset(x = size.width * 0.2f, y = size.height * 0.2f),
+                                            end = Offset(x = size.width * 0.8f, y = size.height * 0.8f),
+                                            strokeWidth = 3.dp.toPx(),
+                                            cap = StrokeCap.Round
+                                        )
+                                    }
+                                }
+                                "LOW" -> {
+                                    Canvas(modifier = Modifier.matchParentSize()) {
+                                        drawLine(
+                                            color = Color.Red.copy(alpha = 0.8f),
+                                            start = Offset(x = size.width * 0.2f, y = size.height * 0.2f),
+                                            end = Offset(x = size.width * 0.8f, y = size.height * 0.8f),
+                                            strokeWidth = 3.dp.toPx(),
+                                            cap = StrokeCap.Round
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     // FAB de Gemas (Izquierda)
                     FloatingActionButton(
@@ -615,6 +697,31 @@ fun MapScreen(
             confirmButtonText = stringResource(R.string.dialog_button_ok)
         )
     }
+    if (showGraphicsDialog) {
+        // Obtenemos el nombre corto del nivel de calidad actual
+        val qualityName = qualityCodeToName(quality = uiState.oceanQuality)
+
+        AppAlertDialog(
+            onDismissRequest = { showGraphicsDialog = false },
+            title = { DialogTitle(text = stringResource(R.string.graphics_indicator_dialog_title)) },
+            // Usamos HtmlCompat para renderizar la etiqueta <b> que pusimos en el string
+            text = { DialogText(text = htmlToString(stringResource(R.string.graphics_indicator_dialog_message, qualityName))) },
+            confirmButton = {
+                TextButton(onClick = {
+                    navController.navigate(Routes.SETTINGS_SCREEN)
+                    showGraphicsDialog = false
+                }) {
+                    DialogButtonText(text = stringResource(R.string.graphics_indicator_dialog_button_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGraphicsDialog = false }) {
+                    // Reutilizamos el string "Entendido" que ya tienes
+                    DialogButtonText(text = stringResource(R.string.dialog_button_ok))
+                }
+            }
+        )
+    }
 }
 
 // Crea este nuevo Composable separado para el contenido del Bottom Sheet.
@@ -682,6 +789,31 @@ private fun RewardRow(icon: ImageVector, text: String) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+/**
+ * Convierte un string con etiquetas HTML simples (como <b>) a un AnnotatedString.
+ */
+@Composable
+private fun htmlToString(html: String): String {
+    return remember(html) {
+        // Usamos la librería de AndroidX para parsear el HTML de forma segura
+        androidx.core.text.HtmlCompat.fromHtml(html, androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
+    }
+}
+
+/**
+ * Convierte el código de calidad (ej. "HIGH") a su nombre corto traducible (ej. "Alta").
+ */
+@Composable
+private fun qualityCodeToName(quality: String): String {
+    return when (quality) {
+        "VERY_HIGH" -> stringResource(R.string.settings_quality_tier_very_high_short)
+        "HIGH" -> stringResource(R.string.settings_quality_tier_high_short)
+        "MEDIUM" -> stringResource(R.string.settings_quality_tier_medium_short)
+        "LOW" -> stringResource(R.string.settings_quality_tier_low_short)
+        else -> quality // Fallback
     }
 }
 

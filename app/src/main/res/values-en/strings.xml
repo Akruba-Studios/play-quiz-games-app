@@ -63,6 +63,11 @@
     <string name="map_toast_conquer_neighbors">Conquer a neighboring country to unlock this region!</string>
     <string name="map_toast_coming_soon">This region will be available in future expansions!</string>
 
+    <string name="graphics_indicator_dialog_title">Ocean Quality</string>
+    <string name="graphics_indicator_dialog_message">Your current experience is set to <b>%1$s</b>. If you want to see more effects or optimize performance to save battery, you can adjust the Graphics settings at any time.</string>
+    <string name="graphics_indicator_dialog_button_settings">Go to Settings</string>
+    <string name="cd_graphics_quality_indicator">Graphics Quality Indicator</string>
+
     <!-- Rewarded Ads -->
     <string name="reward_button_text">+ Gems</string>
     <string name="cd_get_gem_reward">Get Gem Reward</string>
