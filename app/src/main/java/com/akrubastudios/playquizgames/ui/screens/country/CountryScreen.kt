@@ -15,16 +15,25 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
@@ -47,13 +56,15 @@ import com.akrubastudios.playquizgames.core.MusicTrack
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.components.TextWithBorder
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
+import kotlinx.coroutines.delay
 
-@Composable // Control: 2-CS
+@Composable // Control: 3-CS
 fun CountryScreen(
     viewModel: CountryViewModel = hiltViewModel(),
     // MODIFICADO: Necesitamos nuevas lambdas para la navegación
@@ -312,32 +323,110 @@ private fun ChallengeBossButton(bossLevelId: String, onChallengeClick: (String) 
 }
 
 @Composable
-private fun StudyTopics(topics: List<String>) {
+private fun StudyTopics(topics: List<String>, viewModel: CountryViewModel = hiltViewModel()) {
     var isExpanded by remember { mutableStateOf(false) }
 
     if (topics.isNotEmpty()) {
-        Column(modifier = Modifier.fillMaxWidth(0.9f)) {
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-            Row(
-                modifier = Modifier.clickable { isExpanded = !isExpanded },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Info, contentDescription = stringResource(R.string.cd_information))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.country_study_topics_title), style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = if (isExpanded) stringResource(R.string.cd_close) else stringResource(R.string.cd_expand)
-                )
-            }
-            AnimatedVisibility(visible = isExpanded) {
-                Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp)) {
-                    topics.forEach { topic ->
-                        Text("• $topic", style = MaterialTheme.typography.bodyMedium)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .background(
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                    shape = MaterialTheme.shapes.medium
+                ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Column {
+                // Fila del Título (sigue siendo clicable para expandir/colapsar)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isExpanded = !isExpanded }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = stringResource(R.string.cd_information))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        // Usamos el nombre del guardián para el título del dossier
+                        text = "INTEL: ${viewModel.uiState.collectAsState().value.guardianName.uppercase()}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand)
+                    )
+                }
+
+                // Contenido animado y con scroll
+                AnimatedVisibility(visible = isExpanded) {
+                    // Usamos un Box con altura máxima para que el scroll se active solo si es necesario
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp) // Altura máxima antes de activar el scroll
+                    ) {
+                        // LazyColumn es performante y nos da el scroll automáticamente
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(topics.size) { index ->
+                                // Composable para cada pista con su animación de entrada
+                                AnimatedTopicItem(
+                                    text = topics[index],
+                                    index = index
+                                )
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Un composable para una sola pista, con animación de entrada en cascada.
+ */
+@Composable
+private fun AnimatedTopicItem(text: String, index: Int) {
+    // Estado para controlar la visibilidad del item
+    var isVisible by remember { mutableStateOf(false) }
+
+    // La animación se dispara una sola vez cuando el item entra en la composición
+    LaunchedEffect(Unit) {
+        // El delay se basa en el índice del item en la lista, creando el efecto cascada
+        delay(100L * index) // El espacio de tiempo entre lineas se hara mayor mietras mas pistas hayan
+        isVisible = true
+    }
+
+    // Usamos AnimatedVisibility para el efecto de fade-in y deslizamiento
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 300)) +
+                slideInHorizontally(
+                    initialOffsetX = { -40 },
+                    animationSpec = tween(durationMillis = 400)
+                )
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "•",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace // Fuente de terminal
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = FontFamily.Monospace // Fuente de terminal
+            )
         }
     }
 }
