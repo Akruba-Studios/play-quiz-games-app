@@ -96,6 +96,8 @@
     <string name="cd_expand">Expandir</string>
     <string name="cd_locked">Bloqueado</string>
 
+    <string name="loading_text">Cargando …</string>
+
     <!-- LevelSelectionScreen -->
     <string name="difficulty_beginner">Fácil</string>
     <string name="difficulty_hard">Difícil</string>

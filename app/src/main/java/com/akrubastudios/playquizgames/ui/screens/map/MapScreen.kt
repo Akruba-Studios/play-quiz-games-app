@@ -317,6 +317,12 @@ fun MapScreen(
                 // CAPA 1: El mapa de fondo
                 if (uiState.isLoading) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ocean_background_static),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
                         CircularProgressIndicator()
                     }
                 } else {
