@@ -85,6 +85,7 @@
     <string name="country_status_locked_title">Este país está bloqueado.</string>
     <string name="country_status_locked_subtitle">Conquista países vecinos para desbloquearlo.</string>
     <string name="country_all_content_unlocked">Has desbloqueado todo el contenido de este país.</string>
+    <string name="country_domination_message">¡Has derrotado a %1$s y ahora DOMINAS esta nación!</string>
     <string name="country_button_challenge_boss">Desafiar al Guardián</string>
     <string name="country_button_use_boost">Usar Boost de 5,000 PC</string>
     <string name="country_study_topics_title">Reunir Intel (Pistas para el Jefe)</string>

@@ -29,10 +29,12 @@ fun ScreenBackground( // CONTROL: 1-SB
     imageLoader: ImageLoader,
     imageAlpha: Float = 0.7f, // Valor + grande, Imagen mas clara
     scrimAlpha: Float = 0.7f, // Valor * grande, Velo mas opaco
+    forceFullBrightness: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    val finalScrimAlpha = if (forceFullBrightness) 0f else scrimAlpha
 
+    Box(modifier = Modifier.fillMaxSize()) {
         // CAPA 1: La imagen de fondo, ahora con opacidad configurable
         if (backgroundUrl.isNotBlank()) {
             AsyncImage(
@@ -70,7 +72,7 @@ fun ScreenBackground( // CONTROL: 1-SB
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = scrimAlpha)) // <-- USA EL PARÁMETRO
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = finalScrimAlpha)) // <-- USA EL PARÁMETRO
             )
         }
 

@@ -44,7 +44,9 @@ data class CountryState(
     val isScreenLoading: Boolean = true, // Para la carga inicial
     val isApplyingBoost: Boolean = false,
     val canApplyBoost: Boolean = false,
-    val showConquestTutorialDialog: Boolean = false
+    val showConquestTutorialDialog: Boolean = false,
+    val isDominated: Boolean = false,
+    val guardianName: String = ""
 )
 // Representará una categoría con su nombre ya localizado.
 data class CategoryState(
@@ -93,6 +95,9 @@ class CountryViewModel @Inject constructor(
             val bossQuiz = country?.bossLevelId?.let {
                 if (it.isNotBlank()) quizRepository.getLevel(it) else null
             }
+
+            // Cargamos los datos del tema visual que contienen el nombre del guardián.
+            val countryVisualTheme = quizRepository.getCountryVisualTheme(countryId)
 
             // Si los datos estáticos cruciales fallan, salimos del estado de carga y mostramos error.
             if (country == null) {
@@ -174,7 +179,11 @@ class CountryViewModel @Inject constructor(
                         pcRequired = country.pcRequired.takeIf { it > 0 } ?: 1,
                         isScreenLoading = false,
                         canApplyBoost = canApplyBoost,
-                        showConquestTutorialDialog = showTutorial
+                        showConquestTutorialDialog = showTutorial,
+                        isDominated = (status == CountryStatus.DOMINATED),
+                        guardianName = countryVisualTheme?.guardianData?.name?.get(langCode)
+                            ?: countryVisualTheme?.guardianData?.name?.get("es")
+                            ?: ""
                     )
 
                     Log.d("CountryViewModel", "🔄 Estado actualizado - PC: $currentPc, Status: $status")

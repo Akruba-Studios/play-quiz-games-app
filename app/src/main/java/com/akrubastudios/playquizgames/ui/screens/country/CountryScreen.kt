@@ -33,7 +33,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -48,8 +50,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.components.TextWithBorder
+import com.akrubastudios.playquizgames.ui.theme.DeepNavy
+import com.akrubastudios.playquizgames.ui.theme.LightGray
 
-@Composable // Control: 1-CS
+@Composable // Control: 2-CS
 fun CountryScreen(
     viewModel: CountryViewModel = hiltViewModel(),
     // MODIFICADO: Necesitamos nuevas lambdas para la navegación
@@ -68,11 +72,14 @@ fun CountryScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
+    val isDominated = uiState.countryStatus == CountryStatus.DOMINATED
+
     ScreenBackground(
         backgroundUrl = uiState.country?.backgroundImageUrl ?: "",
         imageLoader = viewModel.imageLoader,
         imageAlpha = 1.0f,  // 1.0f - 100% opaca, la imagen se verá con toda su fuerza
-        scrimAlpha = 0.7f   // 0.7 - 70% opaco en el velo
+        scrimAlpha = 0.7f,   // 0.7 - 70% opaco en el velo
+        forceFullBrightness = uiState.isDominated
     ) {
         if (uiState.isScreenLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -106,11 +113,25 @@ fun CountryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    Text(
-                        text = uiState.countryName, // <-- Mucho más simple.
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.displayMedium
-                    )
+                    if (isDominated) {
+                        // En modo Dominado, usamos TextWithBorder
+                        TextWithBorder(
+                            text = uiState.countryName,
+                            style = MaterialTheme.typography.displayMedium.copy(
+                                textAlign = TextAlign.Center, // Aseguramos el centrado
+                                color = DeepNavy
+                            ),
+                            borderColor = LightGray, // Un borde negro da el mejor contraste
+                            borderWidth = 6f
+                        )
+                    } else {
+                        // En otros modos, usamos el Text normal
+                        Text(
+                            text = uiState.countryName,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
@@ -178,20 +199,17 @@ fun CountryScreen(
 
                     CountryStatus.DOMINATED -> {
                         item {
-                            CountryProgress(
-                                current = uiState.pcRequired,
-                                total = uiState.pcRequired,
-                                statusText = stringResource(R.string.country_status_dominated)
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                stringResource(R.string.country_all_content_unlocked),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            CategoryList(
-                                categories = uiState.availableCategories,
-                                onCategoryClick = onPlayCategoryClick
+                            Spacer(modifier = Modifier.height(32.dp))
+                            // Usamos TextWithBorder directamente aquí
+                            TextWithBorder(
+                                text = stringResource(R.string.country_domination_message, uiState.guardianName),
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    textAlign = TextAlign.Center, // Aseguramos el centrado
+                                    color = DeepNavy
+                                ),
+                                borderColor = Color.LightGray,
+                                borderWidth = 6f,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }
                     }

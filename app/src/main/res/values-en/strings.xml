@@ -85,6 +85,7 @@
     <string name="country_status_locked_title">This country is locked.</string>
     <string name="country_status_locked_subtitle">Conquer neighboring countries to unlock it.</string>
     <string name="country_all_content_unlocked">You have unlocked all content in this country.</string>
+    <string name="country_domination_message">You have defeated %1$s and now DOMINATE this nation!</string>
     <string name="country_button_challenge_boss">Challenge the Guardian</string>
     <string name="country_button_use_boost">Use 5,000 PC Boost</string>
     <string name="country_study_topics_title">Gather Intel (Clues for the Boss)</string>

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -133,7 +134,7 @@ fun PlayerLevelIndicator(
                 if (boostCount > 0) {
                     Spacer(modifier = Modifier.width(boostSpacing))
                     Icon(
-                        imageVector = Icons.Filled.Star,
+                        imageVector = Icons.Default.RocketLaunch,
                         contentDescription = "Boost de Conquista",
                         tint = MaterialTheme.colorScheme.secondary, // Color dorado para la estrella
                         modifier = Modifier.size(iconSize)
