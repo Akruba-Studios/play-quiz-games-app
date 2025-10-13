@@ -54,6 +54,7 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lightbulb
@@ -109,7 +110,7 @@ data class Particle(
 )
 
 // =====================================================
-// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 15-BS
+// COMPONENTES COMPACTOS REDISEÑADOS - SIN PESOS FIJOS - Control: 16-BS
 // =====================================================
 
 // Helper para tuplas
@@ -1166,6 +1167,13 @@ fun BossScreen(
                     battleStats = uiState.battleStats
                 )
             }
+            // Animación de derrota
+            if (uiState.showDefeatAnimation) {
+                DefeatSequence(
+                    guardianName = uiState.guardianTheme.name,
+                    guardianEmoji = uiState.guardianTheme.emoji
+                )
+            }
         }
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true
@@ -1368,6 +1376,59 @@ private fun VictorySequence(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DefeatSequence(
+    guardianName: String,
+    guardianEmoji: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.9f)) // Fondo oscuro
+            .clickable(
+                // Hacemos que sea no-clicable para que no se cierre por error
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {}
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Fila 1: Título
+            Text(
+                text = stringResource(R.string.boss_defeat_title),
+                style = MaterialTheme.typography.displaySmall,
+                color = Color.Red,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Fila 2: Emoji del Jefe (notoriamente grande)
+            Text(
+                text = guardianEmoji,
+                fontSize = 80.sp // Tamaño grande para el emoji
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Fila 3: Subtítulo
+            Text(
+                text = stringResource(R.string.boss_defeat_subtitle, guardianName),
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

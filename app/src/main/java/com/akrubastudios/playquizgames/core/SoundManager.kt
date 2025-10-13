@@ -30,7 +30,8 @@ enum class SoundEffect(val resourceId: Int) {
     HELP_EXTRA_TIME(R.raw.sfx_help_extra_time),
     HELP_REMOVE_LETTERS(R.raw.sfx_help_remove_letters),
     HELP_REVEAL_LETTER(R.raw.sfx_help_reveal_letter),
-    HELP_SHOW_HINT(R.raw.sfx_help_show_hint)
+    HELP_SHOW_HINT(R.raw.sfx_help_show_hint),
+    BOSS_DEFEATED(R.raw.sfx_boss_defeated)
     // Aquí añadiremos más sonidos en el futuro (ej. BUTTON_CLICK)
 }
 

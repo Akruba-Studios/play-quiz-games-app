@@ -70,6 +70,7 @@ data class BossState(
     val currentDialogue: String = "",
     val isPhaseTransition: Boolean = false,
     val showVictoryAnimation: Boolean = false,
+    val showDefeatAnimation: Boolean = false,
     val showShakeEffect: Boolean = false,
     val battleStats: BattleStats = BattleStats(),
     val lettersReshuffleCounter: Int = 0,
@@ -312,8 +313,8 @@ class BossViewModel @Inject constructor(
                 // Si ha ganado, disparamos la secuencia de victoria.
                 triggerVictorySequence()
             } else {
-                // Si no, termina el juego como una derrota.
-                endGame(victory = false)
+                // Si es derrota, ahora llamamos a la secuencia de derrota.
+                triggerDefeatSequence()
             }
         }
     }
@@ -512,7 +513,7 @@ class BossViewModel @Inject constructor(
                 }
 
                 if (newMistakes >= state.maxMistakes) {
-                    endGame(victory = false)
+                    triggerDefeatSequence()
                     return@launch
                 }
             }
@@ -531,6 +532,8 @@ class BossViewModel @Inject constructor(
     }
 
     private fun triggerVictorySequence() {
+        soundManager.playSound(SoundEffect.BOSS_DEFEATED)
+
         val totalTime = System.currentTimeMillis() - uiState.value.battleStats.startTime
         val accuracy = (uiState.value.correctAnswersCount.toFloat() / uiState.value.totalQuestions) * 100f
 
@@ -545,8 +548,22 @@ class BossViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            delay(3000L) // Mostrar animación por 3 segundos
+            delay(4000L) // Mostrar animación por 4 segundos
             endGame(victory = true)
+        }
+    }
+
+    /**
+     * Activa el overlay de derrota y reproduce el sonido de risa del jefe.
+     */
+    private fun triggerDefeatSequence() {
+        soundManager.playSound(SoundEffect.BOSS_EVIL_LAUGH)
+
+        _uiState.update { it.copy(showDefeatAnimation = true) }
+
+        viewModelScope.launch {
+            delay(4000L) // Muestra la animación de derrota por 4 segundos
+            endGame(victory = false) // Procede a finalizar el juego
         }
     }
 

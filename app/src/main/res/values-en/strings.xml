@@ -145,6 +145,9 @@
     <string name="help_item_show_hint_title">Show Hint</string>
     <string name="help_item_show_hint_description">Shows a fun fact</string>
 
+    <string name="boss_defeat_title">YOU HAVE BEEN DEFEATED</string>
+    <string name="boss_defeat_subtitle">%1$s has vanquished you.</string>
+
     <!-- ResultScreen -->
     <string name="result_title_boss_victory">Guardian Defeated!</string>
     <string name="result_title_boss_defeat">Challenge Failed</string>
