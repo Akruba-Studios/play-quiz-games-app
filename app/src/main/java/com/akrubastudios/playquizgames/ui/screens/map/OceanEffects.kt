@@ -4,13 +4,17 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
@@ -342,48 +346,201 @@ fun OceanMistEffect(modifier: Modifier = Modifier) {
         )
     }
 }
-@Composable // Efecto de Tormenta: Relámpagos con flash y oscurecimiento
-fun ThunderstormEffect(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "thunderstorm")
+@Composable
+fun StormEffect(
+    modifier: Modifier = Modifier,
+    onThunderSound: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "storm")
 
-    // Genera tiempos aleatorios para los relámpagos (cada 8-15 segundos)
-    val lightningTrigger by infiniteTransition.animateFloat(
+    // Ciclo de relámpagos cada 10 segundos
+    val lightningCycle by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 100f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(12000, easing = LinearEasing),
+            animation = tween(10000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "lightningTrigger"
+        label = "lightningCycle"
     )
 
-    // Fase del relámpago: 0 = normal, 0.1-0.3 = oscureciendo, 0.3-0.35 = flash, 0.35-1 = volviendo
-    val lightningPhase = remember(lightningTrigger) {
-        if (Random.nextFloat() < 0.08f) { // 8% de probabilidad cada ciclo
-            lightningTrigger % 1f
-        } else {
-            0f
-        }
+    // Determinar si hay relámpago en este ciclo (30% probabilidad)
+    val shouldFlash = remember(lightningCycle) {
+        if (lightningCycle < 0.05f) Random.nextFloat() < 0.3f else false
     }
 
+    val flashProgress = if (shouldFlash && lightningCycle < 0.05f) {
+        lightningCycle / 0.05f // 0 a 1 en los primeros 500ms
+    } else 0f
+
     val flashIntensity = when {
-        lightningPhase < 0.1f -> 0f // Normal
-        lightningPhase < 0.3f -> (lightningPhase - 0.1f) / 0.2f * -0.3f // Oscureciendo
-        lightningPhase < 0.35f -> 0.95f // FLASH blanco
-        lightningPhase < 0.5f -> 0.95f - ((lightningPhase - 0.35f) / 0.15f * 0.95f) // Desvaneciendo flash
-        else -> 0f // Vuelve a normal
+        flashProgress < 0.3f -> 0f // Esperando
+        flashProgress < 0.5f -> (flashProgress - 0.3f) / 0.2f * -0.25f // Oscurece
+        flashProgress < 0.6f -> 0.95f // FLASH máximo
+        flashProgress < 1f -> 0.95f - ((flashProgress - 0.6f) / 0.4f * 0.95f) // Desvanece
+        else -> 0f
+    }
+
+    // Disparar sonido cuando el flash está en máximo
+    LaunchedEffect(flashProgress) {
+        if (flashProgress in 0.5f..0.61f && shouldFlash) {
+            onThunderSound()
+        }
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        if (flashIntensity > 0) {
-            // Flash blanco o oscurecimiento
-            val color = if (flashIntensity > 0.5f) {
-                Color.White.copy(alpha = flashIntensity)
-            } else {
-                Color.Black.copy(alpha = -flashIntensity) // Valores negativos se usan para oscurecer
-            }
+        // Overlay oscuro constante (ambiente de tormenta)
+        drawRect(color = Color.Black.copy(alpha = 0.35f))
 
-            drawRect(color = color)
+        // Flash del relámpago
+        if (flashIntensity > 0.5f) {
+            drawRect(color = Color.White.copy(alpha = flashIntensity))
+        } else if (flashIntensity < 0f) {
+            drawRect(color = Color.Black.copy(alpha = -flashIntensity))
         }
     }
 }
+
+@Composable
+fun RainEffect(modifier: Modifier = Modifier) {
+    // Sistema de impactos múltiples con diferentes características
+    val impacts = remember { mutableStateListOf<RainImpactAdvanced>() }
+    val random = remember { Random.Default }
+
+    // Generador continuo de impactos
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Cada 20-40ms genera un nuevo impacto (lluvia intensa)
+            delay(random.nextLong(20, 40))
+
+            // Características aleatorias del impacto
+            val isLargeDrop = random.nextFloat() < 0.15f // 15% gotas grandes
+            val maxRadius = if (isLargeDrop) {
+                random.nextFloat() * 40f + 50f // Gotas grandes: 50-90px
+            } else {
+                random.nextFloat() * 25f + 20f // Gotas normales: 20-45px
+            }
+
+            impacts.add(
+                RainImpactAdvanced(
+                    x = random.nextFloat(),
+                    y = random.nextFloat(),
+                    age = 0f,
+                    maxRadius = maxRadius,
+                    ripples = if (isLargeDrop) 3 else 2, // Gotas grandes hacen más ondas
+                    speed = if (isLargeDrop) 600f else 450f,
+                    alpha = if (isLargeDrop) 0.95f else 0.85f
+                )
+            )
+        }
+    }
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val width = size.width
+        val height = size.height
+
+        // Actualizar y dibujar todos los impactos
+        val iterator = impacts.iterator()
+        while (iterator.hasNext()) {
+            val impact = iterator.next()
+
+            // Remover impactos viejos
+            if (impact.age > impact.maxRadius * 3.5f) {
+                iterator.remove()
+                continue
+            }
+
+            val xPos = width * impact.x
+            val yPos = height * impact.y
+
+            // Progreso de la animación (0 a 1)
+            val progress = impact.age / (impact.maxRadius * 2f)
+
+            // Dibujar múltiples ondas concéntricas
+            for (rippleIndex in 0 until impact.ripples) {
+                // Cada onda empieza con un delay
+                val rippleDelay = rippleIndex * 0.25f
+                val rippleProgress = (progress - rippleDelay).coerceAtLeast(0f)
+
+                if (rippleProgress > 0f) {
+                    val radius = rippleProgress * impact.maxRadius
+
+                    // Alpha que se desvanece: fuerte al inicio, desaparece al final
+                    val fadeOut = 1f - rippleProgress
+                    val alpha = (impact.alpha * fadeOut * fadeOut).coerceIn(0f, 1f)
+
+                    if (alpha > 0.05f) {
+                        // Onda exterior (más gruesa, más visible)
+                        drawCircle(
+                            color = Color.White.copy(alpha = alpha * 0.8f),
+                            radius = radius,
+                            center = Offset(xPos, yPos),
+                            style = Stroke(
+                                width = (8f - rippleProgress * 4f).coerceAtLeast(2f)
+                            )
+                        )
+
+                        // Onda interior sutil (efecto de profundidad)
+                        if (rippleProgress > 0.1f) {
+                            drawCircle(
+                                color = Color(0xFFB3E5FC).copy(alpha = alpha * 0.4f), // Azul claro
+                                radius = radius * 0.7f,
+                                center = Offset(xPos, yPos),
+                                style = Stroke(width = 1.5f)
+                            )
+                        }
+
+                        // Splash inicial (solo en los primeros frames)
+                        if (rippleProgress < 0.2f && rippleIndex == 0) {
+                            val splashAlpha = (1f - rippleProgress / 0.2f) * impact.alpha
+
+                            // Círculo sólido central del impacto
+                            drawCircle(
+                                color = Color.White.copy(alpha = splashAlpha * 0.6f),
+                                radius = radius * 0.3f,
+                                center = Offset(xPos, yPos)
+                            )
+
+                            // Pequeñas salpicaduras radiales
+                            val splashCount = if (impact.maxRadius > 20f) 8 else 6
+                            for (i in 0 until splashCount) {
+                                val angle = (i / splashCount.toFloat()) * 6.28f
+                                val splashDist = radius * 1.2f
+                                val splashX = xPos + kotlin.math.cos(angle) * splashDist
+                                val splashY = yPos + kotlin.math.sin(angle) * splashDist
+
+                                drawCircle(
+                                    color = Color.White.copy(alpha = splashAlpha * 0.5f),
+                                    radius = 2f + rippleProgress * 3f,
+                                    center = Offset(splashX, splashY)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Incrementar edad (velocidad ajustada por tamaño)
+            impact.age += 16f / (impact.speed / 450f) // ~60fps normalizado
+        }
+
+        // Efecto de neblina/spray ambiental (gotas microscópicas)
+        if (impacts.size > 50) { // Solo cuando hay suficiente lluvia
+            drawRect(
+                color = Color.White.copy(alpha = 0.03f),
+                size = size
+            )
+        }
+    }
+}
+
+// Clase de datos mejorada para impactos avanzados
+private data class RainImpactAdvanced(
+    val x: Float,           // Posición X normalizada (0-1)
+    val y: Float,           // Posición Y normalizada (0-1)
+    var age: Float,         // Edad en ms
+    val maxRadius: Float,   // Radio máximo de expansión
+    val ripples: Int,       // Cantidad de ondas concéntricas
+    val speed: Float,       // Velocidad de expansión
+    val alpha: Float        // Opacidad base
+)

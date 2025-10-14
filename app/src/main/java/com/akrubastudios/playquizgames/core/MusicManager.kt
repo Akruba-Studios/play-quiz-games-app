@@ -129,6 +129,55 @@ class MusicManager @Inject constructor(
         }
     }
 
+    /**
+     * Reduce suavemente el volumen de la música a un nivel bajo (ej. 20%).
+     * Se usa cuando un sonido ambiental, como la lluvia, necesita ser el protagonista.
+     */
+    fun duckVolume() {
+        fadeJob?.cancel() // Cancela cualquier animación de volumen en curso
+        fadeJob = scope.launch {
+            if (mediaPlayer == null) return@launch
+            // El volumen objetivo es el 20% del volumen actual del usuario
+            val targetVolume = currentVolume * 0.2f
+
+            // Animamos desde el volumen actual hasta el volumen objetivo
+            for (i in 100 downTo 20 step 5) {
+                val volume = (i / 100f) * currentVolume
+                try {
+                    mediaPlayer?.setVolume(volume, volume)
+                } catch (e: IllegalStateException) {
+                    // Ignorar si el mediaplayer se libera a mitad de la animación
+                }
+                delay(25) // Animación rápida
+            }
+            // Aseguramos que el volumen final sea exacto
+            mediaPlayer?.setVolume(targetVolume, targetVolume)
+        }
+    }
+
+    /**
+     * Restaura suavemente el volumen de la música a su nivel original.
+     * Se llama cuando el sonido ambiental termina.
+     */
+    fun restoreVolume() {
+        fadeJob?.cancel()
+        fadeJob = scope.launch {
+            if (mediaPlayer == null) return@launch
+            // Animamos desde el volumen bajo actual hasta el volumen completo del usuario
+            for (i in 20..100 step 5) {
+                val volume = (i / 100f) * currentVolume
+                try {
+                    mediaPlayer?.setVolume(volume, volume)
+                } catch (e: IllegalStateException) {
+                    // Ignorar
+                }
+                delay(25)
+            }
+            // Aseguramos que el volumen final sea el correcto
+            mediaPlayer?.setVolume(currentVolume, currentVolume)
+        }
+    }
+
     // --- INICIO DE LAS NUEVAS FUNCIONES DE FUNDIDO ---
     private fun fadeIn() {
         scope.launch {

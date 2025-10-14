@@ -39,6 +39,7 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.media.MediaPlayer
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
@@ -99,6 +100,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import com.akrubastudios.playquizgames.ui.components.AppAlertDialog
 import com.akrubastudios.playquizgames.ui.components.AppExpeditionAlertDialog
 import com.akrubastudios.playquizgames.ui.components.DialogButtonText
@@ -112,10 +116,12 @@ import com.akrubastudios.playquizgames.ui.theme.CyanAccent
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 37-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 38-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,6 +157,62 @@ fun MapScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Sistema de tormenta
+    var isStormActive by remember { mutableStateOf(false) }
+    val thunderPlayer = remember { MediaPlayer.create(context, R.raw.sfx_thunder) }
+    // Creamos un par de reproductores para el bucle sin fisuras
+    val rainPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            val mediaItem = MediaItem.fromUri("android.resource://${context.packageName}/${R.raw.sfx_rain}")
+            setMediaItem(mediaItem)
+            repeatMode = Player.REPEAT_MODE_ONE
+            prepare()
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            thunderPlayer.release()
+            rainPlayer.release()
+        }
+    }
+    // Scheduler de tormentas
+    LaunchedEffect(key1 = "storm_scheduler") {
+        while (true) {
+            delay(10000) // Cada 2 minutos = 120000
+
+            if (Random.nextFloat() < 0.8f) { // 30% probabilidad = 0.3f
+                isStormActive = true
+                delay(20000) // Duración: 45 segundos = 45000
+                isStormActive = false
+            }
+        }
+    }
+    /// Control de sonido de lluvia y música con AUTO-RE-ENCADENAMIENTO
+    LaunchedEffect(isStormActive) {
+        if (isStormActive) {
+            viewModel.musicManager.duckVolume()
+
+            rainPlayer.volume = 0f
+            rainPlayer.play()
+
+            // Fade in
+            for (i in 0..20) {
+                delay(100)
+                rainPlayer.volume = i / 20f
+            }
+        } else {
+            // Fade out
+            for (i in 20 downTo 0) {
+                delay(100)
+                rainPlayer.volume = i / 20f
+            }
+
+            rainPlayer.pause()
+            rainPlayer.seekTo(0)
+            viewModel.musicManager.restoreVolume()
+        }
+    }
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -337,7 +399,14 @@ fun MapScreen(
                                 Routes.COUNTRY_SCREEN.replace("{countryId}", countryId)
                             )
                         },
-                        modifier = Modifier.fillMaxSize() // El mapa ocupa todo el espacio
+                        modifier = Modifier.fillMaxSize(), // El mapa ocupa todo el espacio
+                        isStormActive = isStormActive,                     // AÑADIR
+                        onThunderSound = {                                 // AÑADIR
+                            if (!thunderPlayer.isPlaying) {
+                                thunderPlayer.seekTo(0)
+                                thunderPlayer.start()
+                            }
+                        }
                     )
                 }
 
@@ -831,7 +900,9 @@ fun InteractiveWorldMap(
     availableCountryIds: List<String>,
     oceanQuality: String,
     onCountryClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isStormActive: Boolean = false,
+    onThunderSound: () -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val horizontalOffsetFactor = remember(screenWidth) {
@@ -1284,13 +1355,14 @@ fun InteractiveWorldMap(
             )
         }
 
+        // PRIMERO: Guardar si debemos mostrar tormenta (evaluado cada vez que cambia isStormActive)
+        val shouldShowStorm = oceanQuality == "VERY_HIGH" && isStormActive
+
         when (oceanQuality) {
             "VERY_HIGH" -> {
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
                 // CAPA 1.1: Partículas Flotantes
                 OceanBubblesEffect(modifier = Modifier.fillMaxSize())
-                // CAPA 1.6: Tormenta
-                ThunderstormEffect(modifier = Modifier.fillMaxSize())
 
                 // CAPA 1.2: Niebla Flotante
                 // OceanMistEffect(modifier = Modifier.fillMaxSize())
@@ -1326,6 +1398,15 @@ fun InteractiveWorldMap(
             }
             // Vignette Dinámico
             OceanVignette(modifier = Modifier.fillMaxSize())
+        }
+
+        // SISTEMA DE TORMENTA (solo en VERY_HIGH)
+        if (shouldShowStorm) {
+            StormEffect(
+                modifier = Modifier.fillMaxSize(),
+                onThunderSound = onThunderSound
+            )
+            RainEffect(modifier = Modifier.fillMaxSize())
         }
 
         // CAPA 2: Mapa en canvas original
