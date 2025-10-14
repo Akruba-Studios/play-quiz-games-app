@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 38-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 39-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,6 +131,10 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Configuración centralizada de efectos por calidad
+    val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
+    val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
 
@@ -158,8 +162,14 @@ fun MapScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Sistema de tormenta
+    // Sistema de tormenta y Lluvia
     var isStormActive by remember { mutableStateOf(false) }
+    var isRainActive by remember { mutableStateOf(false) }
+
+    // Calcular si deben mostrarse los efectos (MOVER AQUÍ)
+    val shouldShowStorm = uiState.oceanQuality in stormQualityLevels && isStormActive
+    val shouldShowRain = uiState.oceanQuality in rainQualityLevels && isRainActive
+
     val thunderPlayer = remember { MediaPlayer.create(context, R.raw.sfx_thunder) }
     // Creamos un par de reproductores para el bucle sin fisuras
     val rainPlayer = remember {
@@ -176,21 +186,45 @@ fun MapScreen(
             rainPlayer.release()
         }
     }
-    // Scheduler de tormentas
-    LaunchedEffect(key1 = "storm_scheduler") {
+    // Sistema Inteligente para LLuvia y Tormentas
+    LaunchedEffect(key1 = "weather_scheduler", uiState.oceanQuality) {
         while (true) {
-            delay(10000) // Cada 2 minutos = 120000
+            delay(10000) // Evalua Cada 2 minutos = 120000
 
-            if (Random.nextFloat() < 0.8f) { // 30% probabilidad = 0.3f
-                isStormActive = true
-                delay(20000) // Duración: 45 segundos = 45000
-                isStormActive = false
+            if (Random.nextFloat() < 0.8f) { // 30% probabilidad para tormenta = 0.3f
+                val currentQuality = uiState.oceanQuality
+                val hasStorm = currentQuality in stormQualityLevels
+                val hasRain = currentQuality in rainQualityLevels
+
+                when {
+                    // VERY_HIGH: ambos sincronizados
+                    currentQuality == "VERY_HIGH" && hasStorm && hasRain -> {
+                        isStormActive = true
+                        isRainActive = true
+                        delay(20000) // Duración Total efecto: 45 segundos = 45000
+                        isStormActive = false
+                        isRainActive = false
+                    }
+                    // Solo tormenta
+                    hasStorm && !hasRain -> {
+                        isStormActive = true
+                        delay(20000) // Duración Total efecto: 45 segundos = 45000
+                        isStormActive = false
+                    }
+                    // Solo lluvia
+                    hasRain && !hasStorm -> {
+                        isRainActive = true
+                        delay(20000) // Duración Total efecto: 45 segundos = 45000
+                        isRainActive = false
+                    }
+                }
             }
         }
     }
+
     /// Control de sonido de lluvia y música con AUTO-RE-ENCADENAMIENTO
-    LaunchedEffect(isStormActive) {
-        if (isStormActive) {
+    LaunchedEffect(isRainActive) {
+        if (isRainActive) {
             viewModel.musicManager.duckVolume()
 
             rainPlayer.volume = 0f
@@ -401,6 +435,9 @@ fun MapScreen(
                         },
                         modifier = Modifier.fillMaxSize(), // El mapa ocupa todo el espacio
                         isStormActive = isStormActive,                     // AÑADIR
+                        isRainActive = isRainActive,
+                        shouldShowStorm = shouldShowStorm,
+                        shouldShowRain = shouldShowRain,
                         onThunderSound = {                                 // AÑADIR
                             if (!thunderPlayer.isPlaying) {
                                 thunderPlayer.seekTo(0)
@@ -902,6 +939,9 @@ fun InteractiveWorldMap(
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     isStormActive: Boolean = false,
+    isRainActive: Boolean = false,
+    shouldShowStorm: Boolean = false,
+    shouldShowRain: Boolean = false,
     onThunderSound: () -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -1355,9 +1395,6 @@ fun InteractiveWorldMap(
             )
         }
 
-        // PRIMERO: Guardar si debemos mostrar tormenta (evaluado cada vez que cambia isStormActive)
-        val shouldShowStorm = oceanQuality == "VERY_HIGH" && isStormActive
-
         when (oceanQuality) {
             "VERY_HIGH" -> {
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
@@ -1378,7 +1415,8 @@ fun InteractiveWorldMap(
             }
             "HIGH" -> {
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
-                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+                // OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+                OceanFishEffect(modifier = Modifier.fillMaxSize())
             }
             "MEDIUM" -> {
                 staticOceanBackground()
@@ -1400,12 +1438,16 @@ fun InteractiveWorldMap(
             OceanVignette(modifier = Modifier.fillMaxSize())
         }
 
-        // SISTEMA DE TORMENTA (solo en VERY_HIGH)
+        // Efecto de TORMENTA (independiente)
         if (shouldShowStorm) {
             StormEffect(
                 modifier = Modifier.fillMaxSize(),
                 onThunderSound = onThunderSound
             )
+        }
+
+        // Efecto de LLUVIA (independiente)
+        if (shouldShowRain) {
             RainEffect(modifier = Modifier.fillMaxSize())
         }
 
