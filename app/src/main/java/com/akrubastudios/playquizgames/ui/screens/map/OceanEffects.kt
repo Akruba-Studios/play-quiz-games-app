@@ -1,14 +1,20 @@
 package com.akrubastudios.playquizgames.ui.screens.map
 
+import android.R.attr.scaleX
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phishing
 import androidx.compose.material.icons.filled.Sailing
 import androidx.compose.material.icons.filled.Tsunami
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,10 +27,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -563,35 +572,42 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
     val fishSpecies = remember {
         listOf(
             FishSpecies(
-                icon = Icons.Default.Phishing, // Pez 1
-                baseSize = 32.dp,
+                icon = JawsIcon, // Pez 1. Tamaño 24
+                baseSize = 100.dp,
                 speed = 0.8f,
                 depthLayer = 0.3f, // Lejano (pequeño, transparente)
                 verticalMovement = 0.02f
             ),
             FishSpecies(
-                icon = Icons.Default.Sailing, // Pez 2 (usamos iconos relacionados al agua)
+                icon = AnglerFishIcon, // Pez 2. Tamaño 512
                 baseSize = 28.dp,
                 speed = 1.2f,
                 depthLayer = 0.5f, // Medio
                 verticalMovement = 0.05f
             ),
             FishSpecies(
-                icon = Icons.Default.WaterDrop, // Pez 3
+                icon = FishSharpIcon, // Pez 3. Tamaño 512
                 baseSize = 24.dp,
                 speed = 1.5f,
                 depthLayer = 0.7f, // Cercano (grande, opaco)
                 verticalMovement = 0.03f
             ),
             FishSpecies(
-                icon = Icons.Default.Tsunami, // Pez 4
+                icon = JellyfishIcon, // Pez 4. Tamaño 32
                 baseSize = 36.dp,
                 speed = 0.6f,
                 depthLayer = 0.4f,
                 verticalMovement = 0.01f
             ),
             FishSpecies(
-                icon = Icons.Default.Waves, // Pez 5
+                icon = TropicalFishIcon, // Pez 5. Tamaño 512
+                baseSize = 30.dp,
+                speed = 1.0f,
+                depthLayer = 0.6f,
+                verticalMovement = 0.04f
+            ),
+            FishSpecies(
+                icon = WhaleIcon, // Pez 6. Tamaño 64 y tiene colores
                 baseSize = 30.dp,
                 speed = 1.0f,
                 depthLayer = 0.6f,
@@ -600,14 +616,14 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
         )
     }
 
-    // Generamos población de peces (15 peces en total)
+    // Generamos población de peces (20 peces en total)
     val fishes = remember {
-        List(15) { index ->
+        List(20) { index ->
             val species = fishSpecies[index % fishSpecies.size]
             Fish(
                 species = species,
                 startX = (index * 0.13f) % 1f, // Distribuidos en X
-                startY = (index * 0.17f) % 1f, // Distribuidos en Y
+                startY = (index * 0.29f) % 1f, // Distribuidos en Y
                 id = index
             )
         }
@@ -625,35 +641,22 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
         label = "time"
     )
 
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val width = size.width
-        val height = size.height
-
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        android.util.Log.d("PANTALLA", "Ancho: ${maxWidth.value}, Alto: ${maxHeight.value}")
         fishes.forEach { fish ->
-            // Ciclo de tiempo único por pez
+            val density = LocalDensity.current
             val fishTime = (time + fish.startX) % 1f
-
-            // Movimiento horizontal (de lado a lado)
             val xProgress = fishTime
-            val xPos = width * xProgress
 
-            // Movimiento vertical sinusoidal (simula nadar arriba/abajo)
-            val verticalOscillation = kotlin.math.sin(fishTime * 6.28f * 3) *
-                    height * fish.species.verticalMovement
-            val yPos = height * fish.startY + verticalOscillation
+            val verticalOscillation = kotlin.math.sin(fishTime * 6.28f * 3) * fish.species.verticalMovement
+            val yPos = fish.startY + verticalOscillation
 
-            // Determinar dirección del pez
             val previousTime = (time + fish.startX - 0.01f) % 1f
             val isMovingRight = fishTime > previousTime
 
-            // Calcular tamaño según profundidad
-            val sizePx = with(this) { fish.species.baseSize.toPx() }
-            val scaledSize = sizePx * fish.species.depthLayer
-
-            // Alpha según profundidad
+            val scaledSize = fish.species.baseSize * fish.species.depthLayer
             val alpha = 0.4f + (fish.species.depthLayer * 0.5f)
 
-            // Tinte azulado según profundidad (más lejos = más azul)
             val blueTint = 1f - (fish.species.depthLayer * 0.3f)
             val fishColor = Color(
                 red = blueTint,
@@ -662,33 +665,34 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
                 alpha = alpha
             )
 
-            // Dibujar el pez con rotación
-            drawContext.canvas.save()
-            drawContext.canvas.translate(xPos, yPos)
-
-            // Flip horizontal si va hacia la izquierda
-            if (!isMovingRight) {
-                drawContext.canvas.scale(-1f, 1f)
+            // AGREGA ESTOS LOGS AQUÍ
+            if (fish.species.icon == JawsIcon) {
+                android.util.Log.d("TIBURON", "ID: ${fish.id}, X: ${xProgress * this@BoxWithConstraints.maxWidth.value}, Y: ${yPos * this@BoxWithConstraints.maxHeight.value}, Size: $scaledSize, Alpha: $alpha")
             }
 
-            // Dibujar el icono del pez
-            translate(left = -scaledSize / 2f, top = -scaledSize / 2f) {
-                drawContext.canvas.nativeCanvas.apply {
-                    val paint = android.graphics.Paint().apply {
-                        color = fishColor.toArgb()
-                        isAntiAlias = true
+
+
+            Icon(
+                imageVector = fish.species.icon,
+                contentDescription = null,
+                modifier = Modifier
+                    .offset {
+                        val halfSize = (scaledSize.value * density.density / 2).toInt()
+                        IntOffset(
+                            x = (xProgress * this@BoxWithConstraints.maxWidth.value * density.density).toInt() - halfSize,
+                            y = (yPos * this@BoxWithConstraints.maxHeight.value * density.density).toInt() - halfSize
+                        )
                     }
-
-                    // Convertir ImageVector a Path y dibujar
-                    val vectorPath = fish.species.icon.toPath(
-                        size = scaledSize,
-                        density = this@Canvas
-                    )
-                    drawPath(vectorPath, paint)
-                }
-            }
-
-            drawContext.canvas.restore()
+                    .size(scaledSize)
+                    .graphicsLayer {
+                        scaleX = if (fish.species.icon == WhaleIcon) {
+                            if (isMovingRight) -1f else 1f  // Invertido para ballena
+                        } else {
+                            if (isMovingRight) 1f else -1f  // Normal para otros
+                        }
+                    },
+                tint = if (fish.species.icon == WhaleIcon) Color.Unspecified else fishColor
+            )
         }
     }
 }
@@ -709,14 +713,3 @@ private data class Fish(
     val startY: Float,  // Posición inicial Y (0-1)
     val id: Int
 )
-
-// Función de extensión para convertir ImageVector a Path
-private fun ImageVector.toPath(size: Float, density: androidx.compose.ui.unit.Density): android.graphics.Path {
-    val path = android.graphics.Path()
-
-    // Esto es una simplificación - dibuja un rectángulo como placeholder
-    // En producción, usarías una librería para convertir ImageVector a Path correctamente
-    path.addRect(0f, 0f, size, size, android.graphics.Path.Direction.CW)
-
-    return path
-}

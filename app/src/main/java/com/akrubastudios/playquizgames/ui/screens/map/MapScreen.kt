@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 39-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 40-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +132,7 @@ fun MapScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Configuración centralizada de efectos por calidad
+    // CONTROL ESPECIAL PARA ACTIVAR TORMENA Y LLUVIA, SI SE QUIERE SINCRONIZAR AJUSTAR EN EL LAUNCHED "weather_scheduler"
     val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
     val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
 
