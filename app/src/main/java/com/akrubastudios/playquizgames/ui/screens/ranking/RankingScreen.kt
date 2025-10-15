@@ -23,14 +23,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.Constraints
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -43,7 +46,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 3-RS
+@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 4-RS
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel(),
@@ -328,15 +331,48 @@ fun PodiumPosition(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = user.displayName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                fontSize = nameFontSize,
-                modifier = Modifier.fillMaxWidth()
-            )
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                val textMeasurer = rememberTextMeasurer()
+                val baseTextStyle = MaterialTheme.typography.bodyMedium
+
+                // Calculamos el fontSize óptimo usando tu misma lógica
+                val optimalFontSize = remember(user.displayName, this@BoxWithConstraints.maxWidth) {
+                    var low = 1f // Tamaño mínimo aceptable
+                    var high = nameFontSize.value // Empezamos con el tamaño máximo que ya calculamos
+                    var result = low
+
+                    // Búsqueda binaria para eficiencia
+                    while (high - low > 0.5f) {
+                        val mid = (low + high) / 2f
+                        val textStyle = baseTextStyle.copy(fontSize = mid.sp)
+                        val textLayoutResult = textMeasurer.measure(
+                            text = user.displayName,
+                            style = textStyle,
+                            constraints = Constraints(maxWidth = this@BoxWithConstraints.constraints.maxWidth)
+                        )
+
+                        if (textLayoutResult.lineCount <= 1) {
+                            result = mid
+                            low = mid // Cabe, intenta un tamaño más grande
+                        } else {
+                            high = mid // No cabe, intenta un tamaño más pequeño
+                        }
+                    }
+                    result.sp
+                }
+
+                Text(
+                    text = user.displayName,
+                    style = baseTextStyle,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    fontSize = optimalFontSize // Aplicamos el tamaño de fuente calculado
+                )
+            }
 
             Text(
                 text = "${stringResource(R.string.ranking_level_prefix2)} ${user.level}",
