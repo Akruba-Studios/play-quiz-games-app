@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -37,11 +38,12 @@ import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
+import com.akrubastudios.playquizgames.ui.theme.GoldAccent
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 2-RS
+@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 3-RS
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel(),
@@ -159,6 +161,13 @@ fun PodiumTop3(
             else -> 12.dp
         }
     }
+    val titleFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 20.sp
+            screenWidth < 370.dp -> 22.sp // Tamaño reducido (equivale a titleLarge)
+            else -> 24.sp               // Tamaño normal (headlineSmall)
+        }
+    }
 
     // Animación de entrada
     var visible by remember { mutableStateOf(false) }
@@ -177,7 +186,9 @@ fun PodiumTop3(
         ) {
             Text(
                 text = "🏆 ${stringResource(R.string.ranking_top_3_title)}",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = titleFontSize // Aplicamos el tamaño de fuente dinámico
+                ),
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -374,6 +385,15 @@ fun AnimatedRankedUserItem(
     user: RankedUserUiItem,
     delay: Long
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val nameFontSize = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 14.sp
+            screenWidth < 370.dp -> 15.sp // Tamaño reducido (bodyMedium)
+            else -> 16.sp               // Tamaño normal (bodyLarge)
+        }
+    }
+
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(delay)
@@ -437,7 +457,9 @@ fun AnimatedRankedUserItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = user.displayName,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = nameFontSize // Aplicamos el tamaño de fuente dinámico
+                        ),
                         fontWeight = FontWeight.SemiBold
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -445,7 +467,7 @@ fun AnimatedRankedUserItem(
                             text = stringResource(R.string.ranking_level_prefix, user.level),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
-                            color = DarkGoldAccent
+                            color = GoldAccent
                         )
                         Text(
                             text = " • ${NumberFormat.getNumberInstance(Locale.getDefault()).format(user.totalXp)} XP",
@@ -472,7 +494,7 @@ fun FloatingUserRankCard(
     rankData: CurrentUserRankData,
     modifier: Modifier = Modifier
 ) {
-    // Animación de glow sutil
+    // La animación del glow no cambia
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -485,39 +507,49 @@ fun FloatingUserRankCard(
     )
 
     Box(modifier = modifier) {
-        // Glow detrás de la card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .offset(y = 4.dp)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
-                            Color.Transparent
-                        ),
-                        radius = 400f
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                )
-        )
+        // CAPA 1: El fondo semi-sólido. Es el primero, por lo que está más atrás.
+        Surface(
+            modifier = Modifier.matchParentSize(), // Ocupa el mismo tamaño que la Card final
+            color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
+            shape = RoundedCornerShape(20.dp),
+            tonalElevation = 0.dp, // Sin elevación propia
+        ) {} // El contenido es vacío, solo nos interesa el fondo
 
-        // Card real
+        // CAPA 2: El Glow. Se dibuja encima del fondo semi-sólido.
+        if (!isSystemInDarkTheme()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .offset(y = 4.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
+                                Color.Transparent
+                            ),
+                            radius = 400f
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+            )
+        }
+
+        // CAPA 3: La Card con el contenido. Ahora es transparente para dejar ver las capas de abajo.
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(20.dp)
-                ),
+            modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            // El color del contenedor ahora es el tinte sutil, como en las otras pantallas
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
             shape = RoundedCornerShape(20.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), // Padding vertical reducido
+                verticalArrangement = Arrangement.spacedBy(4.dp) // Espaciado preciso entre Rows
+            ) {
+                // PRIMER ROW: Título y #Rank
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -525,7 +557,7 @@ fun FloatingUserRankCard(
                 ) {
                     Text(
                         text = "🎯 ${stringResource(R.string.ranking_your_position)}",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -536,7 +568,7 @@ fun FloatingUserRankCard(
                     ) {
                         Text(
                             text = "#${rankData.rank}",
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), // Padding vertical reducido
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onPrimary
@@ -544,6 +576,7 @@ fun FloatingUserRankCard(
                     }
                 }
 
+                // SEGUNDO ROW: XP y XP para el siguiente
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
