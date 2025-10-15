@@ -254,9 +254,12 @@
 
     <!-- RankingScreen -->
     <string name="ranking_title">Ranking Global</string>
-    <string name="ranking_your_position">Tu Posición</string>
+    <string name="ranking_top_3_title">TOP 3 CAMPEONES</string>
+    <string name="ranking_your_position">TU POSICIÓN</string>
     <string name="ranking_xp_to_next">XP para la siguiente Posición</string>
     <string name="cd_profile_picture_of">Foto de perfil de %1$s</string>
+    <string name="ranking_level_prefix">Nivel %1$d</string>
+    <string name="ranking_level_prefix2">Nv</string>
 
     <!-- PlayerLevelIndicator -->
     <string name="player_level">Nivel %1$d</string>
