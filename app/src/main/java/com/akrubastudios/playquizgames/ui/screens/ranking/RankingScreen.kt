@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,17 +29,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 1-RS
+@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 2-RS
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel(),
@@ -60,7 +64,7 @@ fun RankingScreen(
                 title = {
                     Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "🏆 ${stringResource(R.string.ranking_title)}",
+                            text = "${stringResource(R.string.ranking_title)}",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -125,6 +129,7 @@ fun RankingScreen(
                         rankData = uiState.currentUserRank!!,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
+                            .zIndex(1f)
                             .padding(16.dp)
                     )
                 }
@@ -139,6 +144,22 @@ fun PodiumTop3(
     second: RankedUserUiItem,
     third: RankedUserUiItem
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val podiumWidth = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 85.dp   // Ancho reducido para pantallas críticas
+            screenWidth < 370.dp -> 95.dp   // Ancho intermedio
+            else -> 100.dp                  // Ancho normal
+        }
+    }
+    val spacerWidth = remember(screenWidth) {
+        when {
+            screenWidth < 340.dp -> 8.dp
+            screenWidth < 370.dp -> 10.dp
+            else -> 12.dp
+        }
+    }
+
     // Animación de entrada
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -155,7 +176,7 @@ fun PodiumTop3(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "👑 ${stringResource(R.string.ranking_top_3_title)}",
+                text = "🏆 ${stringResource(R.string.ranking_top_3_title)}",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -173,10 +194,11 @@ fun PodiumTop3(
                     position = 2,
                     height = 120.dp,
                     color = Color(0xFFC0C0C0), // Plata
-                    delay = 200L
+                    delay = 200L,
+                    width = podiumWidth
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacerWidth))
 
                 // PRIMER LUGAR
                 PodiumPosition(
@@ -184,10 +206,11 @@ fun PodiumTop3(
                     position = 1,
                     height = 160.dp,
                     color = Color(0xFFFFD700), // Oro
-                    delay = 0L
+                    delay = 0L,
+                    width = podiumWidth
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacerWidth))
 
                 // TERCER LUGAR
                 PodiumPosition(
@@ -195,7 +218,8 @@ fun PodiumTop3(
                     position = 3,
                     height = 100.dp,
                     color = Color(0xFFCD7F32), // Bronce
-                    delay = 400L
+                    delay = 400L,
+                    width = podiumWidth
                 )
             }
         }
@@ -208,8 +232,15 @@ fun PodiumPosition(
     position: Int,
     height: Dp,
     color: Color,
-    delay: Long
+    delay: Long,
+    width: Dp
 ) {
+    val avatarSize = if (position == 1) width * 0.8f else width * 0.64f
+    val badgeSize = width * 0.24f
+    val badgeFontSize = (badgeSize.value / 1.7f).sp
+    val nameFontSize = (width.value / 7.5f).sp
+    val levelFontSize = (width.value / 8.5f).sp
+
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(delay)
@@ -234,14 +265,14 @@ fun PodiumPosition(
     ) {
         Column(
             modifier = Modifier
-                .width(100.dp)
+                .width(width)
                 .scale(if (position == 1) scale else 1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar con borde brillante
             Box(
                 modifier = Modifier
-                    .size(if (position == 1) 80.dp else 64.dp)
+                    .size(avatarSize)
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(color.copy(alpha = 0.3f), Color.Transparent)
@@ -265,7 +296,7 @@ fun PodiumPosition(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .offset(x = 4.dp, y = 4.dp)
-                        .size(24.dp)
+                        .size(badgeSize)
                         .background(color, CircleShape)
                         .background(
                             brush = Brush.radialGradient(
@@ -279,7 +310,7 @@ fun PodiumPosition(
                         text = "$position",
                         color = Color.Black,
                         fontWeight = FontWeight.Black,
-                        fontSize = 14.sp
+                        fontSize = badgeFontSize
                     )
                 }
             }
@@ -292,6 +323,7 @@ fun PodiumPosition(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
+                fontSize = nameFontSize,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -299,7 +331,8 @@ fun PodiumPosition(
                 text = "${stringResource(R.string.ranking_level_prefix2)} ${user.level}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = nameFontSize,
             )
 
             // Pedestal
@@ -412,7 +445,7 @@ fun AnimatedRankedUserItem(
                             text = stringResource(R.string.ranking_level_prefix, user.level),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = DarkGoldAccent
                         )
                         Text(
                             text = " • ${NumberFormat.getNumberInstance(Locale.getDefault()).format(user.totalXp)} XP",
@@ -472,7 +505,12 @@ fun FloatingUserRankCard(
 
         // Card real
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(20.dp)
+                ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -506,8 +544,6 @@ fun FloatingUserRankCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -533,6 +569,93 @@ fun FloatingUserRankCard(
     }
 }
 
+@Composable
+fun SkeletonLoadingRanking() {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+
+    // Animación del shimmer que se mueve de izquierda a derecha
+    val shimmerTranslate by infiniteTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        val containerWidth = this@BoxWithConstraints.maxWidth.value
+
+        // Función para crear el brush del shimmer
+        fun shimmerBrush(): Brush {
+            val shimmerColors = listOf(
+                Color(0xFFE0E0E0),
+                Color(0xFFF5F5F5),
+                Color(0xFFE0E0E0)
+            )
+
+            val offset = containerWidth * shimmerTranslate
+
+            return Brush.linearGradient(
+                colors = shimmerColors,
+                start = Offset(offset, 0f),
+                end = Offset(offset + containerWidth, 0f)
+            )
+        }
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Título skeleton
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(shimmerBrush())
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Skeleton del podio - UN SOLO BOX GRANDE
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(shimmerBrush())
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Skeleton de las cards individuales - SIMPLES
+            repeat(6) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp)
+                            .background(shimmerBrush())
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+/*
 @Composable
 fun SkeletonLoadingRanking() {
     val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
@@ -719,3 +842,5 @@ fun SkeletonLoadingRanking() {
         }
     }
 }
+
+ */
