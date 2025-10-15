@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 40-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 41-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)

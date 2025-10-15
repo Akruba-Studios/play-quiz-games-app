@@ -642,7 +642,6 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
     )
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        android.util.Log.d("PANTALLA", "Ancho: ${maxWidth.value}, Alto: ${maxHeight.value}")
         fishes.forEach { fish ->
             val density = LocalDensity.current
             val fishTime = (time + fish.startX) % 1f
@@ -664,13 +663,6 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
                 blue = 1f,
                 alpha = alpha
             )
-
-            // AGREGA ESTOS LOGS AQUÍ
-            if (fish.species.icon == JawsIcon) {
-                android.util.Log.d("TIBURON", "ID: ${fish.id}, X: ${xProgress * this@BoxWithConstraints.maxWidth.value}, Y: ${yPos * this@BoxWithConstraints.maxHeight.value}, Size: $scaledSize, Alpha: $alpha")
-            }
-
-
 
             Icon(
                 imageVector = fish.species.icon,
