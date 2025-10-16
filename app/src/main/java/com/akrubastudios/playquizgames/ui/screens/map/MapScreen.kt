@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 41-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 42-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,10 +131,6 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // CONTROL ESPECIAL PARA ACTIVAR TORMENA Y LLUVIA, SI SE QUIERE SINCRONIZAR AJUSTAR EN EL LAUNCHED "weather_scheduler"
-    val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
-    val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
 
     val context = LocalContext.current // Necesitaremos el contexto para los strings
 
@@ -162,13 +158,58 @@ fun MapScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // ========================================================================
+    // SISTEMA DE EFECTOS AMBIENTALES - CONFIGURACIÓN CENTRALIZADA
+    // ========================================================================
+
+    // --- ESTADOS INDIVIDUALES DE EFECTOS ---
     // Sistema de tormenta y Lluvia
     var isStormActive by remember { mutableStateOf(false) }
     var isRainActive by remember { mutableStateOf(false) }
+    // Otros Efectos
+    var isFishActive by remember { mutableStateOf(false) }
+    var isMistActive by remember { mutableStateOf(false) }
+    var isGodRaysActive by remember { mutableStateOf(false) }
+    var isSpecularActive by remember { mutableStateOf(false) }
+    var isGradientActive by remember { mutableStateOf(false) }
+    var isBubblesActive by remember { mutableStateOf(false) }
 
-    // Calcular si deben mostrarse los efectos (MOVER AQUÍ)
+    // --- LISTAS DE CALIDAD GRÁFICA (Define qué efectos se muestran en cada nivel) ---
+    val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
+    val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
+
+    val fishQualityLevels = remember { listOf("VERY_HIGH") }
+    val mistQualityLevels = remember { listOf("MEDIUM") }
+    val godRaysQualityLevels = remember { listOf("MEDIUM") }
+    val specularQualityLevels = remember { listOf("MEDIUM") }
+    val bubblesQualityLevels = remember { listOf("LOW") }
+    val gradientQualityLevels = remember { emptyList<String>() } // Esto es para que el efecto no funcione en ninguan calidad, queda anulado
+
+
+    // --- CONFIGURACIÓN DEL SISTEMA ---
+    // Capa Ambiental (efectos sutiles frecuentes)
+    val ambientTickInterval = 5000L        // Cada cuántos ms hace un "tick" (5000 = 5 segundos)
+    val ambientCycleLength = 4             // Cuántos ticks para evaluar (4 * 5s = 20 segundos)
+    val ambientProbability = 0.70f         // Probabilidad de activar efecto cuando se evalúa (0.70 = 70%)
+    val ambientEffectDuration = 15000L     // Duración de efectos ambientales en ms (15000 = 15 segundos)
+
+    // Capa Climática (eventos dramáticos poco frecuentes)
+    val climaticCycleLength = 3           // Cuántos ticks para evaluar (18 * 5s = 90 segundos)
+    val climaticProbability = 0.80f        // Probabilidad de evento climático (0.30 = 30%)
+    val climaticEffectDuration = 20000L    // Duración de eventos climáticos en ms (20000 = 20 segundos) - ACTUAL: 20s para pruebas, pero era 45s
+
+    // Control de superposición
+    val allowEffectOverlap = true          // true = efectos pueden ocurrir simultáneamente, false = solo uno a la vez
+
+    // Variables calculadas para efectos ambientales
     val shouldShowStorm = uiState.oceanQuality in stormQualityLevels && isStormActive
     val shouldShowRain = uiState.oceanQuality in rainQualityLevels && isRainActive
+    val shouldShowFish = uiState.oceanQuality in fishQualityLevels && isFishActive
+    val shouldShowMist = uiState.oceanQuality in mistQualityLevels && isMistActive
+    val shouldShowGodRays = uiState.oceanQuality in godRaysQualityLevels && isGodRaysActive
+    val shouldShowSpecular = uiState.oceanQuality in specularQualityLevels && isSpecularActive
+    val shouldShowGradient = uiState.oceanQuality in gradientQualityLevels && isGradientActive
+    val shouldShowBubbles = uiState.oceanQuality in bubblesQualityLevels && isBubblesActive
 
     val thunderPlayer = remember { MediaPlayer.create(context, R.raw.sfx_thunder) }
     // Creamos un par de reproductores para el bucle sin fisuras
@@ -186,41 +227,229 @@ fun MapScreen(
             rainPlayer.release()
         }
     }
-    // Sistema Inteligente para LLuvia y Tormentas
+    // ========================================================================
+    // CENTRO DE MANDO ÚNICO - SISTEMA CLIMÁTICO UNIFICADO
+    // ========================================================================
     LaunchedEffect(key1 = "weather_scheduler", uiState.oceanQuality) {
+        var ambientCounter = 0
+        var climaticCounter = 0
+
+        // Variable para rastrear si hay un efecto activo (para control de overlap)
+        var activeEffectsCount = 0
+        var isAmbientEffectActive = false
+        var isClimaticEffectActive = false
+
         while (true) {
-            delay(10000) // Evalua Cada 2 minutos = 120000
+            delay(ambientTickInterval) // Tick base del sistema
 
-            if (Random.nextFloat() < 0.8f) { // 30% probabilidad para tormenta = 0.3f
-                val currentQuality = uiState.oceanQuality
-                val hasStorm = currentQuality in stormQualityLevels
-                val hasRain = currentQuality in rainQualityLevels
+            // ✅ SOLO incrementar si NO hay efecto activo
+            if (!isAmbientEffectActive) {
+                ambientCounter++
+            }
+            if (!isClimaticEffectActive) {
+                climaticCounter++
+            }
 
-                when {
-                    // VERY_HIGH: ambos sincronizados
-                    currentQuality == "VERY_HIGH" && hasStorm && hasRain -> {
-                        isStormActive = true
-                        isRainActive = true
-                        delay(20000) // Duración Total efecto: 45 segundos = 45000
-                        isStormActive = false
-                        isRainActive = false
+            Log.d("WeatherScheduler", "=== TICK ===")
+            Log.d("WeatherScheduler", "ambientCounter: $ambientCounter (active: $isAmbientEffectActive)")
+            Log.d("WeatherScheduler", "climaticCounter: $climaticCounter (active: $isClimaticEffectActive)")
+            Log.d("WeatherScheduler", "activeEffectsCount: $activeEffectsCount")
+
+            // ====================================================================
+            // CAPA AMBIENTAL - Efectos sutiles frecuentes
+            // ====================================================================
+            if (ambientCounter > ambientCycleLength && !isAmbientEffectActive) {
+                // Comprobar si debemos activar un efecto ambiental
+                if (Random.nextFloat() < ambientProbability) {
+                    // Si NO se permite overlap Y ya hay un efecto activo, saltamos
+                    if (!allowEffectOverlap && activeEffectsCount > 0) {
+                        // No hacer nada, esperamos al siguiente ciclo
+                    } else {
+                        ambientCounter = 0
+                        // Pool de efectos ambientales disponibles
+                        val availableEffects = mutableListOf<String>()
+
+                        // Solo añadimos efectos cuya calidad gráfica actual lo permite
+                        if (uiState.oceanQuality in fishQualityLevels && !isFishActive) {
+                            availableEffects.add("fish")
+                        }
+                        if (uiState.oceanQuality in mistQualityLevels && !isMistActive) {
+                            availableEffects.add("mist")
+                        }
+                        if (uiState.oceanQuality in godRaysQualityLevels && !isGodRaysActive) {
+                            availableEffects.add("godRays")
+                        }
+                        if (uiState.oceanQuality in specularQualityLevels && !isSpecularActive) {
+                            availableEffects.add("specular")
+                        }
+                        if (uiState.oceanQuality in gradientQualityLevels && !isGradientActive) {
+                            availableEffects.add("gradient")
+                        }
+                        if (uiState.oceanQuality in bubblesQualityLevels && !isBubblesActive) {
+                            availableEffects.add("bubbles")
+                        }
+
+                        // Si hay efectos disponibles, elegimos uno al azar, estos efectos no se supornen
+                        if (availableEffects.isNotEmpty()) {
+                            val chosenEffect = availableEffects.random()
+
+                            // Activamos el efecto elegido
+                            when (chosenEffect) {
+                                "fish" -> {
+                                    isFishActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isFishActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                                "mist" -> {
+                                    isMistActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isMistActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                                "godRays" -> {
+                                    isGodRaysActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isGodRaysActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                                "specular" -> {
+                                    isSpecularActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isSpecularActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                                "gradient" -> {
+                                    isGradientActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isGradientActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                                "bubbles" -> {
+                                    isBubblesActive = true
+                                    isAmbientEffectActive = true
+                                    activeEffectsCount++
+                                    launch {
+                                        delay(ambientEffectDuration)
+                                        isBubblesActive = false
+                                        isAmbientEffectActive = false
+                                        activeEffectsCount--
+                                    }
+                                }
+                            }
+                        }
                     }
-                    // Solo tormenta
-                    hasStorm && !hasRain -> {
-                        isStormActive = true
-                        delay(20000) // Duración Total efecto: 45 segundos = 45000
-                        isStormActive = false
+                } else {
+                    // ✅ Si la probabilidad FALLÓ, también resetear
+                    // para que vuelva a intentar en el próximo ciclo
+                    ambientCounter = 0
+                }
+            }
+
+            // ====================================================================
+            // CAPA CLIMÁTICA - Eventos dramáticos poco frecuentes
+            // ====================================================================
+            if (climaticCounter > climaticCycleLength && !isClimaticEffectActive) {
+                Log.d("WeatherScheduler", "⛈️ EVALUANDO EFECTO CLIMÁTICO")
+                // Comprobar si debemos activar un evento climático
+                if (Random.nextFloat() < climaticProbability) {
+                    Log.d("WeatherScheduler", "✅ Probabilidad pasó (${climaticProbability})")
+                    // Si NO se permite overlap Y ya hay un efecto activo, saltamos
+                    if (!allowEffectOverlap && activeEffectsCount > 0) {
+                        // No hacer nada, esperamos al siguiente ciclo
+                    } else {
+                        climaticCounter = 0
+                        val currentQuality = uiState.oceanQuality
+                        val hasStorm = currentQuality in stormQualityLevels
+                        val hasRain = currentQuality in rainQualityLevels
+
+                        when {
+                            // VERY_HIGH: ambos sincronizados (TU LÓGICA ACTUAL PRESERVADA)
+                            currentQuality == "VERY_HIGH" && hasStorm && hasRain -> {
+                                Log.d("WeatherScheduler", "⛈️🌧️ ACTIVANDO TORMENTA + LLUVIA")
+                                isStormActive = true
+                                isRainActive = true
+                                isClimaticEffectActive = true
+                                activeEffectsCount++
+                                launch {
+                                    Log.d("WeatherScheduler", "⛈️ Tormenta iniciada - durará ${climaticEffectDuration}ms")
+                                    delay(climaticEffectDuration)
+                                    Log.d("WeatherScheduler", "⛈️ TERMINANDO TORMENTA")
+                                    isStormActive = false
+                                    isRainActive = false
+                                    isClimaticEffectActive = false
+                                    activeEffectsCount--
+                                    Log.d("WeatherScheduler", "⛈️ Tormenta terminada - contador reseteado a 0")
+                                }
+                            }
+                            // Solo tormenta
+                            hasStorm && !hasRain -> {
+                                Log.d("WeatherScheduler", "⛈️ ACTIVANDO SOLO TORMENTA")
+                                isStormActive = true
+                                isClimaticEffectActive = true
+                                activeEffectsCount++
+                                launch {
+                                    Log.d("WeatherScheduler", "⛈️ Tormenta iniciada - durará ${climaticEffectDuration}ms")
+                                    delay(climaticEffectDuration)
+                                    Log.d("WeatherScheduler", "⛈️ TERMINANDO TORMENTA")
+                                    isStormActive = false
+                                    isClimaticEffectActive = false
+                                    activeEffectsCount--
+                                    Log.d("WeatherScheduler", "⛈️ Tormenta terminada - contador reseteado a 0")
+                                }
+                            }
+                            // Solo lluvia
+                            hasRain && !hasStorm -> {
+                                Log.d("WeatherScheduler", "🌧️ ACTIVANDO SOLO LLUVIA")
+                                isRainActive = true
+                                isClimaticEffectActive = true
+                                activeEffectsCount++
+                                launch {
+                                    Log.d("WeatherScheduler", "🌧️ Lluvia iniciada - durará ${climaticEffectDuration}ms")
+                                    delay(climaticEffectDuration)
+                                    Log.d("WeatherScheduler", "🌧️ TERMINANDO LLUVIA")
+                                    isRainActive = false
+                                    isClimaticEffectActive = false
+                                    activeEffectsCount--
+                                    Log.d("WeatherScheduler", "🌧️ Lluvia terminada - contador reseteado a 0")
+                                }
+                            }
+                        }
                     }
-                    // Solo lluvia
-                    hasRain && !hasStorm -> {
-                        isRainActive = true
-                        delay(20000) // Duración Total efecto: 45 segundos = 45000
-                        isRainActive = false
-                    }
+                } else {
+                    // ✅ Si la probabilidad FALLÓ, también resetear
+                    // para que vuelva a intentar en el próximo ciclo
+                    climaticCounter = 0
                 }
             }
         }
     }
+// ========================================================================
 
     /// Control de sonido de lluvia y música con AUTO-RE-ENCADENAMIENTO
     LaunchedEffect(isRainActive) {
@@ -434,10 +663,14 @@ fun MapScreen(
                             )
                         },
                         modifier = Modifier.fillMaxSize(), // El mapa ocupa todo el espacio
-                        isStormActive = isStormActive,                     // AÑADIR
-                        isRainActive = isRainActive,
                         shouldShowStorm = shouldShowStorm,
                         shouldShowRain = shouldShowRain,
+                        shouldShowFish = shouldShowFish,
+                        shouldShowMist = shouldShowMist,
+                        shouldShowGodRays = shouldShowGodRays,
+                        shouldShowSpecular = shouldShowSpecular,
+                        shouldShowGradient = shouldShowGradient,
+                        shouldShowBubbles = shouldShowBubbles,
                         onThunderSound = {                                 // AÑADIR
                             if (!thunderPlayer.isPlaying) {
                                 thunderPlayer.seekTo(0)
@@ -938,10 +1171,14 @@ fun InteractiveWorldMap(
     oceanQuality: String,
     onCountryClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isStormActive: Boolean = false,
-    isRainActive: Boolean = false,
     shouldShowStorm: Boolean = false,
     shouldShowRain: Boolean = false,
+    shouldShowFish: Boolean = false,
+    shouldShowMist: Boolean = false,
+    shouldShowGodRays: Boolean = false,
+    shouldShowSpecular: Boolean = false,
+    shouldShowGradient: Boolean = false,
+    shouldShowBubbles: Boolean = false,
     onThunderSound: () -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -1395,40 +1632,59 @@ fun InteractiveWorldMap(
             )
         }
 
+        // FONDOS BASE (según calidad gráfica)
         when (oceanQuality) {
             "VERY_HIGH" -> {
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
-                // CAPA 1.1: Partículas Flotantes
-                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
-
-                // CAPA 1.2: Niebla Flotante
-                // OceanMistEffect(modifier = Modifier.fillMaxSize())
-
-                // CAPA 1.3: Rayos de Luz
-                // OceanGodRaysEffect(modifier = Modifier.fillMaxSize())
-
-                // CAPA 1.4: Gradient overlay
-                // OceanGradientOverlay(modifier = Modifier.fillMaxSize()) // Gradient Overlay Animado
-
-                // CAPA 1.5: Efectos especulares
-                // OceanSpecularEffect(modifier = Modifier.fillMaxSize()) // Brillo Especular Animado
             }
             "HIGH" -> {
                 VideoBackground(videoResId = R.raw.ocean_background, modifier = Modifier.fillMaxSize())
-                // OceanBubblesEffect(modifier = Modifier.fillMaxSize())
-                OceanFishEffect(modifier = Modifier.fillMaxSize())
             }
             "MEDIUM" -> {
                 staticOceanBackground()
-                OceanBubblesEffect(modifier = Modifier.fillMaxSize())
             }
             "LOW" -> {
                 staticOceanBackground()
-                // No se renderizan más efectos.
             }
         }
 
-        // Efectos que se aplican a casi todos los niveles (excepto los más bajos si fuera necesario)
+        // EFECTOS AMBIENTALES DINÁMICOS (controlados por el scheduler)
+        if (shouldShowBubbles) {
+            OceanBubblesEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        if (shouldShowFish) {
+            OceanFishEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        if (shouldShowMist) {
+            OceanMistEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        if (shouldShowGodRays) {
+            OceanGodRaysEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        if (shouldShowSpecular) {
+            OceanSpecularEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        if (shouldShowGradient) {
+            OceanGradientOverlay(modifier = Modifier.fillMaxSize())
+        }
+
+        // EFECTOS CLIMÁTICOS (lógica preservada)
+        if (shouldShowStorm) {
+            StormEffect(
+                modifier = Modifier.fillMaxSize(),
+                onThunderSound = onThunderSound
+            )
+        }
+        if (shouldShowRain) {
+            RainEffect(modifier = Modifier.fillMaxSize())
+        }
+
+        // EFECTOS PERMANENTES (según calidad)
         if (oceanQuality in listOf("VERY_HIGH", "HIGH", "MEDIUM")) {
             // Color Grading Dinámico
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -1436,19 +1692,6 @@ fun InteractiveWorldMap(
             }
             // Vignette Dinámico
             OceanVignette(modifier = Modifier.fillMaxSize())
-        }
-
-        // Efecto de TORMENTA (independiente)
-        if (shouldShowStorm) {
-            StormEffect(
-                modifier = Modifier.fillMaxSize(),
-                onThunderSound = onThunderSound
-            )
-        }
-
-        // Efecto de LLUVIA (independiente)
-        if (shouldShowRain) {
-            RainEffect(modifier = Modifier.fillMaxSize())
         }
 
         // CAPA 2: Mapa en canvas original
