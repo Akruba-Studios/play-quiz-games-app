@@ -38,73 +38,149 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
+// CONTROL: 1-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
 ) {
+    // Sistema de partículas especulares (reflejos de luz solar bajo el agua)
+    val specularParticles = remember {
+        List(35) { index ->
+            SpecularParticle(
+                id = index,
+                startX = Random.nextFloat(),
+                startY = Random.nextFloat(), // Se muestran en toda la pantalla
+                size = Random.nextFloat() * 60f + 30f, // Tamaño 30-90px
+                speed = Random.nextFloat() * 0.15f + 0.08f, // Velocidad variable lenta
+                intensity = Random.nextFloat() * 0.4f + 0.3f, // Intensidad 0.3-0.7
+                phase = Random.nextFloat() * 6.28f, // Fase aleatoria
+                wobbleSpeed = Random.nextFloat() * 0.5f + 0.3f, // Velocidad oscilación
+                wobbleAmp = Random.nextFloat() * 0.03f + 0.01f, // Amplitud oscilación
+                depth = Random.nextFloat() // Profundidad (perspectiva)
+            )
+        }
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "specular")
 
-    val offsetX1 by infiniteTransition.animateFloat(
-        initialValue = -200f,
-        targetValue = 1400f,
+    // Tiempo global para animaciones
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(15000, easing = LinearEasing),
+            animation = tween(30000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "offsetX1"
-    )
-
-    val offsetX2 by infiniteTransition.animateFloat(
-        initialValue = 800f,
-        targetValue = -300f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(20000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "offsetX2"
-    )
-
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "alpha"
+        label = "time"
     )
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = alpha * fadeAlpha),
-                    Color.White.copy(alpha = alpha * 0.5f * fadeAlpha),
-                    Color.Transparent
-                ),
-                center = Offset(offsetX1, size.height * 0.3f),
-                radius = 250f
-            ),
-            center = Offset(offsetX1, size.height * 0.3f),
-            radius = 250f
-        )
+        val canvasWidth = size.width
+        val canvasHeight = size.height
 
-        drawCircle(
-            brush = Brush.radialGradient(
+        specularParticles.forEach { particle ->
+            // Movimiento horizontal (deriva lenta)
+            val xProgress = (particle.startX + time * particle.speed) % 1f
+            val xPos = xProgress * canvasWidth
+
+            // Oscilación vertical (simula movimiento de olas)
+            val wobble = kotlin.math.sin(time * 6.28f * particle.wobbleSpeed + particle.phase) * particle.wobbleAmp
+            val yPos = (particle.startY + wobble) * canvasHeight
+
+            // Variación de intensidad (parpadeo sutil por refracción)
+            val flicker = kotlin.math.sin(time * 6.28f * 2f + particle.phase) * 0.15f + 0.85f
+            val finalAlpha = particle.intensity * flicker * fadeAlpha
+
+            // Tamaño con perspectiva (partículas más profundas son más pequeñas)
+            val perspectiveSize = particle.size * (0.6f + particle.depth * 0.4f)
+
+            // Gradiente radial multi-stop para realismo
+            val gradient = Brush.radialGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = alpha * 0.8f * fadeAlpha),
-                    Color.White.copy(alpha = alpha * 0.4f * fadeAlpha),
+                    Color.White.copy(alpha = finalAlpha * 0.9f),           // Centro muy brillante
+                    Color(0xFFFFFFF0).copy(alpha = finalAlpha * 0.6f),     // Blanco cálido
+                    Color(0xFFC8E6FF).copy(alpha = finalAlpha * 0.3f),     // Azul claro
+                    Color(0xFF96C8FF).copy(alpha = finalAlpha * 0.1f),     // Azul más oscuro
+                    Color.Transparent                                        // Borde difuso
+                ),
+                center = Offset(xPos, yPos),
+                radius = perspectiveSize
+            )
+
+            // Dibujar partícula especular principal
+            drawCircle(
+                brush = gradient,
+                radius = perspectiveSize,
+                center = Offset(xPos, yPos)
+            )
+
+            // Highlight central adicional (núcleo brillante)
+            if (finalAlpha > 0.5f) {
+                val coreGradient = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = finalAlpha * 0.7f),
+                        Color.White.copy(alpha = finalAlpha * 0.3f),
+                        Color.Transparent
+                    ),
+                    center = Offset(xPos, yPos),
+                    radius = perspectiveSize * 0.3f
+                )
+
+                drawCircle(
+                    brush = coreGradient,
+                    radius = perspectiveSize * 0.3f,
+                    center = Offset(xPos, yPos)
+                )
+            }
+
+            // Reflejo elongado sutil (efecto de agua en movimiento)
+            if (particle.depth > 0.6f && finalAlpha > 0.4f) {
+                val stretchGradient = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = finalAlpha * 0.2f),
+                        Color.Transparent
+                    ),
+                    start = Offset(xPos, yPos),
+                    end = Offset(xPos + perspectiveSize * 0.8f, yPos - perspectiveSize * 0.3f)
+                )
+
+                drawRect(
+                    brush = stretchGradient,
+                    topLeft = Offset(xPos, yPos - 5f),
+                    size = androidx.compose.ui.geometry.Size(perspectiveSize * 0.8f, 10f)
+                )
+            }
+        }
+
+        // Capa de brillo ambiental superior (luz difusa del sol)
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFC8E6FF).copy(alpha = 0.08f * fadeAlpha),
                     Color.Transparent
                 ),
-                center = Offset(offsetX2, size.height * 0.6f),
-                radius = 180f
-            ),
-            center = Offset(offsetX2, size.height * 0.6f),
-            radius = 180f
+                startY = 0f,
+                endY = canvasHeight * 0.5f
+            )
         )
     }
 }
+
+// Clase de datos para partículas especulares
+private data class SpecularParticle(
+    val id: Int,
+    val startX: Float,        // Posición inicial X (0-1)
+    val startY: Float,        // Posición inicial Y (0-1)
+    val size: Float,          // Tamaño base de la partícula
+    val speed: Float,         // Velocidad de desplazamiento horizontal
+    val intensity: Float,     // Intensidad base del brillo
+    val phase: Float,         // Fase inicial para variación
+    val wobbleSpeed: Float,   // Velocidad de oscilación vertical
+    val wobbleAmp: Float,     // Amplitud de oscilación vertical
+    val depth: Float          // Profundidad (0=lejano, 1=cercano)
+)
+
 @Composable // Gradient Overlay Animado: Un gradiente azul oscuro que pulsa desde las esquinas.
 fun OceanGradientOverlay(
     modifier: Modifier = Modifier,

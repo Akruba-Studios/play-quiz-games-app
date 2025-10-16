@@ -183,23 +183,23 @@ fun MapScreen(
     var bubblesFadeAlpha by remember { mutableStateOf(0f) }
 
     // --- LISTAS DE CALIDAD GRÁFICA (Define qué efectos se muestran en cada nivel) ---
-    val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
-    val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
+    val stormQualityLevels = remember { listOf("VERY_HIGH") } // ("VERY_HIGH", "HIGH")
+    val rainQualityLevels = remember { listOf("VERY_HIGH") }
 
     val fishQualityLevels = remember { listOf("VERY_HIGH") } // Peces
-    val mistQualityLevels = remember { listOf("LOW") } // Neblina
-    val godRaysQualityLevels = remember { listOf("MEDIUM") } // Rayos verticales
+    val mistQualityLevels = remember { listOf("VERY_HIGH") } // Neblina
+    val godRaysQualityLevels = remember { listOf("LOW") } // Rayos verticales
     val specularQualityLevels = remember { listOf("MEDIUM") } //
-    val bubblesQualityLevels = remember { listOf("MEDIUM") } // Burbujas
-    val gradientQualityLevels = remember { emptyList<String>() } // Esto es para que el efecto no funcione en ninguan calidad, queda anulado
+    val bubblesQualityLevels = remember { listOf("VERY_HIGH") } // Burbujas
+    val gradientQualityLevels = remember { listOf("HIGH") } // Esto: { emptyList<String>() }  es para que el efecto no funcione en ninguan calidad, queda anulado
 
 
     // --- CONFIGURACIÓN DEL SISTEMA ---
     // Capa Ambiental (efectos sutiles frecuentes)
     val ambientTickInterval = 5000L        // Cada cuántos ms hace un "tick" (5000 = 5 segundos)
-    val ambientCycleLength = 4             // Cuántos ticks para evaluar (4 * 5s = 20 segundos)
+    val ambientCycleLength = 2             // Cuántos ticks para evaluar (4 * 5s = 20 segundos)
     val ambientProbability = 0.70f         // Probabilidad de activar efecto cuando se evalúa (0.70 = 70%)
-    val ambientEffectDuration = 15000L     // Duración de efectos ambientales en ms (15000 = 15 segundos)
+    val ambientEffectDuration = 20000L     // Duración de efectos ambientales en ms (15000 = 15 segundos)
 
     // Capa Climática (eventos dramáticos poco frecuentes)
     val climaticCycleLength = 3           // Cuántos ticks para evaluar (18 * 5s = 90 segundos)
