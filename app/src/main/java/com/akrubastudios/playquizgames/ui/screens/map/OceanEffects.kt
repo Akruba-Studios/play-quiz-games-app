@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 6-OE
+// CONTROL: 7-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -381,10 +381,10 @@ fun OceanVignette(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "vignette")
 
     val intensity by infiniteTransition.animateFloat(
-        initialValue = 0.45f,  // CAMBIO: era 0.3f (muy sutil)
-        targetValue = 0.65f,   // CAMBIO: era 0.5f (poco notorio)
+        initialValue = 0.15f,  // CAMBIO: era 0.45f (mucho mas suave)
+        targetValue = 0.45f,   // CAMBIO: era 0.65f (se reduce la la fuerza)
         animationSpec = infiniteRepeatable(
-            animation = tween(8000, easing = FastOutSlowInEasing), // CAMBIO: era 6000 (muy rápido)
+            animation = tween(12000, easing = FastOutSlowInEasing), // CAMBIO: era 8000 (rápido)
             repeatMode = RepeatMode.Reverse
         ),
         label = "intensity"
@@ -398,7 +398,7 @@ fun OceanVignette(modifier: Modifier = Modifier) {
                     Color.Black.copy(alpha = intensity)
                 ),
                 center = size.center,
-                radius = size.minDimension * 0.85f  // CAMBIO: era 1.2f (demasiado grande, no se veía)
+                radius = size.minDimension * 1f  // CAMBIO: era 0.85f (se veia mucho)
             )
         )
     }
