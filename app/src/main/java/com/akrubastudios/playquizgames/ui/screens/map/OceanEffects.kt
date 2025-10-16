@@ -283,90 +283,136 @@ fun OceanGodRaysEffect(modifier: Modifier = Modifier) {
         )
     }
 }
-@Composable // Capas de niebla/neblina que flotan
+@Composable
 fun OceanMistEffect(modifier: Modifier = Modifier) {
+    // Sistema de partículas de niebla orgánica
+    val mistParticles = remember {
+        List(80) { index ->
+            MistParticle(
+                id = index,
+                startX = Random.nextFloat(),
+                startY = Random.nextFloat() * 0.6f, // Concentrada en parte superior/media
+                size = Random.nextFloat() * 150f + 80f, // Tamaño variable 80-230
+                speed = Random.nextFloat() * 0.3f + 0.15f, // Velocidad lenta y variable
+                depth = Random.nextFloat(), // Profundidad para parallax
+                opacity = Random.nextFloat() * 0.15f + 0.08f, // Opacidad muy sutil
+                drift = Random.nextFloat() * 30f - 15f, // Deriva vertical
+                wobbleFreq = Random.nextFloat() * 2f + 1f, // Frecuencia de ondulación
+                wobbleAmp = Random.nextFloat() * 40f + 20f // Amplitud de ondulación
+            )
+        }
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "mist")
 
-    // Capa de niebla 1 - Movimiento lento
-    val offsetX1 by infiniteTransition.animateFloat(
-        initialValue = -300f,
-        targetValue = 1400f,
+    // Tiempo global para animaciones
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(35000, easing = LinearEasing),
+            animation = tween(40000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "offsetX1"
+        label = "time"
     )
 
-    // Capa de niebla 2 - Movimiento más rápido, dirección opuesta
-    val offsetX2 by infiniteTransition.animateFloat(
-        initialValue = 1000f,
-        targetValue = -400f,
+    // Pulsación lenta de opacidad general
+    val globalAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(25000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "offsetX2"
-    )
-
-    // Pulsación de opacidad - MÁS VISIBLE
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.12f,
-        targetValue = 0.28f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(6000, easing = FastOutSlowInEasing),
+            animation = tween(8000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "alpha"
+        label = "globalAlpha"
     )
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        // Capa 1 - Niebla superior (más pequeña y visible)
-        drawOval(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = alpha),
-                    Color.White.copy(alpha = alpha * 0.5f),
-                    Color.Transparent
-                ),
-                center = Offset(offsetX1, size.height * 0.3f),
-                radius = 350f
-            ),
-            topLeft = Offset(offsetX1 - 400f, size.height * 0.2f),
-            size = androidx.compose.ui.geometry.Size(800f, 300f)
-        )
+        val canvasWidth = size.width
+        val canvasHeight = size.height
 
-        // Capa 2 - Niebla inferior (forma alargada horizontal)
-        drawOval(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = alpha * 0.8f),
-                    Color.White.copy(alpha = alpha * 0.4f),
-                    Color.Transparent
-                ),
-                center = Offset(offsetX2, size.height * 0.65f),
-                radius = 400f
-            ),
-            topLeft = Offset(offsetX2 - 500f, size.height * 0.55f),
-            size = androidx.compose.ui.geometry.Size(1000f, 250f)
-        )
+        mistParticles.forEach { particle ->
+            // Movimiento horizontal (deriva lenta con parallax)
+            val timeOffset = (time + particle.startX) % 1f
+            val xProgress = timeOffset * particle.speed
+            val xPos = ((particle.startX + xProgress) % 1f) * canvasWidth
 
-        // Capa 3 - Niebla pequeña central
-        val offsetX3 = offsetX1 * 0.6f + size.width * 0.3f
-        drawOval(
-            brush = Brush.radialGradient(
+            // Movimiento vertical (ondulación sutil)
+            val wobble = kotlin.math.sin(timeOffset * 6.28f * particle.wobbleFreq) * particle.wobbleAmp
+            val yPos = (particle.startY * canvasHeight) + particle.drift + wobble
+
+            // Opacidad con variación temporal
+            val timeBasedFade = kotlin.math.sin(timeOffset * 6.28f * 0.5f) * 0.3f + 0.7f
+            val finalAlpha = particle.opacity * globalAlpha * timeBasedFade * particle.depth
+
+            // Crear gradiente orgánico con múltiples stops para bordes difusos
+            val gradient = Brush.radialGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = alpha * 0.6f),
+                    Color.White.copy(alpha = finalAlpha * 0.8f),
+                    Color.White.copy(alpha = finalAlpha * 0.5f),
+                    Color.White.copy(alpha = finalAlpha * 0.25f),
+                    Color.White.copy(alpha = finalAlpha * 0.1f),
                     Color.Transparent
                 ),
-                center = Offset(offsetX3, size.height * 0.45f),
-                radius = 250f
-            ),
-            topLeft = Offset(offsetX3 - 300f, size.height * 0.35f),
-            size = androidx.compose.ui.geometry.Size(600f, 200f)
+                center = Offset(xPos, yPos),
+                radius = particle.size * (0.8f + particle.depth * 0.4f)
+            )
+
+            // Dibujar partícula de niebla con forma más orgánica
+            drawCircle(
+                brush = gradient,
+                radius = particle.size * (0.8f + particle.depth * 0.4f),
+                center = Offset(xPos, yPos)
+            )
+
+            // Capa adicional desplazada para efecto volumétrico
+            val offsetX = kotlin.math.cos(timeOffset * 6.28f) * 15f
+            val offsetY = kotlin.math.sin(timeOffset * 6.28f) * 10f
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = finalAlpha * 0.4f),
+                        Color.White.copy(alpha = finalAlpha * 0.15f),
+                        Color.Transparent
+                    ),
+                    center = Offset(xPos + offsetX, yPos + offsetY),
+                    radius = particle.size * 0.6f
+                ),
+                radius = particle.size * 0.6f,
+                center = Offset(xPos + offsetX, yPos + offsetY)
+            )
+        }
+
+        // Capa de neblina ambiental global (efecto atmosférico sutil)
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = 0.02f * globalAlpha),
+                    Color.White.copy(alpha = 0.05f * globalAlpha),
+                    Color.Transparent
+                ),
+                startY = 0f,
+                endY = canvasHeight * 0.4f
+            )
         )
     }
 }
+
+// Clase de datos para partículas de niebla
+private data class MistParticle(
+    val id: Int,
+    val startX: Float,      // Posición inicial X (0-1)
+    val startY: Float,      // Posición inicial Y (0-1)
+    val size: Float,        // Tamaño de la partícula
+    val speed: Float,       // Velocidad de movimiento horizontal
+    val depth: Float,       // Profundidad (0=lejano, 1=cercano)
+    val opacity: Float,     // Opacidad base
+    val drift: Float,       // Deriva vertical constante
+    val wobbleFreq: Float,  // Frecuencia de ondulación
+    val wobbleAmp: Float    // Amplitud de ondulación
+)
+
 @Composable
 fun StormEffect(
     modifier: Modifier = Modifier,

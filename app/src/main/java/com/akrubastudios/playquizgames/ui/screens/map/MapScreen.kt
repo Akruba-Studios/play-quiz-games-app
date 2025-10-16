@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 42-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 43-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -178,11 +178,11 @@ fun MapScreen(
     val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
     val rainQualityLevels = remember { listOf("VERY_HIGH", "MEDIUM") }
 
-    val fishQualityLevels = remember { listOf("VERY_HIGH") }
-    val mistQualityLevels = remember { listOf("MEDIUM") }
-    val godRaysQualityLevels = remember { listOf("MEDIUM") }
-    val specularQualityLevels = remember { listOf("MEDIUM") }
-    val bubblesQualityLevels = remember { listOf("LOW") }
+    val fishQualityLevels = remember { listOf("VERY_HIGH") } // Peces
+    val mistQualityLevels = remember { listOf("LOW") } // Neblina
+    val godRaysQualityLevels = remember { listOf("MEDIUM") } // Rayos verticales
+    val specularQualityLevels = remember { listOf("MEDIUM") } //
+    val bubblesQualityLevels = remember { listOf("MEDIUM") } // Burbujas
     val gradientQualityLevels = remember { emptyList<String>() } // Esto es para que el efecto no funcione en ninguan calidad, queda anulado
 
 
@@ -249,11 +249,6 @@ fun MapScreen(
             if (!isClimaticEffectActive) {
                 climaticCounter++
             }
-
-            Log.d("WeatherScheduler", "=== TICK ===")
-            Log.d("WeatherScheduler", "ambientCounter: $ambientCounter (active: $isAmbientEffectActive)")
-            Log.d("WeatherScheduler", "climaticCounter: $climaticCounter (active: $isClimaticEffectActive)")
-            Log.d("WeatherScheduler", "activeEffectsCount: $activeEffectsCount")
 
             // ====================================================================
             // CAPA AMBIENTAL - Efectos sutiles frecuentes
@@ -375,10 +370,8 @@ fun MapScreen(
             // CAPA CLIMÁTICA - Eventos dramáticos poco frecuentes
             // ====================================================================
             if (climaticCounter > climaticCycleLength && !isClimaticEffectActive) {
-                Log.d("WeatherScheduler", "⛈️ EVALUANDO EFECTO CLIMÁTICO")
                 // Comprobar si debemos activar un evento climático
                 if (Random.nextFloat() < climaticProbability) {
-                    Log.d("WeatherScheduler", "✅ Probabilidad pasó (${climaticProbability})")
                     // Si NO se permite overlap Y ya hay un efecto activo, saltamos
                     if (!allowEffectOverlap && activeEffectsCount > 0) {
                         // No hacer nada, esperamos al siguiente ciclo
@@ -391,52 +384,40 @@ fun MapScreen(
                         when {
                             // VERY_HIGH: ambos sincronizados (TU LÓGICA ACTUAL PRESERVADA)
                             currentQuality == "VERY_HIGH" && hasStorm && hasRain -> {
-                                Log.d("WeatherScheduler", "⛈️🌧️ ACTIVANDO TORMENTA + LLUVIA")
                                 isStormActive = true
                                 isRainActive = true
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    Log.d("WeatherScheduler", "⛈️ Tormenta iniciada - durará ${climaticEffectDuration}ms")
                                     delay(climaticEffectDuration)
-                                    Log.d("WeatherScheduler", "⛈️ TERMINANDO TORMENTA")
                                     isStormActive = false
                                     isRainActive = false
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
-                                    Log.d("WeatherScheduler", "⛈️ Tormenta terminada - contador reseteado a 0")
                                 }
                             }
                             // Solo tormenta
                             hasStorm && !hasRain -> {
-                                Log.d("WeatherScheduler", "⛈️ ACTIVANDO SOLO TORMENTA")
                                 isStormActive = true
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    Log.d("WeatherScheduler", "⛈️ Tormenta iniciada - durará ${climaticEffectDuration}ms")
                                     delay(climaticEffectDuration)
-                                    Log.d("WeatherScheduler", "⛈️ TERMINANDO TORMENTA")
                                     isStormActive = false
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
-                                    Log.d("WeatherScheduler", "⛈️ Tormenta terminada - contador reseteado a 0")
                                 }
                             }
                             // Solo lluvia
                             hasRain && !hasStorm -> {
-                                Log.d("WeatherScheduler", "🌧️ ACTIVANDO SOLO LLUVIA")
                                 isRainActive = true
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    Log.d("WeatherScheduler", "🌧️ Lluvia iniciada - durará ${climaticEffectDuration}ms")
                                     delay(climaticEffectDuration)
-                                    Log.d("WeatherScheduler", "🌧️ TERMINANDO LLUVIA")
                                     isRainActive = false
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
-                                    Log.d("WeatherScheduler", "🌧️ Lluvia terminada - contador reseteado a 0")
                                 }
                             }
                         }
@@ -449,7 +430,7 @@ fun MapScreen(
             }
         }
     }
-// ========================================================================
+    // ========================================================================
 
     /// Control de sonido de lluvia y música con AUTO-RE-ENCADENAMIENTO
     LaunchedEffect(isRainActive) {
