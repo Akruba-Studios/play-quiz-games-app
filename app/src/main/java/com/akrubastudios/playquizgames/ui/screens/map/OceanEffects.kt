@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 2-OE
+// CONTROL: 3-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -381,10 +381,10 @@ fun OceanVignette(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "vignette")
 
     val intensity by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.5f,
+        initialValue = 0.45f,  // CAMBIO: era 0.3f (muy sutil)
+        targetValue = 0.65f,   // CAMBIO: era 0.5f (poco notorio)
         animationSpec = infiniteRepeatable(
-            animation = tween(6000, easing = FastOutSlowInEasing),
+            animation = tween(8000, easing = FastOutSlowInEasing), // CAMBIO: era 6000 (muy rápido)
             repeatMode = RepeatMode.Reverse
         ),
         label = "intensity"
@@ -398,7 +398,7 @@ fun OceanVignette(modifier: Modifier = Modifier) {
                     Color.Black.copy(alpha = intensity)
                 ),
                 center = size.center,
-                radius = size.minDimension * 1.2f
+                radius = size.minDimension * 0.85f  // CAMBIO: era 1.2f (demasiado grande, no se veía)
             )
         )
     }
@@ -456,85 +456,228 @@ fun OceanBubblesEffect(
         }
     }
 }
+
 @Composable // Rayos de luz que atraviesan el agua (God Rays)
 fun OceanGodRaysEffect(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "godRays")
+    val infiniteTransition = rememberInfiniteTransition(label = "god_rays")
 
-    val offsetX by infiniteTransition.animateFloat(
-        initialValue = -400f,
-        targetValue = 1600f,
+    // Tiempo global para animaciones
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(25000, easing = LinearEasing),
+            animation = tween(60000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "offsetX"
+        label = "time"
     )
 
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.08f,
-        targetValue = 0.18f,
+    // Pulsación de intensidad general (nubes pasando sobre el sol)
+    val globalIntensity by infiniteTransition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = FastOutSlowInEasing),
+            animation = tween(12000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "alpha"
+        label = "intensity"
     )
 
+    // Sistema de rayos
+    val godRays = remember {
+        List(14) { index ->
+            GodRaySimple(
+                id = index,
+                startX = (index * 0.15f) % 1.3f - 0.15f, // Distribuidos con offset
+                topY = -0.1f - Random.nextFloat() * 0.2f, // Empiezan arriba fuera de pantalla
+                angle = Random.nextFloat() * 8f + 78f, // Ángulos 78-86 grados (casi vertical)
+                width = Random.nextFloat() * 100f + 60f, // Ancho 60-160px
+                speed = Random.nextFloat() * 0.04f + 0.02f, // Velocidad 0.02-0.06
+                intensity = Random.nextFloat() * 0.3f + 0.2f, // Intensidad 0.2-0.5
+                phase = Random.nextFloat() * 6.28f,
+                flickerSpeed = Random.nextFloat() * 0.6f + 0.4f
+            )
+        }
+    }
+
     Canvas(modifier = modifier.fillMaxSize()) {
-        val rayColor = Color.White.copy(alpha = alpha * fadeAlpha) // busca TODAS las ocurrencias de rayColor y multiplica: * fadeAlpha
+        val canvasWidth = size.width
+        val canvasHeight = size.height
 
-        // Rayo 1 - Diagonal principal
-        drawRect(
-            brush = Brush.horizontalGradient(
+        godRays.forEach { ray ->
+            // MOVIMIENTO HORIZONTAL (cruza de izquierda a derecha)
+            val xProgress = (ray.startX + time * ray.speed) % 1.3f
+
+            // Si está fuera del rango visible, skip
+            if (xProgress < -0.15f || xProgress > 1.15f) return@forEach
+
+            // Posición X actual del rayo en píxeles
+            val rayX = xProgress * canvasWidth
+
+            // Oscilación muy sutil del ángulo (agua moviéndose)
+            val angleWobble = kotlin.math.sin(time * 6.28f * 0.2f + ray.phase) * 2f
+            val currentAngle = ray.angle + angleWobble
+            val angleRad = Math.toRadians(currentAngle.toDouble()).toFloat()
+
+            // Parpadeo por turbulencia del agua
+            val flicker = kotlin.math.sin(time * 6.28f * ray.flickerSpeed + ray.phase) * 0.25f + 0.75f
+            val finalAlpha = ray.intensity * flicker * globalIntensity * fadeAlpha
+
+            // CALCULAR GEOMETRÍA DEL RAYO
+            // El rayo es un "pilar" diagonal que atraviesa toda la pantalla verticalmente
+
+            // Punto superior (fuera de pantalla arriba)
+            val topX = rayX
+            val topY = ray.topY * canvasHeight
+
+            // Punto inferior (calculado por trigonometría)
+            val rayHeight = canvasHeight * 1.3f // Un poco más largo para cubrir todo
+            val bottomX = topX - kotlin.math.tan(Math.toRadians((90.0 - currentAngle).toDouble())).toFloat() * rayHeight
+            val bottomY = topY + rayHeight
+
+            // Ancho del rayo con ligera perspectiva (más ancho abajo)
+            val topWidth = ray.width
+            val bottomWidth = ray.width * 1.15f
+
+            // Vector perpendicular al rayo para crear los bordes
+            val perpAngle = angleRad - Math.PI.toFloat() / 2f
+            val perpX = kotlin.math.cos(perpAngle)
+            val perpY = kotlin.math.sin(perpAngle)
+
+            // CREAR PATH DEL RAYO (trapecio alargado)
+            val rayPath = androidx.compose.ui.graphics.Path().apply {
+                // Lado izquierdo superior
+                moveTo(topX + perpX * topWidth / 2f, topY + perpY * topWidth / 2f)
+                // Lado izquierdo inferior
+                lineTo(bottomX + perpX * bottomWidth / 2f, bottomY + perpY * bottomWidth / 2f)
+                // Lado derecho inferior
+                lineTo(bottomX - perpX * bottomWidth / 2f, bottomY - perpY * bottomWidth / 2f)
+                // Lado derecho superior
+                lineTo(topX - perpX * topWidth / 2f, topY - perpY * topWidth / 2f)
+                close()
+            }
+
+            // GRADIENTE A LO LARGO DEL RAYO (de arriba hacia abajo)
+            // Más brillante arriba (cerca de la superficie), más tenue abajo
+            val rayGradient = Brush.linearGradient(
                 colors = listOf(
-                    Color.Transparent,
-                    rayColor,
-                    rayColor,
+                    Color(0xFFFFFFF5).copy(alpha = finalAlpha * 0.85f), // Blanco cálido arriba
+                    Color(0xFFE8F4F8).copy(alpha = finalAlpha * 0.65f), // Blanco azulado
+                    Color(0xFFB3E5FC).copy(alpha = finalAlpha * 0.40f), // Azul claro
+                    Color(0xFF81D4FA).copy(alpha = finalAlpha * 0.20f), // Azul medio
+                    Color(0xFF4FC3F7).copy(alpha = finalAlpha * 0.05f), // Azul oscuro
                     Color.Transparent
                 ),
-                startX = offsetX - 200f,
-                endX = offsetX + 200f
-            ),
-            topLeft = Offset(offsetX - 200f, -100f),
-            size = androidx.compose.ui.geometry.Size(400f, size.height + 200f)
-        )
+                start = Offset(topX, topY),
+                end = Offset(bottomX, bottomY)
+            )
 
-        // Rayo 2 - Más delgado y rápido
-        val offsetX2 = offsetX * 0.7f + 300f
+            // Dibujar rayo principal
+            drawPath(
+                path = rayPath,
+                brush = rayGradient
+            )
+
+            // NÚCLEO BRILLANTE CENTRAL (30% del ancho)
+            if (finalAlpha > 0.3f) {
+                val coreTopWidth = topWidth * 0.3f
+                val coreBottomWidth = bottomWidth * 0.3f
+
+                val corePath = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(topX + perpX * coreTopWidth / 2f, topY + perpY * coreTopWidth / 2f)
+                    lineTo(bottomX + perpX * coreBottomWidth / 2f, bottomY + perpY * coreBottomWidth / 2f)
+                    lineTo(bottomX - perpX * coreBottomWidth / 2f, bottomY - perpY * coreBottomWidth / 2f)
+                    lineTo(topX - perpX * coreTopWidth / 2f, topY - perpY * coreTopWidth / 2f)
+                    close()
+                }
+
+                val coreGradient = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = finalAlpha * 0.6f),
+                        Color(0xFFFFFFF0).copy(alpha = finalAlpha * 0.4f),
+                        Color(0xFFE3F2FD).copy(alpha = finalAlpha * 0.2f),
+                        Color.Transparent
+                    ),
+                    start = Offset(topX, topY),
+                    end = Offset(bottomX, bottomY)
+                )
+
+                drawPath(
+                    path = corePath,
+                    brush = coreGradient
+                )
+            }
+
+            // PARTÍCULAS DE POLVO/PLANCTON flotando en el rayo
+            val particleCount = 12
+            for (i in 0 until particleCount) {
+                // Posición a lo largo del rayo (0 = arriba, 1 = abajo)
+                val particleRatio = (i.toFloat() / particleCount + time * 0.15f + ray.phase * 0.1f) % 1f
+
+                // Interpolación de posición
+                val pX = topX + (bottomX - topX) * particleRatio
+                val pY = topY + (bottomY - topY) * particleRatio
+
+                // Oscilación lateral dentro del rayo
+                val lateralWobble = kotlin.math.sin(time * 6.28f * 1.5f + ray.phase + i * 0.5f) * ray.width * 0.25f
+                val finalPX = pX + perpX * lateralWobble
+                val finalPY = pY + perpY * lateralWobble
+
+                // Parpadeo individual de partícula
+                val particleFlicker = kotlin.math.sin(time * 6.28f * 2f + i * 0.8f) * 0.5f + 0.5f
+                val particleAlpha = finalAlpha * particleFlicker * 0.5f
+
+                if (particleAlpha > 0.15f) {
+                    // Tamaño variable según profundidad
+                    val particleSize = 3f + (1f - particleRatio) * 2f
+
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = particleAlpha * 0.9f),
+                                Color(0xFFE3F2FD).copy(alpha = particleAlpha * 0.5f),
+                                Color.Transparent
+                            ),
+                            center = Offset(finalPX, finalPY),
+                            radius = particleSize
+                        ),
+                        radius = particleSize,
+                        center = Offset(finalPX, finalPY)
+                    )
+                }
+            }
+        }
+
+        // DIFUSIÓN ATMOSFÉRICA superior (brillo general del agua)
         drawRect(
-            brush = Brush.horizontalGradient(
+            brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color.Transparent,
-                    rayColor.copy(alpha = alpha * 0.6f),
+                    Color(0xFFE8F4F8).copy(alpha = 0.06f * globalIntensity * fadeAlpha),
                     Color.Transparent
                 ),
-                startX = offsetX2 - 100f,
-                endX = offsetX2 + 100f
-            ),
-            topLeft = Offset(offsetX2 - 100f, -100f),
-            size = androidx.compose.ui.geometry.Size(200f, size.height + 200f)
-        )
-
-        // Rayo 3 - Muy sutil, lento
-        val offsetX3 = offsetX * 1.3f - 500f
-        drawRect(
-            brush = Brush.horizontalGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    rayColor.copy(alpha = alpha * 0.4f),
-                    Color.Transparent
-                ),
-                startX = offsetX3 - 150f,
-                endX = offsetX3 + 150f
-            ),
-            topLeft = Offset(offsetX3 - 150f, -100f),
-            size = androidx.compose.ui.geometry.Size(300f, size.height + 200f)
+                startY = 0f,
+                endY = canvasHeight * 0.35f
+            )
         )
     }
 }
+
+// Clase de datos simplificada
+private data class GodRaySimple(
+    val id: Int,
+    val startX: Float,        // Posición inicial X normalizada
+    val topY: Float,          // Posición Y superior (negativa = fuera pantalla)
+    val angle: Float,         // Ángulo en grados (78-86)
+    val width: Float,         // Ancho del rayo en px
+    val speed: Float,         // Velocidad de desplazamiento horizontal
+    val intensity: Float,     // Intensidad base
+    val phase: Float,         // Fase para variación
+    val flickerSpeed: Float   // Velocidad de parpadeo
+)
+
 @Composable
 fun OceanMistEffect(
     modifier: Modifier = Modifier,
