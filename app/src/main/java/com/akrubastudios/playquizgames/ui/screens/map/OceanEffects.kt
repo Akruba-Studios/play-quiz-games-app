@@ -39,7 +39,10 @@ import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
-fun OceanSpecularEffect(modifier: Modifier = Modifier) {
+fun OceanSpecularEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "specular")
 
     val offsetX1 by infiniteTransition.animateFloat(
@@ -76,8 +79,8 @@ fun OceanSpecularEffect(modifier: Modifier = Modifier) {
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = alpha),
-                    Color.White.copy(alpha = alpha * 0.5f),
+                    Color.White.copy(alpha = alpha * fadeAlpha),
+                    Color.White.copy(alpha = alpha * 0.5f * fadeAlpha),
                     Color.Transparent
                 ),
                 center = Offset(offsetX1, size.height * 0.3f),
@@ -90,8 +93,8 @@ fun OceanSpecularEffect(modifier: Modifier = Modifier) {
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = alpha * 0.8f),
-                    Color.White.copy(alpha = alpha * 0.4f),
+                    Color.White.copy(alpha = alpha * 0.8f * fadeAlpha),
+                    Color.White.copy(alpha = alpha * 0.4f * fadeAlpha),
                     Color.Transparent
                 ),
                 center = Offset(offsetX2, size.height * 0.6f),
@@ -103,7 +106,10 @@ fun OceanSpecularEffect(modifier: Modifier = Modifier) {
     }
 }
 @Composable // Gradient Overlay Animado: Un gradiente azul oscuro que pulsa desde las esquinas.
-fun OceanGradientOverlay(modifier: Modifier = Modifier) {
+fun OceanGradientOverlay(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "gradient")
 
     val alpha by infiniteTransition.animateFloat(
@@ -122,7 +128,7 @@ fun OceanGradientOverlay(modifier: Modifier = Modifier) {
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color.Transparent,
-                    Color(0xFF1B4F72).copy(alpha = alpha)
+                    Color(0xFF1B4F72).copy(alpha = alpha * fadeAlpha)
                 ),
                 center = size.center,
                 radius = size.maxDimension * 0.8f
@@ -158,7 +164,10 @@ fun OceanVignette(modifier: Modifier = Modifier) {
     }
 }
 @Composable // Partículas flotantes que simulan burbujas/espuma
-fun OceanBubblesEffect(modifier: Modifier = Modifier) {
+fun OceanBubblesEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "bubbles")
 
     // Generamos 15 burbujas con diferentes offsets y velocidades
@@ -200,7 +209,7 @@ fun OceanBubblesEffect(modifier: Modifier = Modifier) {
             }
 
             drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.4f),
+                color = Color.White.copy(alpha = alpha * 0.4f * fadeAlpha),
                 radius = bubbleSize / 2f,
                 center = Offset(xPos, yPos)
             )
@@ -208,7 +217,10 @@ fun OceanBubblesEffect(modifier: Modifier = Modifier) {
     }
 }
 @Composable // Rayos de luz que atraviesan el agua (God Rays)
-fun OceanGodRaysEffect(modifier: Modifier = Modifier) {
+fun OceanGodRaysEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "godRays")
 
     val offsetX by infiniteTransition.animateFloat(
@@ -232,7 +244,7 @@ fun OceanGodRaysEffect(modifier: Modifier = Modifier) {
     )
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val rayColor = Color.White.copy(alpha = alpha)
+        val rayColor = Color.White.copy(alpha = alpha * fadeAlpha) // busca TODAS las ocurrencias de rayColor y multiplica: * fadeAlpha
 
         // Rayo 1 - Diagonal principal
         drawRect(
@@ -284,7 +296,10 @@ fun OceanGodRaysEffect(modifier: Modifier = Modifier) {
     }
 }
 @Composable
-fun OceanMistEffect(modifier: Modifier = Modifier) {
+fun OceanMistEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     // Sistema de partículas de niebla orgánica
     val mistParticles = remember {
         List(80) { index ->
@@ -343,7 +358,7 @@ fun OceanMistEffect(modifier: Modifier = Modifier) {
 
             // Opacidad con variación temporal
             val timeBasedFade = kotlin.math.sin(timeOffset * 6.28f * 0.5f) * 0.3f + 0.7f
-            val finalAlpha = particle.opacity * globalAlpha * timeBasedFade * particle.depth
+            val finalAlpha = particle.opacity * globalAlpha * timeBasedFade * particle.depth * fadeAlpha
 
             // Crear gradiente orgánico con múltiples stops para bordes difusos
             val gradient = Brush.radialGradient(
@@ -388,8 +403,8 @@ fun OceanMistEffect(modifier: Modifier = Modifier) {
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = 0.02f * globalAlpha),
-                    Color.White.copy(alpha = 0.05f * globalAlpha),
+                    Color.White.copy(alpha = 0.02f * globalAlpha * fadeAlpha),
+                    Color.White.copy(alpha = 0.05f * globalAlpha * fadeAlpha),
                     Color.Transparent
                 ),
                 startY = 0f,
@@ -416,7 +431,8 @@ private data class MistParticle(
 @Composable
 fun StormEffect(
     modifier: Modifier = Modifier,
-    onThunderSound: () -> Unit
+    onThunderSound: () -> Unit,
+    fadeAlpha: Float = 1f
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "storm")
 
@@ -457,19 +473,22 @@ fun StormEffect(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         // Overlay oscuro constante (ambiente de tormenta)
-        drawRect(color = Color.Black.copy(alpha = 0.35f))
+        drawRect(color = Color.Black.copy(alpha = 0.35f * fadeAlpha))
 
         // Flash del relámpago
         if (flashIntensity > 0.5f) {
-            drawRect(color = Color.White.copy(alpha = flashIntensity))
+            drawRect(color = Color.White.copy(alpha = flashIntensity * fadeAlpha))
         } else if (flashIntensity < 0f) {
-            drawRect(color = Color.Black.copy(alpha = -flashIntensity))
+            drawRect(color = Color.Black.copy(alpha = -flashIntensity * fadeAlpha))
         }
     }
 }
 
 @Composable
-fun RainEffect(modifier: Modifier = Modifier) {
+fun RainEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     // Sistema de impactos múltiples con diferentes características
     val impacts = remember { mutableStateListOf<RainImpactAdvanced>() }
     val random = remember { Random.Default }
@@ -534,7 +553,7 @@ fun RainEffect(modifier: Modifier = Modifier) {
 
                     // Alpha que se desvanece: fuerte al inicio, desaparece al final
                     val fadeOut = 1f - rippleProgress
-                    val alpha = (impact.alpha * fadeOut * fadeOut).coerceIn(0f, 1f)
+                    val alpha = (impact.alpha * fadeOut * fadeOut * fadeAlpha).coerceIn(0f, 1f)
 
                     if (alpha > 0.05f) {
                         // Onda exterior (más gruesa, más visible)
@@ -594,7 +613,7 @@ fun RainEffect(modifier: Modifier = Modifier) {
         // Efecto de neblina/spray ambiental (gotas microscópicas)
         if (impacts.size > 50) { // Solo cuando hay suficiente lluvia
             drawRect(
-                color = Color.White.copy(alpha = 0.03f),
+                color = Color.White.copy(alpha = 0.03f * fadeAlpha),
                 size = size
             )
         }
@@ -613,7 +632,10 @@ private data class RainImpactAdvanced(
 )
 
 @Composable
-fun OceanFishEffect(modifier: Modifier = Modifier) {
+fun OceanFishEffect(
+    modifier: Modifier = Modifier,
+    fadeAlpha: Float = 1f
+) {
     // Define las 5 especies de peces con sus características
     val fishSpecies = remember {
         listOf(
@@ -700,7 +722,7 @@ fun OceanFishEffect(modifier: Modifier = Modifier) {
             val isMovingRight = fishTime > previousTime
 
             val scaledSize = fish.species.baseSize * fish.species.depthLayer
-            val alpha = 0.4f + (fish.species.depthLayer * 0.5f)
+            val alpha = (0.4f + (fish.species.depthLayer * 0.5f)) * fadeAlpha
 
             val blueTint = 1f - (fish.species.depthLayer * 0.3f)
             val fishColor = Color(

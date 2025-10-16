@@ -121,7 +121,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 43-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 44-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,6 +166,8 @@ fun MapScreen(
     // Sistema de tormenta y Lluvia
     var isStormActive by remember { mutableStateOf(false) }
     var isRainActive by remember { mutableStateOf(false) }
+    var stormFadeAlpha by remember { mutableStateOf(0f) }
+    var rainFadeAlpha by remember { mutableStateOf(0f) }
     // Otros Efectos
     var isFishActive by remember { mutableStateOf(false) }
     var isMistActive by remember { mutableStateOf(false) }
@@ -173,6 +175,12 @@ fun MapScreen(
     var isSpecularActive by remember { mutableStateOf(false) }
     var isGradientActive by remember { mutableStateOf(false) }
     var isBubblesActive by remember { mutableStateOf(false) }
+    var fishFadeAlpha by remember { mutableStateOf(0f) }
+    var mistFadeAlpha by remember { mutableStateOf(0f) }
+    var godRaysFadeAlpha by remember { mutableStateOf(0f) }
+    var specularFadeAlpha by remember { mutableStateOf(0f) }
+    var gradientFadeAlpha by remember { mutableStateOf(0f) }
+    var bubblesFadeAlpha by remember { mutableStateOf(0f) }
 
     // --- LISTAS DE CALIDAD GRÁFICA (Define qué efectos se muestran en cada nivel) ---
     val stormQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
@@ -295,8 +303,20 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        // FADE IN (3 segundos)
+                                        for (i in 0..30) {
+                                            fishFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        // DURACIÓN ACTIVA
+                                        delay(ambientEffectDuration - 5000) // Restamos 5s (3s fade in + 2s fade out)
+                                        // FADE OUT (2 segundos)
+                                        for (i in 30 downTo 0) {
+                                            fishFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isFishActive = false
+                                        fishFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -306,8 +326,17 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        for (i in 0..30) {
+                                            mistFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        delay(ambientEffectDuration - 5000)
+                                        for (i in 30 downTo 0) {
+                                            mistFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isMistActive = false
+                                        mistFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -317,8 +346,17 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        for (i in 0..30) {
+                                            godRaysFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        delay(ambientEffectDuration - 5000)
+                                        for (i in 30 downTo 0) {
+                                            godRaysFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isGodRaysActive = false
+                                        godRaysFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -328,8 +366,17 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        for (i in 0..30) {
+                                            specularFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        delay(ambientEffectDuration - 5000)
+                                        for (i in 30 downTo 0) {
+                                            specularFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isSpecularActive = false
+                                        specularFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -339,8 +386,17 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        for (i in 0..30) {
+                                            gradientFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        delay(ambientEffectDuration - 5000)
+                                        for (i in 30 downTo 0) {
+                                            gradientFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isGradientActive = false
+                                        gradientFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -350,8 +406,17 @@ fun MapScreen(
                                     isAmbientEffectActive = true
                                     activeEffectsCount++
                                     launch {
-                                        delay(ambientEffectDuration)
+                                        for (i in 0..30) {
+                                            bubblesFadeAlpha = i / 30f
+                                            delay(100)
+                                        }
+                                        delay(ambientEffectDuration - 5000)
+                                        for (i in 30 downTo 0) {
+                                            bubblesFadeAlpha = i / 30f
+                                            delay(66)
+                                        }
                                         isBubblesActive = false
+                                        bubblesFadeAlpha = 0f
                                         isAmbientEffectActive = false
                                         activeEffectsCount--
                                     }
@@ -389,9 +454,24 @@ fun MapScreen(
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    delay(climaticEffectDuration)
+                                    // FADE IN (3 segundos) - Ambos sincronizados
+                                    for (i in 0..30) {
+                                        stormFadeAlpha = i / 30f
+                                        rainFadeAlpha = i / 30f
+                                        delay(100)
+                                    }
+                                    // DURACIÓN ACTIVA
+                                    delay(climaticEffectDuration - 5000) // Restamos 5s (3s fade in + 2s fade out)
+                                    // FADE OUT (2 segundos)
+                                    for (i in 30 downTo 0) {
+                                        stormFadeAlpha = i / 30f
+                                        rainFadeAlpha = i / 30f
+                                        delay(66)
+                                    }
                                     isStormActive = false
                                     isRainActive = false
+                                    stormFadeAlpha = 0f
+                                    rainFadeAlpha = 0f
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
                                 }
@@ -402,8 +482,20 @@ fun MapScreen(
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    delay(climaticEffectDuration)
+                                    // FADE IN (3 segundos)
+                                    for (i in 0..30) {
+                                        stormFadeAlpha = i / 30f
+                                        delay(100)
+                                    }
+                                    // DURACIÓN ACTIVA
+                                    delay(climaticEffectDuration - 5000)
+                                    // FADE OUT (2 segundos)
+                                    for (i in 30 downTo 0) {
+                                        stormFadeAlpha = i / 30f
+                                        delay(66)
+                                    }
                                     isStormActive = false
+                                    stormFadeAlpha = 0f
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
                                 }
@@ -414,8 +506,20 @@ fun MapScreen(
                                 isClimaticEffectActive = true
                                 activeEffectsCount++
                                 launch {
-                                    delay(climaticEffectDuration)
+                                    // FADE IN (3 segundos)
+                                    for (i in 0..30) {
+                                        rainFadeAlpha = i / 30f
+                                        delay(100)
+                                    }
+                                    // DURACIÓN ACTIVA
+                                    delay(climaticEffectDuration - 5000)
+                                    // FADE OUT (2 segundos)
+                                    for (i in 30 downTo 0) {
+                                        rainFadeAlpha = i / 30f
+                                        delay(66)
+                                    }
                                     isRainActive = false
+                                    rainFadeAlpha = 0f
                                     isClimaticEffectActive = false
                                     activeEffectsCount--
                                 }
@@ -652,7 +756,15 @@ fun MapScreen(
                         shouldShowSpecular = shouldShowSpecular,
                         shouldShowGradient = shouldShowGradient,
                         shouldShowBubbles = shouldShowBubbles,
-                        onThunderSound = {                                 // AÑADIR
+                        stormFadeAlpha = stormFadeAlpha,
+                        rainFadeAlpha = rainFadeAlpha,
+                        fishFadeAlpha = fishFadeAlpha,
+                        mistFadeAlpha = mistFadeAlpha,
+                        godRaysFadeAlpha = godRaysFadeAlpha,
+                        specularFadeAlpha = specularFadeAlpha,
+                        gradientFadeAlpha = gradientFadeAlpha,
+                        bubblesFadeAlpha = bubblesFadeAlpha,
+                        onThunderSound = {
                             if (!thunderPlayer.isPlaying) {
                                 thunderPlayer.seekTo(0)
                                 thunderPlayer.start()
@@ -1160,6 +1272,14 @@ fun InteractiveWorldMap(
     shouldShowSpecular: Boolean = false,
     shouldShowGradient: Boolean = false,
     shouldShowBubbles: Boolean = false,
+    stormFadeAlpha: Float = 1f,
+    rainFadeAlpha: Float = 1f,
+    fishFadeAlpha: Float = 1f,
+    mistFadeAlpha: Float = 1f,
+    godRaysFadeAlpha: Float = 1f,
+    specularFadeAlpha: Float = 1f,
+    gradientFadeAlpha: Float = 1f,
+    bubblesFadeAlpha: Float = 1f,
     onThunderSound: () -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -1630,39 +1750,61 @@ fun InteractiveWorldMap(
         }
 
         // EFECTOS AMBIENTALES DINÁMICOS (controlados por el scheduler)
-        if (shouldShowBubbles) {
-            OceanBubblesEffect(modifier = Modifier.fillMaxSize())
-        }
-
         if (shouldShowFish) {
-            OceanFishEffect(modifier = Modifier.fillMaxSize())
+            OceanFishEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = fishFadeAlpha
+            )
         }
 
         if (shouldShowMist) {
-            OceanMistEffect(modifier = Modifier.fillMaxSize())
+            OceanMistEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = mistFadeAlpha
+            )
         }
 
         if (shouldShowGodRays) {
-            OceanGodRaysEffect(modifier = Modifier.fillMaxSize())
+            OceanGodRaysEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = godRaysFadeAlpha
+            )
         }
 
         if (shouldShowSpecular) {
-            OceanSpecularEffect(modifier = Modifier.fillMaxSize())
+            OceanSpecularEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = specularFadeAlpha
+            )
         }
 
         if (shouldShowGradient) {
-            OceanGradientOverlay(modifier = Modifier.fillMaxSize())
+            OceanGradientOverlay(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = gradientFadeAlpha
+            )
+        }
+
+        if (shouldShowBubbles) {
+            OceanBubblesEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = bubblesFadeAlpha
+            )
         }
 
         // EFECTOS CLIMÁTICOS (lógica preservada)
         if (shouldShowStorm) {
             StormEffect(
                 modifier = Modifier.fillMaxSize(),
-                onThunderSound = onThunderSound
+                onThunderSound = onThunderSound,
+                fadeAlpha = stormFadeAlpha
             )
         }
         if (shouldShowRain) {
-            RainEffect(modifier = Modifier.fillMaxSize())
+            RainEffect(
+                modifier = Modifier.fillMaxSize(),
+                fadeAlpha = rainFadeAlpha
+            )
         }
 
         // EFECTOS PERMANENTES (según calidad)
