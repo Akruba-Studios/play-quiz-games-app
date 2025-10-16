@@ -186,12 +186,12 @@ fun MapScreen(
     val stormQualityLevels = remember { listOf("VERY_HIGH") } // ("VERY_HIGH", "HIGH")
     val rainQualityLevels = remember { listOf("VERY_HIGH") }
 
-    val fishQualityLevels = remember { listOf("VERY_HIGH") } // Peces
-    val mistQualityLevels = remember { listOf("VERY_HIGH") } // Neblina
-    val godRaysQualityLevels = remember { listOf("LOW") } // Rayos verticales
-    val specularQualityLevels = remember { listOf("MEDIUM") } //
-    val bubblesQualityLevels = remember { listOf("VERY_HIGH") } // Burbujas
-    val gradientQualityLevels = remember { listOf("HIGH") } // Esto: { emptyList<String>() }  es para que el efecto no funcione en ninguan calidad, queda anulado
+    val fishQualityLevels = remember { listOf("HIGH") } // Peces
+    val mistQualityLevels = remember { listOf("LOW") } // Neblina
+    val godRaysQualityLevels = remember { listOf("VERY_HIGH") } // Rayos verticales
+    val specularQualityLevels = remember { listOf("VERY_HIGH") } //
+    val bubblesQualityLevels = remember { listOf("MEDIUM") } // Burbujas
+    val gradientQualityLevels = remember { listOf("VERY_HIGH") } // Esto: { emptyList<String>() }  es para que el efecto no funcione en ninguan calidad, queda anulado
 
 
     // --- CONFIGURACIÓN DEL SISTEMA ---

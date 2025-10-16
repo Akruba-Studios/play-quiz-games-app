@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 3-OE
+// CONTROL: 4-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -403,59 +403,258 @@ fun OceanVignette(modifier: Modifier = Modifier) {
         )
     }
 }
-@Composable // Partículas flotantes que simulan burbujas/espuma
+
+@Composable // Burbujas Flotantes
 fun OceanBubblesEffect(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "bubbles")
 
-    // Generamos 15 burbujas con diferentes offsets y velocidades
-    val bubbles = remember {
-        List(15) { index ->
-            Triple(
-                (index * 73) % 100 / 100f, // posX (0-1)
-                (index * 47) % 100 / 100f, // velocidad relativa
-                (index * 31) % 50 + 20f    // tamaño (20-70)
-            )
-        }
-    }
-
+    // Tiempo global para animaciones
     val time by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(10000, easing = LinearEasing),
+            animation = tween(40000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "time"
     )
 
+    // Pulsación de corrientes submarinas
+    val currentIntensity by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(8000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "current"
+    )
+
+    // Sistema de burbujas multi-capa
+    val bubbles = remember {
+        // CAPA 1: Micro-burbujas de fondo (20 unidades)
+        val microBubbles = List(20) { index ->
+            Bubble(
+                id = index,
+                startX = Random.nextFloat(),
+                startY = Random.nextFloat(),
+                size = Random.nextFloat() * 3f + 2f, // 2-5px (muy pequeñas)
+                speed = Random.nextFloat() * 0.15f + 0.10f, // Lentas
+                wobbleAmp = Random.nextFloat() * 15f + 10f,
+                wobbleFreq = Random.nextFloat() * 2f + 1f,
+                phase = Random.nextFloat() * 6.28f,
+                depth = 0.3f, // Fondo
+                opacity = Random.nextFloat() * 0.2f + 0.15f, // Muy tenues
+                turbulenceStrength = Random.nextFloat() * 0.02f + 0.01f,
+                hasGlow = false
+            )
+        }
+
+        // CAPA 2: Burbujas medianas (15 unidades)
+        val mediumBubbles = List(15) { index ->
+            Bubble(
+                id = index + 20,
+                startX = Random.nextFloat(),
+                startY = Random.nextFloat(),
+                size = Random.nextFloat() * 20f + 15f, // 15-35px
+                speed = Random.nextFloat() * 0.25f + 0.20f, // Velocidad media
+                wobbleAmp = Random.nextFloat() * 35f + 25f,
+                wobbleFreq = Random.nextFloat() * 1.5f + 0.8f,
+                phase = Random.nextFloat() * 6.28f,
+                depth = 0.6f, // Medio
+                opacity = Random.nextFloat() * 0.25f + 0.35f, // Visibles
+                turbulenceStrength = Random.nextFloat() * 0.03f + 0.02f,
+                hasGlow = Random.nextBoolean()
+            )
+        }
+
+        // CAPA 3: Burbujas grandes de primer plano (10 unidades)
+        val largeBubbles = List(10) { index ->
+            Bubble(
+                id = index + 35,
+                startX = Random.nextFloat(),
+                startY = Random.nextFloat(),
+                size = Random.nextFloat() * 35f + 40f, // 40-75px (grandes)
+                speed = Random.nextFloat() * 0.35f + 0.30f, // Rápidas
+                wobbleAmp = Random.nextFloat() * 50f + 40f,
+                wobbleFreq = Random.nextFloat() * 1.2f + 0.6f,
+                phase = Random.nextFloat() * 6.28f,
+                depth = 0.9f, // Primer plano
+                opacity = Random.nextFloat() * 0.3f + 0.50f, // Muy visibles
+                turbulenceStrength = Random.nextFloat() * 0.04f + 0.03f,
+                hasGlow = true // Todas tienen brillo
+            )
+        }
+
+        microBubbles + mediumBubbles + largeBubbles
+    }
+
     Canvas(modifier = modifier.fillMaxSize()) {
-        bubbles.forEach { (posX, speedFactor, bubbleSize) ->
-            // Movimiento vertical cíclico
-            val yProgress = (time + speedFactor) % 1f
-            val yPos = size.height * (1f - yProgress) // De abajo hacia arriba
+        val canvasWidth = size.width
+        val canvasHeight = size.height
 
-            // Oscilación horizontal suave
-            val xOffset = kotlin.math.sin(yProgress * 6.28f * 2) * 30f
-            val xPos = size.width * posX + xOffset
+        bubbles.forEach { bubble ->
+            // Movimiento vertical ascendente (de abajo hacia arriba)
+            val yProgress = (bubble.startY + time * bubble.speed * currentIntensity) % 1f
+            val yPos = canvasHeight * (1f - yProgress) // Invertido: 1=abajo, 0=arriba
 
-            // Alpha que desaparece al llegar arriba
-            val alpha = if (yProgress > 0.85f) {
+            // Oscilación lateral base (zigzag)
+            val wobbleBase = kotlin.math.sin(yProgress * 6.28f * bubble.wobbleFreq + bubble.phase) * bubble.wobbleAmp
+
+            // Turbulencias aleatorias adicionales (simulan corrientes)
+            val turbulence1 = kotlin.math.sin(time * 6.28f * 0.5f + bubble.phase) * bubble.turbulenceStrength * canvasWidth
+            val turbulence2 = kotlin.math.cos(time * 6.28f * 0.3f + bubble.phase * 1.5f) * bubble.turbulenceStrength * canvasWidth
+
+            val xPos = (bubble.startX * canvasWidth) + wobbleBase + turbulence1 + turbulence2
+
+            // Fade out al llegar arriba (últimos 15% del recorrido)
+            val fadeOut = if (yProgress > 0.85f) {
                 (1f - yProgress) / 0.15f
             } else {
-                0.3f
+                1f
             }
 
-            drawCircle(
-                color = Color.White.copy(alpha = alpha * 0.4f * fadeAlpha),
-                radius = bubbleSize / 2f,
-                center = Offset(xPos, yPos)
-            )
+            // Alpha final con profundidad y fade
+            val depthAlpha = bubble.opacity * bubble.depth
+            val finalAlpha = depthAlpha * fadeOut * fadeAlpha
+
+            // Tamaño con perspectiva (burbujas más grandes cerca)
+            val perspectiveSize = bubble.size * bubble.depth
+
+            // Variación de tamaño por oscilación (burbujas "respiran")
+            val breathe = kotlin.math.sin(time * 6.28f * 2f + bubble.phase) * 0.08f + 1f
+            val animatedSize = perspectiveSize * breathe
+
+            if (finalAlpha > 0.05f) {
+                // BURBUJA BASE (círculo translúcido)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = finalAlpha * 0.4f), // Centro semi-opaco
+                            Color.White.copy(alpha = finalAlpha * 0.6f), // Medio más opaco
+                            Color(0xFFE3F2FD).copy(alpha = finalAlpha * 0.3f), // Borde azulado
+                            Color.Transparent
+                        ),
+                        center = Offset(xPos, yPos),
+                        radius = animatedSize
+                    ),
+                    radius = animatedSize,
+                    center = Offset(xPos, yPos)
+                )
+
+                // BORDE DE LA BURBUJA (contorno sutil)
+                drawCircle(
+                    color = Color.White.copy(alpha = finalAlpha * 0.5f),
+                    radius = animatedSize,
+                    center = Offset(xPos, yPos),
+                    style = Stroke(width = (0.5f + bubble.depth * 1f))
+                )
+
+                // REFLEJO ESPECULAR (highlight en la parte superior)
+                val highlightOffset = animatedSize * 0.35f
+                val highlightX = xPos - highlightOffset * 0.5f
+                val highlightY = yPos - highlightOffset * 0.7f
+                val highlightSize = animatedSize * 0.4f
+
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = finalAlpha * 0.8f),
+                            Color.White.copy(alpha = finalAlpha * 0.4f),
+                            Color.Transparent
+                        ),
+                        center = Offset(highlightX, highlightY),
+                        radius = highlightSize
+                    ),
+                    radius = highlightSize,
+                    center = Offset(highlightX, highlightY)
+                )
+
+                // GLOW EXTERIOR (solo burbujas grandes con hasGlow)
+                if (bubble.hasGlow && bubble.depth > 0.7f) {
+                    val glowIntensity = kotlin.math.sin(time * 6.28f * 1.5f + bubble.phase) * 0.3f + 0.7f
+
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = finalAlpha * 0.3f * glowIntensity),
+                                Color(0xFFB3E5FC).copy(alpha = finalAlpha * 0.15f * glowIntensity),
+                                Color.Transparent
+                            ),
+                            center = Offset(xPos, yPos),
+                            radius = animatedSize * 1.5f
+                        ),
+                        radius = animatedSize * 1.5f,
+                        center = Offset(xPos, yPos)
+                    )
+                }
+
+                // REFLEJO SECUNDARIO (pequeño punto de luz opuesto)
+                if (bubble.size > 20f) {
+                    val secondaryX = xPos + highlightOffset * 0.8f
+                    val secondaryY = yPos + highlightOffset * 0.6f
+                    val secondarySize = animatedSize * 0.15f
+
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = finalAlpha * 0.5f),
+                                Color.Transparent
+                            ),
+                            center = Offset(secondaryX, secondaryY),
+                            radius = secondarySize
+                        ),
+                        radius = secondarySize,
+                        center = Offset(secondaryX, secondaryY)
+                    )
+                }
+            }
+        }
+
+        // ESTELA DE MICRO-BURBUJAS EN CORRIENTES (efecto ambiental)
+        val trailCount = 8
+        for (i in 0 until trailCount) {
+            val trailProgress = (time * 0.3f + i * 0.125f) % 1f
+            val trailX = (kotlin.math.sin(trailProgress * 6.28f * 2f) * 0.3f + 0.5f) * canvasWidth
+            val trailY = canvasHeight * (1f - trailProgress)
+            val trailAlpha = (1f - trailProgress) * 0.15f * fadeAlpha
+
+            if (trailAlpha > 0.02f) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = trailAlpha),
+                            Color.Transparent
+                        ),
+                        center = Offset(trailX, trailY),
+                        radius = 3f
+                    ),
+                    radius = 3f,
+                    center = Offset(trailX, trailY)
+                )
+            }
         }
     }
 }
+
+// Clase de datos para burbujas mejorada
+private data class Bubble(
+    val id: Int,
+    val startX: Float,              // Posición inicial X (0-1)
+    val startY: Float,              // Posición inicial Y (0-1)
+    val size: Float,                // Tamaño en px
+    val speed: Float,               // Velocidad de ascenso
+    val wobbleAmp: Float,           // Amplitud de oscilación lateral
+    val wobbleFreq: Float,          // Frecuencia de oscilación
+    val phase: Float,               // Fase para variación
+    val depth: Float,               // Profundidad (0.3=fondo, 0.9=primer plano)
+    val opacity: Float,             // Opacidad base
+    val turbulenceStrength: Float,  // Fuerza de turbulencias
+    val hasGlow: Boolean            // Si tiene glow exterior
+)
 
 @Composable // Rayos de luz que atraviesan el agua (God Rays)
 fun OceanGodRaysEffect(
