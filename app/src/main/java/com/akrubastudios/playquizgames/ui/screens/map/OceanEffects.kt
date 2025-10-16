@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 5-OE
+// CONTROL: 6-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -1218,64 +1218,87 @@ fun OceanFishEffect(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
 ) {
-    // Define las 5 especies de peces con sus características
+    // Define las 6 especies de peces con características CORREGIDAS
     val fishSpecies = remember {
         listOf(
             FishSpecies(
-                icon = JawsIcon, // Pez 1. Tamaño 24
-                baseSize = 100.dp,
+                icon = JawsIcon,
+                baseSize = 85.dp,        // Tiburón grande pero no pixelado
+                speed = 0.5f,            // Lento y amenazante
+                depthLayer = 0.90f,      // Muy cercano (imponente)
+                verticalMovement = 0.01f // Movimiento sutil
+            ),
+            FishSpecies(
+                icon = AnglerFishIcon,
+                baseSize = 45.dp,        // Aumentado de 28
                 speed = 0.8f,
-                depthLayer = 0.3f, // Lejano (pequeño, transparente)
-                verticalMovement = 0.02f
-            ),
-            FishSpecies(
-                icon = AnglerFishIcon, // Pez 2. Tamaño 512
-                baseSize = 28.dp,
-                speed = 1.2f,
-                depthLayer = 0.5f, // Medio
-                verticalMovement = 0.05f
-            ),
-            FishSpecies(
-                icon = FishSharpIcon, // Pez 3. Tamaño 512
-                baseSize = 24.dp,
-                speed = 1.5f,
-                depthLayer = 0.7f, // Cercano (grande, opaco)
+                depthLayer = 0.35f,      // Lejano (abisal)
                 verticalMovement = 0.03f
             ),
             FishSpecies(
-                icon = JellyfishIcon, // Pez 4. Tamaño 32
-                baseSize = 36.dp,
-                speed = 0.6f,
-                depthLayer = 0.4f,
-                verticalMovement = 0.01f
-            ),
-            FishSpecies(
-                icon = TropicalFishIcon, // Pez 5. Tamaño 512
-                baseSize = 30.dp,
-                speed = 1.0f,
-                depthLayer = 0.6f,
+                icon = FishSharpIcon,
+                baseSize = 38.dp,        // Aumentado de 24
+                speed = 1.5f,            // Rápido y ágil
+                depthLayer = 0.65f,
                 verticalMovement = 0.04f
             ),
             FishSpecies(
-                icon = WhaleIcon, // Pez 6. Tamaño 64 y tiene colores
-                baseSize = 30.dp,
-                speed = 1.0f,
-                depthLayer = 0.6f,
-                verticalMovement = 0.04f
+                icon = JellyfishIcon,
+                baseSize = 55.dp,        // Aumentado de 36
+                speed = 0.3f,            // Muy lenta (flotante)
+                depthLayer = 0.50f,
+                verticalMovement = 0.06f // Ondulación pronunciada
+            ),
+            FishSpecies(
+                icon = TropicalFishIcon,
+                baseSize = 42.dp,        // Aumentado de 30
+                speed = 1.2f,
+                depthLayer = 0.70f,      // Cercano y visible
+                verticalMovement = 0.05f
+            ),
+            FishSpecies(
+                icon = WhaleIcon,
+                baseSize = 95.dp,        // TRIPLICADO de 30 - ES UNA BALLENA
+                speed = 0.4f,            // Lenta y majestuosa
+                depthLayer = 0.95f,      // PRIMER PLANO ABSOLUTO
+                verticalMovement = 0.02f // Movimiento suave
             )
         )
     }
 
-    // Generamos población de peces (20 peces en total)
+    // Población con sistema de rareza: 2 ballenas + 2 tiburones + 21 comunes
     val fishes = remember {
-        List(20) { index ->
-            val species = fishSpecies[index % fishSpecies.size]
-            Fish(
-                species = species,
-                startX = (index * 0.13f) % 1f, // Distribuidos en X
-                startY = (index * 0.29f) % 1f, // Distribuidos en Y
-                id = index
-            )
+        buildList {
+            // RAROS: 2 Ballenas
+            repeat(2) { i ->
+                add(Fish(
+                    species = fishSpecies[5], // WhaleIcon
+                    startX = (i * 0.45f + 0.1f) % 1f,
+                    startY = (i * 0.35f + 0.2f) % 1f,
+                    id = size
+                ))
+            }
+
+            // RAROS: 2 Tiburones
+            repeat(2) { i ->
+                add(Fish(
+                    species = fishSpecies[0], // JawsIcon
+                    startX = (i * 0.55f + 0.25f) % 1f,
+                    startY = (i * 0.45f + 0.15f) % 1f,
+                    id = size
+                ))
+            }
+
+            // COMUNES: 21 peces (índices 1-4)
+            repeat(21) { i ->
+                val commonIndex = 1 + (i % 4) // AnglerFish, FishSharp, Jellyfish, TropicalFish
+                add(Fish(
+                    species = fishSpecies[commonIndex],
+                    startX = (i * 0.11f) % 1f,
+                    startY = (i * 0.23f) % 1f,
+                    id = size
+                ))
+            }
         }
     }
 
@@ -1297,40 +1320,74 @@ fun OceanFishEffect(
             val fishTime = (time + fish.startX) % 1f
             val xProgress = fishTime
 
+            // Movimiento vertical con oscilación
             val verticalOscillation = kotlin.math.sin(fishTime * 6.28f * 3) * fish.species.verticalMovement
             val yPos = fish.startY + verticalOscillation
 
+            // Detectar dirección
             val previousTime = (time + fish.startX - 0.01f) % 1f
             val isMovingRight = fishTime > previousTime
 
+            // Tamaño con perspectiva (CORREGIDO)
             val scaledSize = fish.species.baseSize * fish.species.depthLayer
-            val alpha = (0.4f + (fish.species.depthLayer * 0.5f)) * fadeAlpha
 
-            val blueTint = 1f - (fish.species.depthLayer * 0.3f)
-            val fishColor = Color(
-                red = blueTint,
-                green = blueTint,
-                blue = 1f,
-                alpha = alpha
-            )
+            // SISTEMA DE COLOR CORREGIDO - 3 capas de profundidad
+            val fishColor = when {
+                // Peces muy lejanos (abisales): Oscuros y tenues
+                fish.species.depthLayer < 0.4f -> {
+                    Color(
+                        red = 0.25f,
+                        green = 0.35f,
+                        blue = 0.55f,
+                        alpha = (0.4f + fish.species.depthLayer * 0.3f) * fadeAlpha // fadeAlpha integrado
+                    )
+                }
+                // Peces medios: Azul moderado
+                fish.species.depthLayer < 0.7f -> {
+                    Color(
+                        red = 0.45f,
+                        green = 0.65f,
+                        blue = 0.85f,
+                        alpha = (0.5f + fish.species.depthLayer * 0.4f) * fadeAlpha // fadeAlpha integrado
+                    )
+                }
+                // Peces cercanos: Brillantes y nítidos
+                else -> {
+                    Color(
+                        red = 0.60f,
+                        green = 0.80f,
+                        blue = 1.0f,
+                        alpha = (0.6f + fish.species.depthLayer * 0.4f) * fadeAlpha // fadeAlpha integrado
+                    )
+                }
+            }
+
+            // Respiración aumentada (más notoria)
+            val breathe = kotlin.math.sin(time * 6.28f * 2f + fish.id * 0.5f) * 0.12f + 1f // Aumentado de 0.08 a 0.12
+            val animatedSize = scaledSize * breathe
 
             Icon(
                 imageVector = fish.species.icon,
                 contentDescription = null,
                 modifier = Modifier
                     .offset {
-                        val halfSize = (scaledSize.value * density.density / 2).toInt()
+                        val halfSize = (animatedSize.value * density.density / 2).toInt()
                         IntOffset(
                             x = (xProgress * this@BoxWithConstraints.maxWidth.value * density.density).toInt() - halfSize,
                             y = (yPos * this@BoxWithConstraints.maxHeight.value * density.density).toInt() - halfSize
                         )
                     }
-                    .size(scaledSize)
+                    .size(animatedSize)
                     .graphicsLayer {
                         scaleX = if (fish.species.icon == WhaleIcon) {
                             if (isMovingRight) -1f else 1f  // Invertido para ballena
                         } else {
                             if (isMovingRight) 1f else -1f  // Normal para otros
+                        }
+                        alpha = if (fish.species.icon == WhaleIcon) {
+                            (0.6f + fish.species.depthLayer * 0.4f) * fadeAlpha  // Misma fórmula que otros peces
+                        } else {
+                            1f  // Los demás usan el alpha del tint
                         }
                     },
                 tint = if (fish.species.icon == WhaleIcon) Color.Unspecified else fishColor
@@ -1339,19 +1396,18 @@ fun OceanFishEffect(
     }
 }
 
-// Clase de datos para especies de peces
+// Clases de datos (SIN CAMBIOS)
 private data class FishSpecies(
-    val icon: ImageVector,      // Icono del pez (FÁCIL DE CAMBIAR)
-    val baseSize: Dp,            // Tamaño base
-    val speed: Float,            // Multiplicador de velocidad
-    val depthLayer: Float,       // 0.0 = muy lejos, 1.0 = muy cerca
-    val verticalMovement: Float  // Amplitud del movimiento vertical
+    val icon: ImageVector,
+    val baseSize: Dp,
+    val speed: Float,
+    val depthLayer: Float,
+    val verticalMovement: Float
 )
 
-// Clase de datos para instancias individuales de peces
 private data class Fish(
     val species: FishSpecies,
-    val startX: Float,  // Posición inicial X (0-1)
-    val startY: Float,  // Posición inicial Y (0-1)
+    val startX: Float,
+    val startY: Float,
     val id: Int
 )
