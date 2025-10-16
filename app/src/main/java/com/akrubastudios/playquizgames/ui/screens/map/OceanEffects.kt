@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 4-OE
+// CONTROL: 5-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -884,15 +884,15 @@ fun OceanMistEffect(
 ) {
     // Sistema de partículas de niebla orgánica
     val mistParticles = remember {
-        List(80) { index ->
+        List(120) { index -> // era 80, ahora 120 para llenar toda la pantalla
             MistParticle(
                 id = index,
                 startX = Random.nextFloat(),
-                startY = Random.nextFloat() * 0.6f, // Concentrada en parte superior/media
-                size = Random.nextFloat() * 150f + 80f, // Tamaño variable 80-230
+                startY = Random.nextFloat(), // Concentrada en toda la pantalla
+                size = Random.nextFloat() * 200f + 100f, // era 150f + 80f
                 speed = Random.nextFloat() * 0.3f + 0.15f, // Velocidad lenta y variable
                 depth = Random.nextFloat(), // Profundidad para parallax
-                opacity = Random.nextFloat() * 0.15f + 0.08f, // Opacidad muy sutil
+                opacity = Random.nextFloat() * 0.20f + 0.12f, // Opacidad muy sutil  -era 0.15f + 0.08f
                 drift = Random.nextFloat() * 30f - 15f, // Deriva vertical
                 wobbleFreq = Random.nextFloat() * 2f + 1f, // Frecuencia de ondulación
                 wobbleAmp = Random.nextFloat() * 40f + 20f // Amplitud de ondulación
