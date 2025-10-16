@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 1-OE
+// CONTROL: 2-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -181,37 +181,201 @@ private data class SpecularParticle(
     val depth: Float          // Profundidad (0=lejano, 1=cercano)
 )
 
-@Composable // Gradient Overlay Animado: Un gradiente azul oscuro que pulsa desde las esquinas.
+@Composable // Gradient Overlay Animado: Un efecto muy bueno de oscurecimiento como un eclipse. Muy Bueno!
 fun OceanGradientOverlay(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "gradient")
+    val infiniteTransition = rememberInfiniteTransition(label = "ocean_gradient")
 
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.35f,
+    // Tiempo global para animaciones
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(8000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            animation = tween(45000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
         ),
-        label = "alpha"
+        label = "time"
     )
 
+    // Pulsación lenta de intensidad general
+    val globalIntensity by infiniteTransition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "intensity"
+    )
+
+    // Zonas de profundidad (manchas oscuras que simulan variación del fondo marino)
+    val depthZones = remember {
+        List(8) { index ->
+            DepthZone(
+                id = index,
+                centerX = Random.nextFloat(),
+                centerY = Random.nextFloat(),
+                size = Random.nextFloat() * 0.4f + 0.3f, // 0.3 a 0.7
+                intensity = Random.nextFloat() * 0.25f + 0.15f, // 0.15 a 0.4
+                speed = Random.nextFloat() * 0.03f + 0.01f,
+                phase = Random.nextFloat() * 6.28f,
+                driftX = (Random.nextFloat() - 0.5f) * 0.1f,
+                driftY = (Random.nextFloat() - 0.5f) * 0.05f
+            )
+        }
+    }
+
     Canvas(modifier = modifier.fillMaxSize()) {
-        // Gradiente desde esquinas hacia el centro
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+
+        // CAPA 1: Gradiente base de profundidad (de arriba hacia abajo)
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF1A5C8A).copy(alpha = 0.1f * fadeAlpha), // Azul claro arriba
+                    Color(0xFF0D3B5C).copy(alpha = 0.25f * fadeAlpha), // Azul medio
+                    Color(0xFF0A2840).copy(alpha = 0.35f * fadeAlpha)  // Azul oscuro abajo
+                ),
+                startY = 0f,
+                endY = canvasHeight
+            )
+        )
+
+        // CAPA 2: Zonas de profundidad variable (manchas oscuras móviles)
+        depthZones.forEach { zone ->
+            // Movimiento lento y deriva
+            val xOffset = kotlin.math.sin(time * 6.28f * zone.speed + zone.phase) * zone.driftX
+            val yOffset = kotlin.math.cos(time * 6.28f * zone.speed * 0.7f + zone.phase) * zone.driftY
+
+            val xPos = (zone.centerX + xOffset) * canvasWidth
+            val yPos = (zone.centerY + yOffset) * canvasHeight
+
+            // Pulsación individual sutil
+            val pulse = kotlin.math.sin(time * 6.28f * zone.speed * 2f + zone.phase) * 0.15f + 0.85f
+            val zoneAlpha = zone.intensity * pulse * globalIntensity * fadeAlpha
+
+            val zoneRadius = zone.size * kotlin.math.max(canvasWidth, canvasHeight)
+
+            // Gradiente radial con múltiples stops para bordes orgánicos
+            val zoneGradient = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFF0A1E2E).copy(alpha = zoneAlpha * 0.8f),     // Centro oscuro
+                    Color(0xFF0D2A3F).copy(alpha = zoneAlpha * 0.5f),     // Medio
+                    Color(0xFF10334D).copy(alpha = zoneAlpha * 0.25f),    // Transición
+                    Color.Transparent                                       // Borde difuso
+                ),
+                center = Offset(xPos, yPos),
+                radius = zoneRadius
+            )
+
+            drawCircle(
+                brush = zoneGradient,
+                radius = zoneRadius,
+                center = Offset(xPos, yPos)
+            )
+        }
+
+        // CAPA 3: Bandas de corrientes submarinas (franjas horizontales sutiles)
+        val currentOffset1 = (time * 0.05f) % 1f
+        val currentOffset2 = (time * 0.08f + 0.5f) % 1f
+
+        // Corriente 1 (tercio superior)
+        drawRect(
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    Color(0xFF1A4D6E).copy(alpha = 0.12f * fadeAlpha),
+                    Color(0xFF1A4D6E).copy(alpha = 0.18f * fadeAlpha),
+                    Color.Transparent
+                ),
+                startX = (currentOffset1 - 0.3f) * canvasWidth,
+                endX = (currentOffset1 + 0.3f) * canvasWidth
+            ),
+            topLeft = Offset(0f, canvasHeight * 0.25f),
+            size = androidx.compose.ui.geometry.Size(canvasWidth, canvasHeight * 0.15f)
+        )
+
+        // Corriente 2 (tercio inferior)
+        drawRect(
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    Color(0xFF0D3548).copy(alpha = 0.15f * fadeAlpha),
+                    Color(0xFF0D3548).copy(alpha = 0.22f * fadeAlpha),
+                    Color.Transparent
+                ),
+                startX = (currentOffset2 - 0.4f) * canvasWidth,
+                endX = (currentOffset2 + 0.4f) * canvasWidth
+            ),
+            topLeft = Offset(0f, canvasHeight * 0.6f),
+            size = androidx.compose.ui.geometry.Size(canvasWidth, canvasHeight * 0.2f)
+        )
+
+        // CAPA 4: Cáusticas sutiles (patrones de luz refractada)
+        val causticOffset = (time * 0.15f) % 1f
+
+        for (i in 0..5) {
+            val causticX = ((causticOffset + i * 0.2f) % 1f) * canvasWidth
+            val causticY = (kotlin.math.sin(time * 6.28f * 0.3f + i * 1.2f) * 0.15f + 0.4f) * canvasHeight
+            val causticAlpha = (kotlin.math.sin(time * 6.28f * 0.5f + i * 0.8f) * 0.5f + 0.5f) * 0.08f * fadeAlpha
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFB3E5FC).copy(alpha = causticAlpha),
+                        Color(0xFF81D4FA).copy(alpha = causticAlpha * 0.5f),
+                        Color.Transparent
+                    ),
+                    center = Offset(causticX, causticY),
+                    radius = 120f
+                ),
+                radius = 120f,
+                center = Offset(causticX, causticY)
+            )
+        }
+
+        // CAPA 5: Vignette tradicional (oscurecimiento de bordes)
         drawRect(
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color.Transparent,
-                    Color(0xFF1B4F72).copy(alpha = alpha * fadeAlpha)
+                    Color(0xFF000814).copy(alpha = 0.35f * fadeAlpha)
                 ),
-                center = size.center,
-                radius = size.maxDimension * 0.8f
+                center = Offset(canvasWidth / 2f, canvasHeight / 2f),
+                radius = kotlin.math.max(canvasWidth, canvasHeight) * 0.9f
+            )
+        )
+
+        // CAPA 6: Gradiente sutil de temperatura de color (azul frío en profundidad)
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    Color(0xFF0A2540).copy(alpha = 0.15f * fadeAlpha)
+                ),
+                startY = canvasHeight * 0.6f,
+                endY = canvasHeight
             )
         )
     }
 }
+
+// Clase de datos para zonas de profundidad
+private data class DepthZone(
+    val id: Int,
+    val centerX: Float,       // Posición X (0-1)
+    val centerY: Float,       // Posición Y (0-1)
+    val size: Float,          // Tamaño relativo
+    val intensity: Float,     // Intensidad del oscurecimiento
+    val speed: Float,         // Velocidad de movimiento
+    val phase: Float,         // Fase inicial
+    val driftX: Float,        // Deriva horizontal
+    val driftY: Float         // Deriva vertical
+)
+
 @Composable // Vignette Dinámico: Bordes oscuros que pulsan, haciendo el centro más prominente.
 fun OceanVignette(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "vignette")
