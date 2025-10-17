@@ -81,7 +81,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-@OptIn(ExperimentalMaterial3Api::class) // Control: 5-PS
+@OptIn(ExperimentalMaterial3Api::class) // Control: 6-PS
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -116,7 +116,7 @@ fun ProfileScreen(
 
     // --- LÓGICA DE ANIMACIÓN (SIN CAMBIOS, PERO AHORA SABEMOS DÓNDE SE APLICARÁ) ---
     val baseCardColor = MaterialTheme.colorScheme.surfaceContainer
-    val highlightCardColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    val highlightCardColor = Color(0xFFFFD700).copy(alpha = 0.7f) // Oro intenso
     var animationPlayed by remember { mutableStateOf(false) }
     var cardColor by remember { mutableStateOf(baseCardColor) }
     val animatedCardColor by animateColorAsState(
@@ -125,6 +125,14 @@ fun ProfileScreen(
         label = "MilestoneCardColorAnimation" // Cambiamos la etiqueta para claridad
     )
     var scaleAnimation by remember { mutableFloatStateOf(1f) }
+
+    var borderWidth by remember { mutableFloatStateOf(0f) }
+    val animatedBorderWidth by animateFloatAsState(
+        targetValue = borderWidth,
+        animationSpec = tween(durationMillis = 1000),
+        label = "BorderAnimation"
+    )
+
     val animatedScale by animateFloatAsState(
         targetValue = scaleAnimation,
         animationSpec = tween(durationMillis = 1000),
@@ -141,25 +149,29 @@ fun ProfileScreen(
             try {
                 Log.d("MILESTONE_ANIM", "🔄 PULSO 1 - START")
                 cardColor = highlightCardColor
+                borderWidth = 3f
                 scaleAnimation = 1.08f
                 Log.d("MILESTONE_ANIM", "⏰ Delay 1...")
-                delay(1500)
+                delay(1000)
                 Log.d("MILESTONE_ANIM", "⏰ Delay 1 OK")
 
                 cardColor = baseCardColor
+                borderWidth = 0f
                 scaleAnimation = 1f
                 Log.d("MILESTONE_ANIM", "⏰ Delay 2...")
-                delay(1500)
+                delay(1000)
                 Log.d("MILESTONE_ANIM", "⏰ Delay 2 OK - PULSO 1 COMPLETADO")
 
                 Log.d("MILESTONE_ANIM", "🔄 PULSO 2 - START")
                 cardColor = highlightCardColor
+                borderWidth = 3f
                 scaleAnimation = 1.08f
-                delay(1500)
+                delay(1000)
 
                 cardColor = baseCardColor
+                borderWidth = 0f
                 scaleAnimation = 1f
-                delay(1500)
+                delay(1000)
                 Log.d("MILESTONE_ANIM", "✅ TODO TERMINADO")
 
             } catch (e: Exception) {
@@ -299,6 +311,7 @@ fun ProfileScreen(
                                 milestone = milestone,
                                 cardColor = animatedCardColor, // <-- APLICA EL COLOR ANIMADO
                                 scale = animatedScale,
+                                borderWidth = animatedBorderWidth,
                                 cardPadding = horizontalPadding
                             )
                             Spacer(modifier = Modifier.height(24.dp))
@@ -605,6 +618,7 @@ private fun MilestoneCard(
     modifier: Modifier = Modifier,
     cardColor: Color,
     scale: Float = 1f,
+    borderWidth: Float = 0f,
     cardPadding: Dp
 ) {
     Card(
@@ -613,6 +627,11 @@ private fun MilestoneCard(
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .background(
                 color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // 0.8f - 80% de Opacidad
+                shape = MaterialTheme.shapes.medium
+            )
+            .border( // <-- AÑADIR ESTO
+                width = borderWidth.dp,
+                color = Color(0xFFFFD700),
                 shape = MaterialTheme.shapes.medium
             ),
         colors = CardDefaults.cardColors(
