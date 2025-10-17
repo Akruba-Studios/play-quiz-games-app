@@ -43,10 +43,11 @@ import com.akrubastudios.playquizgames.R
 import com.akrubastudios.playquizgames.core.AppConstants
 import com.akrubastudios.playquizgames.ui.components.ScreenBackground
 import com.akrubastudios.playquizgames.ui.components.TextWithBorder
+import com.akrubastudios.playquizgames.ui.theme.DarkGoldAccent
 import com.akrubastudios.playquizgames.ui.theme.DeepNavy
 import com.akrubastudios.playquizgames.ui.theme.LightGray
 
-@OptIn(ExperimentalMaterial3Api::class) // Control 3-CPS
+@OptIn(ExperimentalMaterial3Api::class) // Control 4-CPS
 @Composable
 fun CreateProfileScreen(
     viewModel: CreateProfileViewModel = hiltViewModel(),
@@ -89,74 +90,85 @@ fun CreateProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Avatar
-                    Image(
-                        painter = rememberAsyncImagePainter(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(if (uiState.useGoogleData) uiState.googlePhotoUrl else uiState.selectedAvatarUrl)
-                                .crossfade(true)
-                                .error(R.drawable.logo_splash) // Si falla la carga, se muestra el logo
-                                .build()
-                        ),
+                    // CAMBIO 1: La imagen principal ahora SIEMPRE muestra el avatar seleccionado desde el ViewModel.
+                    AsyncImage(
+                        model = uiState.selectedAvatarUrl,
                         contentDescription = "Avatar",
                         modifier = Modifier
                             .size(120.dp)
-                            .border( // <-- AÑADE ESTE BLOQUE
+                            .border(
                                 width = 2.dp,
                                 color = MaterialTheme.colorScheme.outline,
                                 shape = CircleShape
                             )
                             .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.logo_splash) // Fallback si falla
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    if (!uiState.useGoogleData) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            TextWithBorder(
-                                text = stringResource(id = R.string.create_profile_avatar_title),
-                                style = MaterialTheme.typography.titleMedium.copy(textAlign = TextAlign.Center),
-                                borderColor = Color.White,
-                                borderWidth = 3f
+                    // CAMBIO 2: El título y la lista de avatares ahora son SIEMPRE visibles.
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        TextWithBorder(
+                            text = stringResource(id = R.string.create_profile_avatar_title),
+                            style = MaterialTheme.typography.titleMedium.copy(textAlign = TextAlign.Center),
+                            borderColor = Color.White,
+                            borderWidth = 3f
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // CAMBIO 3: Creamos una lista que incluye el avatar de Google + los personalizados.
+                    val allAvatarOptions = remember(uiState.googlePhotoUrl) {
+                        listOf(uiState.googlePhotoUrl) + availableAvatars
+                    }
+
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+                    ) {
+                        items(allAvatarOptions) { avatarUrl ->
+                            val isSelected = uiState.selectedAvatarUrl == avatarUrl
+                            AsyncImage(
+                                model = avatarUrl,
+                                imageLoader = viewModel.imageLoader,
+                                contentDescription = if (avatarUrl == uiState.googlePhotoUrl) {
+                                    stringResource(R.string.create_profile_google_avatar_cd)
+                                } else {
+                                    "Avatar Option"
+                                },
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .clickable { viewModel.onAvatarSelected(avatarUrl) }
+                                    .border(
+                                        border = BorderStroke(
+                                            width = if (isSelected) 3.dp else 0.dp,
+                                            color = if (isSelected && avatarUrl == uiState.googlePhotoUrl) {
+                                                DarkGoldAccent
+                                            } else if (isSelected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                Color.Transparent
+                                            }
+                                        ),
+                                        shape = CircleShape
+                                    ),
+                                contentScale = ContentScale.Crop,
+                                onSuccess = { state ->
+                                    val source = when (state.result.dataSource) {
+                                        coil.decode.DataSource.MEMORY_CACHE -> "RAM ⚡"
+                                        coil.decode.DataSource.DISK -> "DISCO 💾"
+                                        coil.decode.DataSource.NETWORK -> "RED ⚠️"
+                                        else -> "?"
+                                    }
+                                    Log.d("CreateProfileAvatar", "Avatar cargado desde: $source")
+                                }
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            items(availableAvatars) { avatarUrl ->
-                                val isSelected = uiState.selectedAvatarUrl == avatarUrl
-                                AsyncImage(
-                                    model = avatarUrl,
-                                    imageLoader = viewModel.imageLoader,
-                                    contentDescription = "Avatar Option",
-                                    modifier = Modifier
-                                        .size(64.dp)
-                                        .clip(CircleShape)
-                                        .clickable { viewModel.onAvatarSelected(avatarUrl) }
-                                        .border(
-                                            border = BorderStroke(
-                                                width = if (isSelected) 3.dp else 0.dp,
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-                                            ),
-                                            shape = CircleShape
-                                        ),
-                                    contentScale = ContentScale.Crop,
-                                    onSuccess = { state ->
-                                        val source = when (state.result.dataSource) {
-                                            coil.decode.DataSource.MEMORY_CACHE -> "RAM ⚡"
-                                            coil.decode.DataSource.DISK -> "DISCO 💾"
-                                            coil.decode.DataSource.NETWORK -> "RED ⚠️"
-                                            else -> "?"
-                                        }
-                                        Log.d("CreateProfileAvatar", "Avatar cargado desde: $source")
-                                    }
-                                )
-                            }
-                        }
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Checkbox
                     Row(
@@ -220,6 +232,16 @@ fun CreateProfileScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                        )
+                    } else {
+                        // Mostramos el texto informativo si no hay error.
+                        Text(
+                            text = stringResource(R.string.create_profile_ranking_info),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth() // <-- Ocupa todo el ancho disponible
+                                .padding(top = 4.dp),
+                            textAlign = TextAlign.Center // <-- Centra el texto dentro de ese espacio
                         )
                     }
 

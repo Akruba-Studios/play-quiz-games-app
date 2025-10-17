@@ -58,7 +58,8 @@ class CreateProfileViewModel @Inject constructor(
             it.copy(
                 googleName = decodedName,
                 googlePhotoUrl = decodedPhotoUrl,
-                username = decodedName
+                username = decodedName,
+                selectedAvatarUrl = decodedPhotoUrl
             )
         }
         // Log para debugging
@@ -70,18 +71,32 @@ class CreateProfileViewModel @Inject constructor(
     }
 
     fun onUseGoogleDataChange(useGoogle: Boolean) {
-        _uiState.update {
-            it.copy(
+        _uiState.update { currentState ->
+            currentState.copy(
                 useGoogleData = useGoogle,
-                // Si vuelve a usar los datos de Google, restauramos el nombre
-                username = if (useGoogle) it.googleName else it.username,
+                username = if (useGoogle) currentState.googleName else currentState.username,
+                // AÑADIDO: Si se activa, la selección visual vuelve al avatar de Google.
+                selectedAvatarUrl = if (useGoogle) currentState.googlePhotoUrl else currentState.selectedAvatarUrl,
                 error = null
             )
         }
     }
 
     fun onAvatarSelected(avatarUrl: String) {
-        _uiState.update { it.copy(selectedAvatarUrl = avatarUrl) }
+        _uiState.update { currentState ->
+            // Comprueba si el avatar seleccionado es el de Google.
+            val isGoogleAvatar = avatarUrl == currentState.googlePhotoUrl
+
+            currentState.copy(
+                selectedAvatarUrl = avatarUrl,
+                // Si se selecciona el avatar de Google, useGoogleData se activa.
+                // Si se selecciona cualquier otro, se desactiva.
+                useGoogleData = isGoogleAvatar,
+                // Si volvemos a seleccionar el de Google, restauramos el nombre de Google.
+                // Si no, mantenemos el nombre que el usuario haya escrito.
+                username = if (isGoogleAvatar) currentState.googleName else currentState.username
+            )
+        }
     }
 
     fun onContinueClicked() {

@@ -29,6 +29,9 @@
     <string name="create_profile_button_continue">Continue</string>
     <string name="create_profile_error_empty_name">Username cannot be empty</string>
 
+    <string name="create_profile_ranking_info">This name will be displayed in the global ranking.</string>
+    <string name="create_profile_google_avatar_cd">Google Avatar</string>
+
     <!-- MapScreen -->
     <string name="map_title">Knowledge Map</string>
     <string name="bottom_nav_ranking">Ranking</string>
