@@ -44,6 +44,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -51,6 +52,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.Dispatchers
@@ -121,7 +123,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 44-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 45-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,9 +190,9 @@ fun MapScreen(
 
     val fishQualityLevels = remember { listOf("HIGH") } // Peces
     val mistQualityLevels = remember { listOf("LOW") } // Neblina
-    val godRaysQualityLevels = remember { listOf("VERY_HIGH") } // Rayos verticales
-    val specularQualityLevels = remember { listOf("VERY_HIGH") } //
-    val bubblesQualityLevels = remember { listOf("MEDIUM") } // Burbujas
+    val godRaysQualityLevels = remember { listOf("VERY_HIGH") } // Rayos en diagonal
+    val specularQualityLevels = remember { listOf("VERY_HIGH") } // Centros redondos especulares
+    val bubblesQualityLevels = remember { listOf("VERY_HIGH") } // Burbujas
     val gradientQualityLevels = remember { listOf("VERY_HIGH") } // Esto: { emptyList<String>() }  es para que el efecto no funcione en ninguan calidad, queda anulado
 
 
@@ -1362,19 +1364,169 @@ fun InteractiveWorldMap(
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    // Color Grading Dinámico: Color Grading según hora del día
-    val currentHour = remember {
-        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-    }
-    val timeBasedTint = remember(currentHour) {
-        when (currentHour) {
-            in 6..11 -> Color(0xFFFFE5B4).copy(alpha = 0.15f)   // Mañana: Tinte cálido/amarillo - Color(0xFFFFE5B4).copy(alpha = 0.15f)
-            in 12..17 -> Color(0xFFFFD700).copy(alpha = 0.10f)  // Tarde: Tinte dorado suave - Color(0xFFFFD700).copy(alpha = 0.10f)
-            in 18..19 -> Color(0xFFFF8C42).copy(alpha = 0.25f)  // Atardecer: Tinte naranja - Color(0xFFFF8C42).copy(alpha = 0.20f)
-            else -> Color(0xFF1A4D7A).copy(alpha = 0.25f)       // Noche: Tinte azul oscuro
+    // ========================================================================
+    // SISTEMA AVANZADO DE COLOR GRADING DINÁMICO CON TRANSICIONES SUAVES
+    // ========================================================================
+
+    // Estado que se actualiza cada minuto
+    var currentTimeMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Actualización automática cada minuto (no afecta rendimiento)
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60000L) // 60 segundos = 60000L - cambiar a 2000L para ver la Simulacion
+            currentTimeMillis = System.currentTimeMillis()
         }
     }
-    // Fin Color Grading Dinámico
+    /*
+    // ⚠️ MODO PRUEBA: Simula 24 horas en 2 minutos (ciclo completo) - Se debe apagar completo el val hourFloat abajo
+    val hourFloat = remember(currentTimeMillis) {
+        val elapsedSeconds = (System.currentTimeMillis() / 1000) % 120 // 120 segundos = 2 minutos
+        (elapsedSeconds / 120f) * 24f // Convierte 0-120s a 0-24 horas
+    }
+     */
+
+    // Calcular hora decimal (ej: 18:30 = 18.5)
+    val hourFloat = remember(currentTimeMillis) {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = currentTimeMillis
+        val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(java.util.Calendar.MINUTE)
+        hour + (minute / 60f)
+    }
+
+    // Función para interpolar colores suavemente
+    fun lerpColor(start: Color, end: Color, fraction: Float): Color {
+        val clampedFraction = fraction.coerceIn(0f, 1f)
+        return Color(
+            red = start.red + (end.red - start.red) * clampedFraction,
+            green = start.green + (end.green - start.green) * clampedFraction,
+            blue = start.blue + (end.blue - start.blue) * clampedFraction,
+            alpha = start.alpha + (end.alpha - start.alpha) * clampedFraction
+        )
+    }
+
+    // Calcular tinte interpolado según la hora exacta
+    val timeBasedTint = remember(hourFloat) {
+        when {
+            // MADRUGADA (0:00 - 4:59) → Azul oscuro profundo
+            hourFloat < 5f -> {
+                Color(0xFF0D2840).copy(alpha = 0.35f)
+            }
+
+            // AMANECER (5:00 - 6:59) → Transición azul → rosa → naranja
+            hourFloat < 7f -> {
+                val progress = (hourFloat - 5f) / 2f // 0.0 a 1.0
+                when {
+                    progress < 0.5f -> {
+                        // 5:00-6:00: Azul oscuro → Rosa suave
+                        lerpColor(
+                            Color(0xFF0D2840).copy(alpha = 0.35f),
+                            Color(0xFFFFB3D9).copy(alpha = 0.20f),
+                            progress * 2f
+                        )
+                    }
+                    else -> {
+                        // 6:00-7:00: Rosa suave → Naranja amanecer
+                        lerpColor(
+                            Color(0xFFFFB3D9).copy(alpha = 0.20f),
+                            Color(0xFFFFCC99).copy(alpha = 0.15f),
+                            (progress - 0.5f) * 2f
+                        )
+                    }
+                }
+            }
+
+            // MAÑANA (7:00 - 11:59) → Amarillo cálido suave
+            hourFloat < 12f -> {
+                val progress = (hourFloat - 7f) / 5f
+                lerpColor(
+                    Color(0xFFFFCC99).copy(alpha = 0.15f),
+                    Color(0xFFFFE5B4).copy(alpha = 0.12f),
+                    progress
+                )
+            }
+
+            // MEDIODÍA-TARDE (12:00 - 16:59) → Dorado brillante (luz solar plena)
+            hourFloat < 17f -> {
+                val progress = (hourFloat - 12f) / 5f
+                lerpColor(
+                    Color(0xFFFFF4CC).copy(alpha = 0.18f), // ⬅️ Amarillo más claro/brillante
+                    Color(0xFFFFEB3B).copy(alpha = 0.22f), // ⬅️ Amarillo limón intenso (luz del mediodía)
+                    progress
+                )
+            }
+
+            // ATARDECER TEMPRANO (17:00 - 18:59) → Dorado → Naranja
+            hourFloat < 19f -> {
+                val progress = (hourFloat - 17f) / 2f
+                lerpColor(
+                    Color(0xFFFFD700).copy(alpha = 0.08f),
+                    Color(0xFFFF9F50).copy(alpha = 0.22f),
+                    progress
+                )
+            }
+
+            // ATARDECER INTENSO (19:00 - 20:29) → Naranja → Rojo/Púrpura
+            hourFloat < 20.5f -> {
+                val progress = (hourFloat - 19f) / 1.5f
+                lerpColor(
+                    Color(0xFFFF9F50).copy(alpha = 0.22f),
+                    Color(0xFFFF6B4A).copy(alpha = 0.30f), // Pico de intensidad
+                    progress
+                )
+            }
+
+            // ANOCHECER (20:30 - 22:59) → Púrpura → Azul profundo
+            hourFloat < 23f -> {
+                val progress = (hourFloat - 20.5f) / 2.5f
+                lerpColor(
+                    Color(0xFFFF6B4A).copy(alpha = 0.30f),
+                    Color(0xFF3A5A7A).copy(alpha = 0.28f),
+                    progress
+                )
+            }
+
+            // NOCHE (23:00 - 23:59) → Azul profundo
+            else -> {
+                val progress = (hourFloat - 23f)
+                lerpColor(
+                    Color(0xFF3A5A7A).copy(alpha = 0.28f),
+                    Color(0xFF0D2840).copy(alpha = 0.35f),
+                    progress
+                )
+            }
+        }
+    }
+
+    // Animación suave entre cambios de tinte (transición de 20 segundos)
+    val animatedTint by animateColorAsState(
+        targetValue = timeBasedTint,
+        animationSpec = tween(
+            durationMillis = 20000, // 20 segundos de transición = 20000 - cambiar a 3000 para ver la simulación
+            easing = FastOutSlowInEasing
+        ),
+        label = "time_tint_transition"
+    )
+    /*
+    // PAra ver en logcat las horas simuladas
+    LaunchedEffect(hourFloat) {
+        val periodo = when {
+            hourFloat < 5f -> "🌙 MADRUGADA"
+            hourFloat < 7f -> "🌅 AMANECER"
+            hourFloat < 12f -> "☀️ MAÑANA"
+            hourFloat < 17f -> "🌞 TARDE"
+            hourFloat < 19f -> "🌇 ATARDECER TEMPRANO"
+            hourFloat < 20.5f -> "🔥 GOLDEN HOUR (ATARDECER INTENSO)"
+            hourFloat < 23f -> "🌃 ANOCHECER"
+            else -> "🌙 NOCHE"
+        }
+        android.util.Log.e("TINT_DEBUG", "⏰ Hora: ${String.format("%.2f", hourFloat)} = $periodo")
+    }
+     */
+    // ========================================================================
+    // FIN DEL SISTEMA DE COLOR GRADING
+    // ========================================================================
 
     // Definir colores - Se quedan solo por la nomenclatura ya que los colores ahora se definen con texturas
     val dominatedColor = DarkGoldAccent.toArgb() // PAÍSES DOMINADOS
@@ -1809,9 +1961,9 @@ fun InteractiveWorldMap(
 
         // EFECTOS PERMANENTES (según calidad)
         if (oceanQuality in listOf("VERY_HIGH", "HIGH", "MEDIUM")) {
-            // Color Grading Dinámico
+            // Color Grading Dinámico con animación
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(color = timeBasedTint)
+                drawRect(color = animatedTint)
             }
             // Vignette Dinámico
             OceanVignette(modifier = Modifier.fillMaxSize())
