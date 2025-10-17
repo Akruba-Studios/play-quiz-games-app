@@ -123,7 +123,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 47-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 48-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -271,32 +271,44 @@ fun MapScreen(
                         // No hacer nada, esperamos al siguiente ciclo
                     } else {
                         ambientCounter = 0
-                        // Pool de efectos ambientales disponibles
-                        val availableEffects = mutableListOf<String>()
 
-                        // Solo añadimos efectos cuya calidad gráfica actual lo permite
-                        if (uiState.oceanQuality in fishQualityLevels && !isFishActive) {
-                            availableEffects.add("fish")
-                        }
-                        if (uiState.oceanQuality in mistQualityLevels && !isMistActive) {
-                            availableEffects.add("mist")
-                        }
-                        if (uiState.oceanQuality in godRaysQualityLevels && !isGodRaysActive) {
-                            availableEffects.add("godRays")
-                        }
-                        if (uiState.oceanQuality in specularQualityLevels && !isSpecularActive) {
-                            availableEffects.add("specular")
-                        }
-                        if (uiState.oceanQuality in gradientQualityLevels && !isGradientActive) {
-                            availableEffects.add("gradient")
-                        }
-                        if (uiState.oceanQuality in bubblesQualityLevels && !isBubblesActive) {
-                            availableEffects.add("bubbles")
+                        // 1. Definimos la tabla maestra de pesos. Igualar los valores los acerca a salir el 50% de las veces.
+                        val effectWeights = listOf(
+                            "fish" to 40,
+                            "gradient" to 30,
+                            "bubbles" to 20,
+                            "mist" to 15,
+                            "specular" to 10,
+                            "godRays" to 5
+                        )
+
+                        // 2. Filtramos los efectos que están permitidos por la calidad y no están ya activos.
+                        val weightedAvailableEffects = effectWeights.filter { (effect, _) ->
+                            when (effect) {
+                                "fish" -> uiState.oceanQuality in fishQualityLevels && !isFishActive
+                                "gradient" -> uiState.oceanQuality in gradientQualityLevels && !isGradientActive
+                                "bubbles" -> uiState.oceanQuality in bubblesQualityLevels && !isBubblesActive
+                                "mist" -> uiState.oceanQuality in mistQualityLevels && !isMistActive
+                                "specular" -> uiState.oceanQuality in specularQualityLevels && !isSpecularActive
+                                "godRays" -> uiState.oceanQuality in godRaysQualityLevels && !isGodRaysActive
+                                else -> false
+                            }
                         }
 
-                        // Si hay efectos disponibles, elegimos uno al azar, estos efectos no se supornen
-                        if (availableEffects.isNotEmpty()) {
-                            val chosenEffect = availableEffects.random()
+                        // 3. Si hay efectos disponibles, procedemos con la selección ponderada.
+                        if (weightedAvailableEffects.isNotEmpty()) {
+                            val totalWeight = weightedAvailableEffects.sumOf { it.second }
+                            val randomNumber = Random.nextInt(totalWeight)
+
+                            var chosenEffect: String? = null
+                            var cumulativeWeight = 0
+                            for ((effect, weight) in weightedAvailableEffects) {
+                                cumulativeWeight += weight
+                                if (randomNumber < cumulativeWeight) {
+                                    chosenEffect = effect
+                                    break
+                                }
+                            }
 
                             // Activamos el efecto elegido
                             when (chosenEffect) {
