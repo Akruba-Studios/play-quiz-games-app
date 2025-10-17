@@ -123,7 +123,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 // ===================================================================
-// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 46-MS
+// COMPOSABLE MONITOR VISUAL DE FPS - CONTROL 47-MS
 // ===================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -186,27 +186,27 @@ fun MapScreen(
 
     // --- LISTAS DE CALIDAD GRÁFICA (Define qué efectos se muestran en cada nivel) ---
     val stormQualityLevels = remember { listOf("VERY_HIGH") } // ("VERY_HIGH", "HIGH")
-    val rainQualityLevels = remember { listOf("VERY_HIGH") }
+    val rainQualityLevels = remember { listOf("VERY_HIGH", "HIGH") }
 
-    val fishQualityLevels = remember { listOf("HIGH") } // Peces
-    val mistQualityLevels = remember { listOf("LOW") } // Neblina
-    val godRaysQualityLevels = remember { listOf("VERY_HIGH") } // Rayos en diagonal
-    val specularQualityLevels = remember { listOf("VERY_HIGH") } // Centros redondos especulares
-    val bubblesQualityLevels = remember { listOf("VERY_HIGH") } // Burbujas
-    val gradientQualityLevels = remember { listOf("VERY_HIGH") } // Esto: { emptyList<String>() }  es para que el efecto no funcione en ninguan calidad, queda anulado
+    val fishQualityLevels = remember { listOf("VERY_HIGH", "HIGH") } // Peces
+    val mistQualityLevels = remember { listOf("VERY_HIGH", "HIGH", "MEDIUM") } // Neblina
+    val godRaysQualityLevels = remember { emptyList<String>() } // Esto: { emptyList<String>() } - Rayos en diagonal por ahora el menos impactante
+    val specularQualityLevels = remember { listOf("MEDIUM") } // Centros redondos especulares
+    val bubblesQualityLevels = remember { listOf("HIGH", "MEDIUM") } // Burbujas
+    val gradientQualityLevels = remember { listOf("HIGH", "MEDIUM", "LOW") } // Oscurecimiento muy bueno
 
 
     // --- CONFIGURACIÓN DEL SISTEMA ---
     // Capa Ambiental (efectos sutiles frecuentes)
     val ambientTickInterval = 5000L        // Cada cuántos ms hace un "tick" (5000 = 5 segundos)
-    val ambientCycleLength = 2             // Cuántos ticks para evaluar (4 * 5s = 20 segundos)
+    val ambientCycleLength = 1             // Cuántos ticks para evaluar (1 * 5s = 5 segundos)
     val ambientProbability = 0.70f         // Probabilidad de activar efecto cuando se evalúa (0.70 = 70%)
-    val ambientEffectDuration = 20000L     // Duración de efectos ambientales en ms (15000 = 15 segundos)
+    val ambientEffectDuration = 40000L     // Duración de efectos ambientales en ms (40000 = 40 segundos)
 
     // Capa Climática (eventos dramáticos poco frecuentes)
-    val climaticCycleLength = 3           // Cuántos ticks para evaluar (18 * 5s = 90 segundos)
-    val climaticProbability = 0.80f        // Probabilidad de evento climático (0.30 = 30%)
-    val climaticEffectDuration = 20000L    // Duración de eventos climáticos en ms (20000 = 20 segundos) - ACTUAL: 20s para pruebas, pero era 45s
+    val climaticCycleLength = 2           // Cuántos ticks para evaluar (2 * 5s = 10 segundos)
+    val climaticProbability = 0.30f        // Probabilidad de evento climático (0.30 = 30%)
+    val climaticEffectDuration = 40000L    // Duración de eventos climáticos en ms (40000 = 40 segundos) - ACTUAL: 20s para pruebas, pero era 45s
 
     // Control de superposición
     val allowEffectOverlap = true          // true = efectos pueden ocurrir simultáneamente, false = solo uno a la vez
@@ -1960,7 +1960,7 @@ fun InteractiveWorldMap(
         }
 
         // EFECTOS PERMANENTES (según calidad)
-        if (oceanQuality in listOf("VERY_HIGH", "HIGH", "MEDIUM")) {
+        if (oceanQuality in listOf("VERY_HIGH", "HIGH", "MEDIUM", "LOW")) {
             // Color Grading Dinámico con animación
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawRect(color = animatedTint)
