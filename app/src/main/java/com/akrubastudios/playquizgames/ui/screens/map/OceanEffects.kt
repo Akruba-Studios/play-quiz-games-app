@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-// CONTROL: 7-OE
+// CONTROL: 8-OE
 @Composable // Brillo Especular Animado : Efecto de circulos brillantes moviendose en el oceano
 fun OceanSpecularEffect(
     modifier: Modifier = Modifier,
@@ -656,7 +656,7 @@ private data class Bubble(
     val hasGlow: Boolean            // Si tiene glow exterior
 )
 
-@Composable // Rayos de luz que atraviesan el agua (God Rays)
+@Composable // Rayos de luz que atraviesan el agua (God Rays) - REQUIERE OPTIMIZACION POR AHORA INACTIVO
 fun OceanGodRaysEffect(
     modifier: Modifier = Modifier,
     fadeAlpha: Float = 1f
@@ -1072,8 +1072,18 @@ fun RainEffect(
     fadeAlpha: Float = 1f
 ) {
     // Sistema de impactos múltiples con diferentes características
-    val impacts = remember { mutableStateListOf<RainImpactAdvanced>() }
+    // CAMBIO 1: Creamos una piscina de objetos fija.
+    // Se inicializa una sola vez y nunca cambia su tamaño.
+    val impactPool = remember {
+        List(150) { // Un tamaño fijo, ej. 150, más que suficiente.
+            RainImpactAdvanced(
+                x = 0f, y = 0f, age = 0f, maxRadius = 0f,
+                ripples = 0, speed = 0f, alpha = 0f, isActive = false
+            )
+        }
+    }
     val random = remember { Random.Default }
+    var nextImpactIndex = remember { 0 }
 
     // Generador continuo de impactos
     LaunchedEffect(Unit) {
@@ -1081,25 +1091,31 @@ fun RainEffect(
             // Cada 20-40ms genera un nuevo impacto (lluvia intensa)
             delay(random.nextLong(20, 40))
 
-            // Características aleatorias del impacto
-            val isLargeDrop = random.nextFloat() < 0.15f // 15% gotas grandes
-            val maxRadius = if (isLargeDrop) {
-                random.nextFloat() * 40f + 50f // Gotas grandes: 50-90px
-            } else {
-                random.nextFloat() * 25f + 20f // Gotas normales: 20-45px
-            }
+            // Buscamos el siguiente impacto inactivo en la piscina.
+            val impact = impactPool[nextImpactIndex]
 
-            impacts.add(
-                RainImpactAdvanced(
-                    x = random.nextFloat(),
-                    y = random.nextFloat(),
-                    age = 0f,
-                    maxRadius = maxRadius,
-                    ripples = if (isLargeDrop) 3 else 2, // Gotas grandes hacen más ondas
-                    speed = if (isLargeDrop) 600f else 450f,
-                    alpha = if (isLargeDrop) 0.95f else 0.85f
-                )
-            )
+            // Si ya está activo, significa que la piscina es muy pequeña (improbable).
+            if (!impact.isActive) {
+                val isLargeDrop = random.nextFloat() < 0.15f
+                val maxRadius = if (isLargeDrop) {
+                    random.nextFloat() * 40f + 50f
+                } else {
+                    random.nextFloat() * 25f + 20f
+                }
+
+                impact.apply {
+                    this.x = random.nextFloat()
+                    this.y = random.nextFloat()
+                    this.age = 0f
+                    this.maxRadius = maxRadius
+                    this.ripples = if (isLargeDrop) 3 else 2
+                    this.speed = if (isLargeDrop) 600f else 450f
+                    this.alpha = if (isLargeDrop) 0.95f else 0.85f
+                    this.isActive = true // Lo activamos.
+                }
+            }
+            // Movemos el índice para el siguiente ciclo.
+            nextImpactIndex = (nextImpactIndex + 1) % impactPool.size
         }
     }
 
@@ -1107,76 +1123,58 @@ fun RainEffect(
         val width = size.width
         val height = size.height
 
-        // Actualizar y dibujar todos los impactos
-        val iterator = impacts.iterator()
-        while (iterator.hasNext()) {
-            val impact = iterator.next()
+        // CAMBIO 3: Iteramos sobre la piscina completa y solo dibujamos los activos.
+        impactPool.forEach { impact ->
+            if (!impact.isActive) return@forEach // Si no está activo, saltamos al siguiente.
 
-            // Remover impactos viejos
+            // CAMBIO 4: En lugar de eliminar, simplemente lo desactivamos.
             if (impact.age > impact.maxRadius * 3.5f) {
-                iterator.remove()
-                continue
+                impact.isActive = false
+                return@forEach // Y saltamos el dibujado.
             }
 
+            // --- El resto del código de dibujado es IDÉNTICO, no se ha modificado ---
             val xPos = width * impact.x
             val yPos = height * impact.y
-
-            // Progreso de la animación (0 a 1)
             val progress = impact.age / (impact.maxRadius * 2f)
 
-            // Dibujar múltiples ondas concéntricas
             for (rippleIndex in 0 until impact.ripples) {
-                // Cada onda empieza con un delay
                 val rippleDelay = rippleIndex * 0.25f
                 val rippleProgress = (progress - rippleDelay).coerceAtLeast(0f)
 
                 if (rippleProgress > 0f) {
                     val radius = rippleProgress * impact.maxRadius
-
-                    // Alpha que se desvanece: fuerte al inicio, desaparece al final
                     val fadeOut = 1f - rippleProgress
                     val alpha = (impact.alpha * fadeOut * fadeOut * fadeAlpha).coerceIn(0f, 1f)
 
                     if (alpha > 0.05f) {
-                        // Onda exterior (más gruesa, más visible)
                         drawCircle(
                             color = Color.White.copy(alpha = alpha * 0.8f),
                             radius = radius,
                             center = Offset(xPos, yPos),
-                            style = Stroke(
-                                width = (8f - rippleProgress * 4f).coerceAtLeast(2f)
-                            )
+                            style = Stroke(width = (8f - rippleProgress * 4f).coerceAtLeast(2f))
                         )
-
-                        // Onda interior sutil (efecto de profundidad)
                         if (rippleProgress > 0.1f) {
                             drawCircle(
-                                color = Color(0xFFB3E5FC).copy(alpha = alpha * 0.4f), // Azul claro
+                                color = Color(0xFFB3E5FC).copy(alpha = alpha * 0.4f),
                                 radius = radius * 0.7f,
                                 center = Offset(xPos, yPos),
                                 style = Stroke(width = 1.5f)
                             )
                         }
-
-                        // Splash inicial (solo en los primeros frames)
                         if (rippleProgress < 0.2f && rippleIndex == 0) {
                             val splashAlpha = (1f - rippleProgress / 0.2f) * impact.alpha
-
-                            // Círculo sólido central del impacto
                             drawCircle(
                                 color = Color.White.copy(alpha = splashAlpha * 0.6f),
                                 radius = radius * 0.3f,
                                 center = Offset(xPos, yPos)
                             )
-
-                            // Pequeñas salpicaduras radiales
                             val splashCount = if (impact.maxRadius > 20f) 8 else 6
                             for (i in 0 until splashCount) {
                                 val angle = (i / splashCount.toFloat()) * 6.28f
                                 val splashDist = radius * 1.2f
                                 val splashX = xPos + kotlin.math.cos(angle) * splashDist
                                 val splashY = yPos + kotlin.math.sin(angle) * splashDist
-
                                 drawCircle(
                                     color = Color.White.copy(alpha = splashAlpha * 0.5f),
                                     radius = 2f + rippleProgress * 3f,
@@ -1188,12 +1186,11 @@ fun RainEffect(
                 }
             }
 
-            // Incrementar edad (velocidad ajustada por tamaño)
-            impact.age += 16f / (impact.speed / 450f) // ~60fps normalizado
+            impact.age += 16f / (impact.speed / 450f)
         }
 
-        // Efecto de neblina/spray ambiental (gotas microscópicas)
-        if (impacts.size > 50) { // Solo cuando hay suficiente lluvia
+        // CAMBIO 5: La condición para el spray ahora cuenta los activos.
+        if (impactPool.count { it.isActive } > 50) {
             drawRect(
                 color = Color.White.copy(alpha = 0.03f * fadeAlpha),
                 size = size
@@ -1204,13 +1201,14 @@ fun RainEffect(
 
 // Clase de datos mejorada para impactos avanzados
 private data class RainImpactAdvanced(
-    val x: Float,           // Posición X normalizada (0-1)
-    val y: Float,           // Posición Y normalizada (0-1)
+    var x: Float,           // Posición X normalizada (0-1)
+    var y: Float,           // Posición Y normalizada (0-1)
     var age: Float,         // Edad en ms
-    val maxRadius: Float,   // Radio máximo de expansión
-    val ripples: Int,       // Cantidad de ondas concéntricas
-    val speed: Float,       // Velocidad de expansión
-    val alpha: Float        // Opacidad base
+    var maxRadius: Float,   // Radio máximo de expansión
+    var ripples: Int,       // Cantidad de ondas concéntricas
+    var speed: Float,       // Velocidad de expansión
+    var alpha: Float,        // Opacidad base
+    var isActive: Boolean = false
 )
 
 @Composable
