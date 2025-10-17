@@ -46,7 +46,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 4-RS
+@OptIn(ExperimentalMaterial3Api::class) // CONTROL: 5-RS
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel(),
@@ -440,85 +440,95 @@ fun AnimatedRankedUserItem(
         visible = visible,
         enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 4 }
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.9f)
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Número de ranking con badge
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(
-                            color = when {
-                                user.rank <= 10 -> MaterialTheme.colorScheme.primaryContainer
-                                else -> MaterialTheme.colorScheme.surfaceVariant
-                            },
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "${user.rank}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = when {
-                            user.rank <= 10 -> MaterialTheme.colorScheme.onPrimaryContainer
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                AsyncImage(
-                    model = user.photoUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop
+        // NUEVO: Box envolvente
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(  // <-- CAPA 1: Fondo sólido
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f), // <-- ALPHA REDUCIDO
+                    shape = RoundedCornerShape(16.dp)
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = user.displayName,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontSize = nameFontSize // Aplicamos el tamaño de fuente dinámico
-                        ),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer // <-- SIN ALPHA
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Número de ranking con badge
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                color = when {
+                                    user.rank <= 10 -> MaterialTheme.colorScheme.primaryContainer
+                                    else -> MaterialTheme.colorScheme.surfaceVariant
+                                },
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = stringResource(R.string.ranking_level_prefix, user.level),
-                            style = MaterialTheme.typography.bodySmall,
+                            text = "${user.rank}",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = GoldAccent
-                        )
-                        Text(
-                            text = " • ${NumberFormat.getNumberInstance(Locale.getDefault()).format(user.totalXp)} XP",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = when {
+                                user.rank <= 10 -> MaterialTheme.colorScheme.onPrimaryContainer
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
-                }
 
-                // Badge especial para Top 10
-                if (user.rank <= 10) {
-                    Text(
-                        text = "🔥",
-                        fontSize = 24.sp
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    AsyncImage(
+                        model = user.photoUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentScale = ContentScale.Crop
                     )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = user.displayName,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = nameFontSize
+                            ),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = stringResource(R.string.ranking_level_prefix, user.level),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = GoldAccent
+                            )
+                            Text(
+                                text = " • ${NumberFormat.getNumberInstance(Locale.getDefault()).format(user.totalXp)} XP",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Badge especial para Top 10
+                    if (user.rank <= 10) {
+                        Text(
+                            text = "🔥",
+                            fontSize = 24.sp
+                        )
+                    }
                 }
             }
         }
