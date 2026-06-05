@@ -1,11 +1,11 @@
 plugins {
-    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.hilt)
-    kotlin("kapt")
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
